@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#060A0F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <title>Mi Moto - Pulsar N160 FI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,600;0,700;0,800;1,700;1,800;1,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- NOTIFICACIÓN FLOTANTE SUTIL (HUD TOAST) -->
+  <div id="hud-toast" class="hud-toast hidden" role="status" aria-live="polite">
+    <span class="toast-dot"></span>
+    <span id="hud-toast-text">Listo</span>
+  </div>
+
+  <!-- ================= PANTALLA 1: BIENVENIDA (SOLO 1RA VEZ) ================= -->
+  <section id="onboarding-screen" class="screen">
+    <div class="onboarding-container">
+      <div class="logo-upload-box" id="logo-trigger" title="Toca para cargar tu icono">
+        <img id="onboarding-logo" src="" alt="Logo Mi Moto" class="hidden">
+        <div id="logo-placeholder" class="logo-placeholder">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <p>Subir Icono<br><strong>Mi Moto</strong></p>
+        </div>
+        <input type="file" id="logo-input" accept="image/*" class="hidden">
+      </div>
+
+      <div class="brand-emblem-wrap">
+        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA</span>
+        <h1 class="pulsar-script-logo">pulsar</h1>
+        <span class="n160-fi-sub">N160 FI • DUAL CHANNEL ABS</span>
+      </div>
+
+      <div class="selector-section">
+        <label class="section-label">IDENTIFICACIÓN DE UNIDAD</label>
+        <div class="bike-select-card selected" id="select-n160">
+          <div class="neon-slash-accent"></div>
+          <div class="bike-card-header">
+            <div>
+              <span class="badge-fi">CARIBBEAN BLUE EDITION</span>
+              <h2 class="pulsar-italic-title">pulsar <span class="n160-accent">N160 FI</span></h2>
+              <p>164.82 cc • SOHC 2V • Inyección Electrónica</p>
+            </div>
+            <div class="check-circle">✓</div>
+          </div>
+
+          <div class="bike-photo-box" id="photo-trigger">
+            <img id="onboarding-bike-photo" src="" alt="Pulsar N160" class="hidden">
+            <div id="photo-placeholder" class="photo-placeholder">
+              <span>📷 Toca para cargar la foto de tu Pulsar N160</span>
+            </div>
+            <input type="file" id="photo-input" accept="image/*" class="hidden">
+          </div>
+        </div>
+
+        <div class="initial-km-box">
+          <label for="init-km-input">Odómetro inicial al empezar el control (Km):</label>
+          <input type="number" id="init-km-input" placeholder="Ej: 0" value="0" min="0">
+        </div>
+
+        <button id="btn-start-app" class="btn-neon-full">
+          ENCENDER TABLERO ⚡
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PANTALLA 2: PANEL PRINCIPAL ================= -->
+  <section id="main-screen" class="screen hidden">
+    
+    <!-- Cabecera Limpia y Descontaminada -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="mini-logo-wrap" id="header-logo-btn" title="Cambiar icono">
+          <img id="header-logo" src="" alt="Logo" class="hidden">
+          <span id="header-logo-fallback" class="fallback-p">p</span>
+        </div>
+        <div class="brand-titles">
+          <div class="brand-row">
+            <span class="pulsar-script-header">pulsar</span>
+            <span class="fi-tag">N160 FI</span>
+            <span id="header-plate-badge" class="plate-mini-pill hidden">---</span>
+          </div>
+          <span class="health-indicator" id="bike-health-badge">● Sistema 100% Óptimo</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <!-- Guantera Digital (SOAT + Brevete) -->
+        <button id="btn-open-docs-modal" class="btn-icon-sleek" title="Guantera Digital (SOAT y Brevete)">
+          <span id="docs-alert-dot" class="notif-dot hidden"></span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2"/><path d="M15 12h2"/><path d="M7 16h10"/></svg>
+        </button>
+        <!-- Configuración y Respaldo Unificados -->
+        <button id="btn-open-backup-modal" class="btn-icon-sleek" title="Ajustes, Portada y Copia de Seguridad">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Banner de la Moto -->
+    <div id="main-bike-banner" class="bike-banner hidden">
+      <img id="banner-bike-img" src="" alt="Mi Pulsar N160">
+      <div class="banner-overlay">
+        <span class="pulsar-banner-script">pulsar <small>N160 FI</small></span>
+        <button type="button" id="breakin-pill" class="breakin-pill" data-info-key="breakin_guide">
+          ASENTAMIENTO ⓘ
+        </button>
+      </div>
+    </div>
+
+    <!-- Tablero Digital con Barrido + Sonido Underbelly -->
+    <div id="cockpit-cluster" class="cockpit-card">
+      <div class="cockpit-main">
+        <span class="cockpit-label">ODÓMETRO TOTAL</span>
+        <div class="odo-value-row">
+          <span id="current-km-display">0</span>
+          <small>km</small>
+        </div>
+      </div>
+
+      <div class="cockpit-divider"></div>
+
+      <div class="cockpit-trip" id="trip-reset-trigger" title="Toca para reiniciar TRIP A">
+        <span class="cockpit-label">TRIP A <small class="reset-hint">↻ Reset</small></span>
+        <div class="trip-value-row">
+          <span id="trip-a-display">0</span>
+          <small>km</small>
+        </div>
+      </div>
+
+      <button id="btn-open-km-modal" class="btn-cockpit-update">
+        + Km
+      </button>
+    </div>
+
+    <!-- Navegación Principal de 5 Módulos -->
+    <nav class="tabs-nav-5">
+      <button class="tab-btn active" data-tab="tab-maint">Taller</button>
+      <button class="tab-btn" data-tab="tab-fuel">Grifo</button>
+      <button class="tab-btn" data-tab="tab-garage">Garaje</button>
+      <button class="tab-btn" data-tab="tab-route">Finanzas</button>
+      <button class="tab-btn" data-tab="tab-specs">Ficha</button>
+    </nav>
+
+    <!-- ================= PESTAÑA 1: TALLER ================= -->
+    <div id="tab-maint" class="tab-content">
+      <div class="section-header-row">
+        <span class="section-title-sleek">SEMÁFORO DE MANTENIMIENTOS</span>
+        <button id="btn-open-log-modal-top" class="btn-action-sleek">+ Registrar Servicio</button>
+      </div>
+
+      <div id="maint-alerts-grid" class="alerts-grid"></div>
+
+      <!-- Resumen Financiero Compacto + Bitácora Desplegable con Filtro -->
+      <div class="progressive-drawer-card" style="margin-top: 12px;">
+        <div class="drawer-summary-row">
+          <div class="fin-mini-pair">
+            <span>Mes: <strong id="maint-month-total" class="neon-txt">S/ 0.00</strong></span>
+            <span>Año: <strong id="maint-year-total">S/ 0.00</strong></span>
+          </div>
+          <button type="button" id="btn-toggle-maint-logs" class="btn-drawer-toggle">
+            Bitácora (<span id="maint-count-badge">0</span>) <span id="maint-saved-arrow">▾</span>
+          </button>
+        </div>
+        <div id="drawer-maint-logs" class="drawer-body hidden">
+          <div class="mod-filter-bar" id="maint-log-filters" style="margin-bottom: 8px;">
+            <button type="button" class="mod-filter-pill active" data-maintfilter="all">Todos</button>
+            <button type="button" class="mod-filter-pill" data-maintfilter="oil_change">Aceite</button>
+            <button type="button" class="mod-filter-pill" data-maintfilter="chain_lube">Cadena</button>
+            <button type="button" class="mod-filter-pill" data-maintfilter="air_spark">Filtro/Bujías</button>
+            <button type="button" class="mod-filter-pill" data-maintfilter="brakes_abs">Frenos</button>
+            <button type="button" class="mod-filter-pill" data-maintfilter="valve_calib">Válvulas</button>
+          </div>
+          <div id="logs-container" class="compact-scroll-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PESTAÑA 2: GRIFO (100% PREMIUM) ================= -->
+    <div id="tab-fuel" class="tab-content hidden">
+      
+      <div class="period-selector">
+        <button class="period-btn" data-period="week">Semana</button>
+        <button class="period-btn active" data-period="month">Mes</button>
+        <button class="period-btn" data-period="year">Año</button>
+      </div>
+
+      <div class="fuel-stats-grid">
+        <div class="stat-card highlight">
+          <span class="stat-label" id="fuel-period-label">PREMIUM (MES)</span>
+          <strong class="stat-big" id="fuel-spent-period">S/ 0.00</strong>
+          <span class="stat-sub" id="fuel-gallons-period">0.00 gal ingresados</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">OPERATIVO DEL PERIODO</span>
+          <strong class="stat-big carib" id="total-bike-period">S/ 0.00</strong>
+          <span class="stat-sub" id="fuel-price-trend-sub">Grifo + Taller + Lavado + Otros</span>
+        </div>
+      </div>
+
+      <!-- Meta Mensual de Combustible -->
+      <div class="budget-bar-card">
+        <div class="budget-top-row">
+          <span class="budget-title">META MENSUAL GRIFO: <strong id="budget-limit-label">S/ 150</strong></span>
+          <button type="button" id="btn-edit-budget" class="btn-link-mini">Editar tope</button>
+        </div>
+        <div class="progress-track" style="margin: 5px 0;">
+          <div id="budget-progress-fill" class="progress-fill" style="width: 0%; background: var(--neon-lime);"></div>
+        </div>
+        <div class="budget-foot-row">
+          <span id="budget-status-text">Disponible este mes: S/ 150.00</span>
+          <strong id="budget-pct-text">0%</strong>
+        </div>
+      </div>
+
+      <div class="section-header-row">
+        <div class="title-with-info">
+          <span class="section-title-sleek">TELEMETRÍA DE CONSUMO PREMIUM</span>
+          <button type="button" class="btn-info-dot" data-info-key="telemetry_how">ⓘ</button>
+        </div>
+        <button id="btn-open-fuel-modal" class="btn-action-sleek">+ Abastecer</button>
+      </div>
+
+      <div class="telemetry-grid-4">
+        <div class="tele-box">
+          <span class="tele-label">RENDIMIENTO</span>
+          <strong class="tele-val" id="tele-km-per-gal">-- <small>km/gal</small></strong>
+          <span class="tele-sub" id="tele-km-per-liter">-- km por litro</span>
+        </div>
+        <div class="tele-box">
+          <span class="tele-label">COSTO POR KM</span>
+          <strong class="tele-val neon" id="tele-cost-per-km">S/ -- <small>/km</small></strong>
+          <span class="tele-sub" id="tele-cost-100km">S/ -- cada 100 km</span>
+        </div>
+        <div class="tele-box">
+          <span class="tele-label">ÚLTIMO TRAMO</span>
+          <strong class="tele-val" id="tele-last-delta">-- <small>km</small></strong>
+          <span class="tele-sub" id="tele-last-eff">Entre últimas 2 cargas</span>
+        </div>
+        <div class="tele-box">
+          <span class="tele-label">AUTONOMÍA (14 L)</span>
+          <strong class="tele-val carib" id="tele-tank-range">~520 <small>km</small></strong>
+          <span class="tele-sub">Con 3.70 gal Premium</span>
+        </div>
+      </div>
+
+      <!-- Curva Sparkline -->
+      <div id="sparkline-card" class="sparkline-box hidden">
+        <div class="sparkline-header">
+          <span class="sparkline-title">EVOLUCIÓN DE RENDIMIENTO (KM/GAL)</span>
+          <span id="sparkline-badge" class="sparkline-trend">Estable</span>
+        </div>
+        <div id="sparkline-svg-wrap" class="sparkline-svg-container"></div>
+      </div>
+
+      <div class="tele-tip-banner" id="tele-status-msg">
+        Registra tu primera carga hoy con tu kilometraje actual para activar la telemetría.
+      </div>
+
+      <!-- Cajón Desplegable del Historial de Cargas -->
+      <div class="progressive-drawer-card" style="margin-top: 10px;">
+        <div class="drawer-summary-row">
+          <span class="section-title-sleek">HISTORIAL DE TANQUEADAS</span>
+          <button type="button" id="btn-toggle-fuel-logs" class="btn-drawer-toggle">
+            Ver cargas (<span id="fuel-count-badge">0</span>) <span id="fuel-saved-arrow">▾</span>
+          </button>
+        </div>
+        <div id="drawer-fuel-logs" class="drawer-body hidden">
+          <div id="fuel-logs-container" class="compact-scroll-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PESTAÑA 3: GARAJE (LAVADO UNIFICADO, LLANTAS Y MODS) ================= -->
+    <div id="tab-garage" class="tab-content hidden">
+      
+      <!-- Tarjeta de Lavado y Cuidado con la MISMA tipografía que el resto de la app -->
+      <div class="maint-card" id="spa-widget-card" style="margin-bottom: 11px;">
+        <div class="maint-top">
+          <div>
+            <div class="title-with-info">
+              <span class="section-title-sleek">LAVADO Y CUIDADO DE UNIDAD</span>
+              <button type="button" class="btn-info-dot" data-info-key="spa_care_guide">ⓘ</button>
+            </div>
+            <div class="maint-title" id="spa-status-title" style="margin-top: 3px;">Pintura y retenes al día</div>
+            <div class="maint-sub" id="spa-sub-txt">Último lavado: 0 km (Hace 0 km)</div>
+          </div>
+          <div class="maint-top-right">
+            <button type="button" id="btn-do-spa" class="btn-action-sleek">+ Lavado</button>
+          </div>
+        </div>
+
+        <div class="drawer-summary-row" style="margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--border-subtle);">
+          <div class="fin-mini-pair">
+            <span>Mes: <strong id="spa-month-total" class="carib-txt">S/ 0.00</strong></span>
+            <span>Total: <strong id="spa-all-total">S/ 0.00</strong></span>
+          </div>
+          <button type="button" id="btn-toggle-spa-logs" class="btn-drawer-toggle">
+            Lavados (<span id="spa-count-badge">0</span>) <span id="spa-saved-arrow">▾</span>
+          </button>
+        </div>
+
+        <div id="drawer-spa-logs" class="drawer-body hidden">
+          <div id="spa-logs-container" class="compact-scroll-list" style="max-height: 170px;"></div>
+        </div>
+      </div>
+
+      <div class="subtabs-bar">
+        <button class="subtab-garage-btn active" data-garagesub="sub-garage-tires">
+          🛞 Llantas (Desgaste)
+        </button>
+        <button class="subtab-garage-btn" data-garagesub="sub-garage-mods">
+          🛡️ Accesorios y Mods (<span id="mods-count-badge">0</span>)
+        </button>
+      </div>
+
+      <!-- SUB-VISTA 3A: LLANTAS -->
+      <div id="sub-garage-tires" class="garage-panel">
+        <div class="section-header-row">
+          <div class="title-with-info">
+            <span class="section-title-sleek">TELEMETRÍA DE NEUMÁTICOS</span>
+            <button type="button" class="btn-info-dot" data-info-key="tire_dot_guide">ⓘ</button>
+          </div>
+          <span id="garage-psi-dynamic" class="psi-mini-reminder">Frío: 25 / 28-32 PSI</span>
+        </div>
+
+        <div id="tires-status-grid" class="tires-grid"></div>
+
+        <!-- Desplegable de Llantas Anteriores -->
+        <div class="progressive-drawer-card" style="margin-top: 10px;">
+          <div class="drawer-summary-row">
+            <span class="section-title-sleek">JUEGOS DE LLANTAS ANTERIORES</span>
+            <button type="button" id="btn-toggle-tire-hist" class="btn-drawer-toggle">
+              Historial (<span id="tire-history-count">0</span>) <span id="tire-saved-arrow">▾</span>
+            </button>
+          </div>
+          <div id="drawer-tire-hist" class="drawer-body hidden">
+            <div id="tire-history-container" class="compact-scroll-list" style="max-height: 160px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-VISTA 3B: ACCESORIOS Y MODS -->
+      <div id="sub-garage-mods" class="garage-panel hidden">
+        <div class="finance-strip">
+          <div class="fin-box">
+            <span class="fin-label">INVERSIÓN EN ACCESORIOS</span>
+            <strong class="fin-val" id="mods-total-invested">S/ 0.00</strong>
+          </div>
+          <div class="fin-box">
+            <div class="title-with-info">
+              <span class="fin-label">CARGA ELÉCTRICA (4Ah)</span>
+              <button type="button" class="btn-info-dot" data-info-key="elec_load_guide">ⓘ</button>
+            </div>
+            <strong class="fin-val carib-txt" id="mods-elec-status">Normal</strong>
+          </div>
+          <button id="btn-open-mod-modal" class="btn-action-sleek">+ Agregar</button>
+        </div>
+
+        <div class="mod-filter-bar" id="mod-category-filters">
+          <button type="button" class="mod-filter-pill active" data-modcat="all">Todos</button>
+          <button type="button" class="mod-filter-pill" data-modcat="protection">Sliders/Defensa</button>
+          <button type="button" class="mod-filter-pill" data-modcat="security">Alarma/GPS</button>
+          <button type="button" class="mod-filter-pill" data-modcat="electric">Eléctrico</button>
+          <button type="button" class="mod-filter-pill" data-modcat="gear">Casco/Equipo</button>
+        </div>
+
+        <div id="mods-list-container" class="compact-scroll-list"></div>
+      </div>
+    </div>
+
+    <!-- ================= PESTAÑA 4: FINANZAS TOTALES, RUTA Y CHECKLIST ================= -->
+    <div id="tab-route" class="tab-content hidden">
+      <div class="subtabs-bar-3">
+        <button class="subtab-route-btn active" data-routesub="sub-route-fin">
+          Gastos Totales
+        </button>
+        <button class="subtab-route-btn" data-routesub="sub-route-calc">
+          Simulador Ruta
+        </button>
+        <button class="subtab-route-btn" data-routesub="sub-route-check">
+          Checklist
+        </button>
+      </div>
+
+      <!-- SUB-VISTA 4A: PANEL FINANCIERO MAESTRO + GASTOS EXTRA -->
+      <div id="sub-route-fin" class="route-panel">
+        <div class="tco-card">
+          <div class="section-header-row" style="margin-bottom: 6px;">
+            <span class="section-title-sleek">INVERSIÓN TOTAL ACUMULADA</span>
+            <strong class="fin-val" id="master-grand-total">S/ 0.00</strong>
+          </div>
+
+          <!-- Barra de Proporción de Gastos -->
+          <div class="expense-split-bar" id="expense-split-bar">
+            <div class="split-seg seg-fuel" id="seg-fuel" style="width: 25%"></div>
+            <div class="split-seg seg-maint" id="seg-maint" style="width: 25%"></div>
+            <div class="split-seg seg-garage" id="seg-garage" style="width: 25%"></div>
+            <div class="split-seg seg-admin" id="seg-admin" style="width: 25%"></div>
+          </div>
+
+          <div class="tco-grid">
+            <div class="tco-item">
+              <span>⛽ Combustible Premium (<small id="pct-fuel">0%</small>)</span>
+              <strong id="tco-fuel-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item">
+              <span>🔧 Taller: Repuestos + Mano de Obra (<small id="pct-maint">0%</small>)</span>
+              <strong id="tco-maint-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item sub-breakdown">
+              <span>↳ Desglose Taller: Insumos vs. Mano de Obra</span>
+              <small id="tco-parts-vs-labor">Rep: S/ 0.00 • M.O: S/ 0.00</small>
+            </div>
+            <div class="tco-item">
+              <span>🚿 Lavado y Cuidado (<small id="pct-spa">0%</small>)</span>
+              <strong id="tco-spa-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item">
+              <span>🛞 Garaje: Llantas y Accesorios (<small id="pct-garage">0%</small>)</span>
+              <strong class="carib-txt" id="tco-garage-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item">
+              <span>🪪 Documentos (SOAT), Peajes y Otros (<small id="pct-admin">0%</small>)</span>
+              <strong id="tco-admin-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item">
+              <span>⚡ Costo Operativo Real por Km (<small id="tracked-km-label">0 km</small>)</span>
+              <strong class="neon-txt" id="tco-real-km">S/ 0.00 / km</strong>
+            </div>
+            <div class="tco-item">
+              <span>📅 Costo Operativo por Día de Uso</span>
+              <strong class="carib-txt" id="tco-daily-cost">S/ 0.00 / día</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Registro de Otros Gastos (Cochera, Peajes, Parches, Trámites) -->
+        <div class="progressive-drawer-card">
+          <div class="drawer-summary-row">
+            <div>
+              <span class="section-title-sleek">OTROS GASTOS / IMPREVISTOS</span>
+              <div class="maint-sub">SOAT, cochera, parches, trámites o peajes</div>
+            </div>
+            <div class="maint-top-right">
+              <button type="button" id="btn-open-expense-modal" class="btn-action-sleek">+ Gasto</button>
+              <button type="button" id="btn-toggle-expense-logs" class="btn-drawer-toggle">
+                (<span id="expense-count-badge">0</span>) <span id="expense-saved-arrow">▾</span>
+              </button>
+            </div>
+          </div>
+          <div id="drawer-expense-logs" class="drawer-body hidden">
+            <div id="expense-logs-container" class="compact-scroll-list" style="max-height: 180px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-VISTA 4B: SIMULADOR DE RUTA -->
+      <div id="sub-route-calc" class="route-panel hidden">
+        <div class="route-calc-card">
+          <div class="route-header">
+            <span class="section-title-sleek">SIMULADOR DE VIAJE / RUTA</span>
+            <span class="route-badge">N160 FI</span>
+          </div>
+          <p class="route-desc">Proyección según tu consumo real de Gasolina Premium y la topografía:</p>
+
+          <div class="form-row-2">
+            <div>
+              <label class="modal-label">Distancia (Km):</label>
+              <input type="number" id="route-km-input" placeholder="Ej: 120" value="100">
+            </div>
+            <div>
+              <label class="modal-label">Trayecto:</label>
+              <div class="fuel-type-pills" id="route-trip-picker">
+                <button type="button" class="route-pill selected" data-mult="1">Solo Ida</button>
+                <button type="button" class="route-pill" data-mult="2">Ida y Vuelta</button>
+              </div>
+            </div>
+          </div>
+
+          <label class="modal-label" style="margin-top: 8px;">TOPOGRAFÍA DE LA RUTA:</label>
+          <div class="fuel-type-pills" id="route-terrain-picker">
+            <button type="button" class="terrain-pill selected" data-factor="1">🛣️ Costa / Plano</button>
+            <button type="button" class="terrain-pill" data-factor="1.14">⛰️ Sierra / Ascenso (+14%)</button>
+          </div>
+
+          <div class="route-results-grid">
+            <div class="route-res-box">
+              <span>RECORRIDO</span>
+              <strong id="route-total-km">100 km</strong>
+            </div>
+            <div class="route-res-box">
+              <span>PREMIUM</span>
+              <strong id="route-needed-gal">0.71 gal</strong>
+            </div>
+            <div class="route-res-box highlight">
+              <span>PRESUPUESTO</span>
+              <strong id="route-est-cost">S/ 12.00</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-VISTA 4C: CHECKLIST PRE-VIAJE -->
+      <div id="sub-route-check" class="route-panel hidden">
+        <div class="route-calc-card">
+          <div class="route-header">
+            <span class="section-title-sleek">INSPECCIÓN PRE-VIAJE (PASO A PASO)</span>
+            <button id="btn-reset-checklist" class="btn-link-mini">Reiniciar</button>
+          </div>
+          <p class="route-desc">Toca el icono <strong>ⓘ</strong> de cada punto para ver cómo revisarlo correctamente en tu N160:</p>
+
+          <div class="checklist-box" id="pre-ride-checklist">
+            <div class="check-row-card">
+              <label class="check-item-left">
+                <input type="checkbox" class="ride-chk">
+                <span class="chk-box"></span>
+                <div class="chk-info">
+                  <strong>Presión de Llantas en Frío</strong>
+                  <small>Del: 25 PSI • Tras: 28 PSI (32 PSI con copiloto)</small>
+                </div>
+              </label>
+              <button type="button" class="btn-info-dot" data-info-key="chk_tires">ⓘ</button>
+            </div>
+
+            <div class="check-row-card">
+              <label class="check-item-left">
+                <input type="checkbox" class="ride-chk">
+                <span class="chk-box"></span>
+                <div class="chk-info">
+                  <strong>Tensión y Lubricación de Cadena</strong>
+                  <small>Juego libre de 20-30 mm y O-Rings lubricados</small>
+                </div>
+              </label>
+              <button type="button" class="btn-info-dot" data-info-key="chk_chain">ⓘ</button>
+            </div>
+
+            <div class="check-row-card">
+              <label class="check-item-left">
+                <input type="checkbox" class="ride-chk">
+                <span class="chk-box"></span>
+                <div class="chk-info">
+                  <strong>Frenos ABS (Del. 300mm / Tras. 230mm)</strong>
+                  <small>Tacto firme en manigueta/pedal y nivel de líquido DOT 4</small>
+                </div>
+              </label>
+              <button type="button" class="btn-info-dot" data-info-key="chk_brakes">ⓘ</button>
+            </div>
+
+            <div class="check-row-card">
+              <label class="check-item-left">
+                <input type="checkbox" class="ride-chk">
+                <span class="chk-box"></span>
+                <div class="chk-info">
+                  <strong>Nivel de Aceite 20W-50 en Mirilla</strong>
+                  <small>Moto vertical en caballete central, entre MIN y MAX</small>
+                </div>
+              </label>
+              <button type="button" class="btn-info-dot" data-info-key="chk_oil">ⓘ</button>
+            </div>
+
+            <div class="check-row-card">
+              <label class="check-item-left">
+                <input type="checkbox" class="ride-chk">
+                <span class="chk-box"></span>
+                <div class="chk-info">
+                  <strong>Suspensión 37mm, Faro Bi-LED y Sensor MAP</strong>
+                  <small>Retenes secos, luces activas y reseteo en altura</small>
+                </div>
+              </label>
+              <button type="button" class="btn-info-dot" data-info-key="chk_lights">ⓘ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PESTAÑA 5: FICHA TÉCNICA + OEM + TORQUES ================= -->
+    <div id="tab-specs" class="tab-content hidden">
+      <div class="subtabs-bar-3">
+        <button class="subtab-spec-btn active" data-specsub="sub-spec-quick">Grifo / Taller</button>
+        <button class="subtab-spec-btn" data-specsub="sub-spec-oem">Repuestos y Torques</button>
+        <button class="subtab-spec-btn" data-specsub="sub-spec-full">Ficha Motor</button>
+      </div>
+
+      <div id="sub-spec-quick" class="spec-panel">
+        <div class="quick-cards-grid">
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">LLANTA DELANTERA</span>
+              <button type="button" class="btn-info-dot" data-info-key="chk_tires">ⓘ</button>
+            </div>
+            <strong class="qc-value">25 <small>PSI</small></strong>
+            <span class="qc-sub">Medida: 100/80-17</span>
+          </div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">LLANTA TRASERA</span>
+              <button type="button" class="btn-info-dot" data-info-key="chk_tires">ⓘ</button>
+            </div>
+            <strong class="qc-value">28 / 32 <small>PSI</small></strong>
+            <span class="qc-sub">Solo: 28 • Copiloto: 32</span>
+          </div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">ACEITE MOTOR</span>
+              <button type="button" class="btn-info-dot" data-info-key="spec_oil">ⓘ</button>
+            </div>
+            <strong class="qc-value">20W-50</strong>
+            <span class="qc-sub">API SL / JASO MA2</span>
+          </div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">CANTIDAD ACEITE</span>
+              <button type="button" class="btn-info-dot" data-info-key="spec_oil">ⓘ</button>
+            </div>
+            <strong class="qc-value">1.0 <small>Litro</small></strong>
+            <span class="qc-sub">Desarme total: 1.2 L</span>
+          </div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">TANQUE GASOLINA</span>
+              <button type="button" class="btn-info-dot" data-info-key="spec_fuel">ⓘ</button>
+            </div>
+            <strong class="qc-value">14 <small>Litros</small></strong>
+            <span class="qc-sub">3.70 Galones (Solo Premium)</span>
+          </div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">HOLGURA CADENA</span>
+              <button type="button" class="btn-info-dot" data-info-key="chk_chain">ⓘ</button>
+            </div>
+            <strong class="qc-value">20-30 <small>mm</small></strong>
+            <span class="qc-sub">Lubricar cada 500 km</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="sub-spec-oem" class="spec-panel hidden">
+        <div class="specs-box" style="margin-bottom: 10px;">
+          <div class="oem-header-row">
+            <h3>🧩 Códigos de Repuestos Originales (OEM)</h3>
+            <small class="copy-hint">Toca un código para copiar</small>
+          </div>
+          <div class="oem-list">
+            <div class="oem-item" data-copy-code="JG571014">
+              <div>
+                <strong>Filtro de Aceite Original Bajaj</strong>
+                <small>Elemento filtrante de papel (Cambiar en cada servicio)</small>
+              </div>
+              <span class="oem-code-pill">JG571014 📋</span>
+            </div>
+            <div class="oem-item" data-copy-code="JF581009">
+              <div>
+                <strong>Elemento Filtro de Aire N160</strong>
+                <small>Filtro viscoso original para caja de admisión FI</small>
+              </div>
+              <span class="oem-code-pill">JF581009 📋</span>
+            </div>
+            <div class="oem-item" data-copy-code="CHAMPION RG6HCC">
+              <div>
+                <strong>Bujías DTS-i (x2 unidades)</strong>
+                <small>Calibración de electrodo: 0.7 a 0.8 mm</small>
+              </div>
+              <span class="oem-code-pill">RG6HCC 📋</span>
+            </div>
+            <div class="oem-item" data-copy-code="JR131831">
+              <div>
+                <strong>Pastillas de Freno Delantero (Disco 300mm ABS)</strong>
+                <small>Compuesto original para cáliper delantero</small>
+              </div>
+              <span class="oem-code-pill">JR131831 📋</span>
+            </div>
+            <div class="oem-item" data-copy-code="428HO-132L">
+              <div>
+                <strong>Kit de Arrastre / Cadena O-Ring</strong>
+                <small>Piñón 14T • Catalina 45T • Cadena 428 con O-Ring</small>
+              </div>
+              <span class="oem-code-pill">14T / 45T 📋</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="specs-box">
+          <div class="title-with-info" style="margin-bottom: 6px;">
+            <h3 style="margin:0; border:none; padding:0;">🔧 Torques de Apriete y Holgura de Válvulas</h3>
+            <button type="button" class="btn-info-dot" data-info-key="spec_torque">ⓘ</button>
+          </div>
+          <div class="spec-row"><span>Perno Drenaje de Aceite (Cárter)</span><strong class="neon-txt">22 - 25 Nm</strong></div>
+          <div class="spec-row"><span>Tuerca Eje Rueda Trasera</span><strong>88 - 98 Nm</strong></div>
+          <div class="spec-row"><span>Tuerca Eje Rueda Delantera</span><strong>65 - 75 Nm</strong></div>
+          <div class="spec-row"><span>Bujías de Encendido DTS-i</span><strong>13 - 15 Nm</strong></div>
+          <div class="spec-row"><span>Holgura Válvula de Admisión (En frío)</span><strong>0.05 mm</strong></div>
+          <div class="spec-row"><span>Holgura Válvula de Escape (En frío)</span><strong>0.08 - 0.10 mm</strong></div>
+        </div>
+      </div>
+
+      <div id="sub-spec-full" class="spec-panel hidden">
+        <div class="specs-box">
+          <h3>Bajaj Pulsar N160 FI • Ficha Técnica</h3>
+          <div class="spec-row"><span>Motor</span><strong>4T, Monocilíndrico, SOHC, 2V</strong></div>
+          <div class="spec-row"><span>Cilindrada</span><strong>164.82 cc (Inyección FI)</strong></div>
+          <div class="spec-row"><span>Encendido</span><strong>Doble Bujía DTS-i</strong></div>
+          <div class="spec-row"><span>Potencia / Torque</span><strong>15.78 HP @ 8750 / 14.65 Nm @ 6750</strong></div>
+          <div class="spec-row"><span>Refrigeración</span><strong>Aire + Radiador de Aceite</strong></div>
+          <div class="spec-row"><span>Frenos</span><strong>Del. 300mm ABS / Tras. 230mm</strong></div>
+          <div class="spec-row"><span>Llantas Tubeless</span><strong>Del. 100/80-17 • Tras. 130/70-17</strong></div>
+          <div class="spec-row"><span>Peso / Faro</span><strong>154 kg / Proyector Bi-LED DRL</strong></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ================= MODALES DEL SISTEMA ================= -->
+  <div id="modal-km" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-pulsar-title">Actualizar Odómetro</h3>
+        <button id="btn-close-km-x" class="btn-close-x">✕</button>
+      </div>
+      <p>Ingresa el kilometraje actual que marca tu Pulsar N160:</p>
+      <input type="number" id="input-new-km" placeholder="Ej: 520" min="0">
+      <div class="modal-actions">
+        <button id="btn-cancel-km" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-km" class="btn-neon">Guardar Km</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL META PRESUPUESTO MENSUAL -->
+  <div id="modal-budget" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-pulsar-title">Tope Mensual de Grifo</h3>
+        <button id="btn-close-budget-x" class="btn-close-x">✕</button>
+      </div>
+      <p>Define cuánto deseas gastar como máximo al mes en combustible (S/):</p>
+      <input type="number" id="input-new-budget" placeholder="Ej: 150" min="10" step="10">
+      <div class="modal-actions">
+        <button id="btn-cancel-budget" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-budget" class="btn-neon">Guardar Tope</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRAR / EDITAR LAVADO -->
+  <div id="modal-spa" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag">CUIDADO & PROTECCIÓN ANTICORROSIVA</span>
+          <h3 class="modal-pulsar-title" id="spa-modal-title">Registrar Lavado</h3>
+        </div>
+        <button id="btn-close-spa-x" class="btn-close-x">✕</button>
+      </div>
+
+      <label class="modal-label">MODALIDAD DE LAVADO:</label>
+      <div class="fuel-type-pills-3" id="spa-type-picker">
+        <button type="button" class="compound-pill selected" data-spatype="Carwash Básico" data-defaultcost="12">🚿 Carwash</button>
+        <button type="button" class="compound-pill" data-spatype="Detailing + Cera" data-defaultcost="25">✨ Detailing</button>
+        <button type="button" class="compound-pill" data-spatype="Lavado en Casa" data-defaultcost="0">🧽 En Casa</button>
+      </div>
+
+      <div class="form-row-3">
+        <div>
+          <label class="modal-label">Odómetro (Km):</label>
+          <input type="number" id="spa-km" placeholder="500" min="0">
+        </div>
+        <div>
+          <label class="modal-label">Costo (S/):</label>
+          <input type="number" id="spa-cost" placeholder="12.00" step="0.5" min="0">
+        </div>
+        <div>
+          <label class="modal-label">Fecha:</label>
+          <input type="date" id="spa-date">
+        </div>
+      </div>
+
+      <label class="modal-label">Notas / Insumos aplicados (Opcional):</label>
+      <input type="text" id="spa-notes" placeholder="Ej: Shampoo pH neutro + Cera + Limpieza retenes">
+
+      <div class="modal-actions">
+        <button id="btn-cancel-spa" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-spa" class="btn-neon">Guardar Lavado</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRAR / EDITAR MANTENIMIENTO (CON DESGLOSE REPUESTOS + MANO DE OBRA) -->
+  <div id="modal-log" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <h3 class="modal-pulsar-title" id="log-modal-title">Registrar Mantenimiento</h3>
+        <button id="btn-close-log-x" class="btn-close-x">✕</button>
+      </div>
+      <label class="modal-label">SELECCIONA EL SERVICIO REALIZADO:</label>
+      <div class="custom-service-grid" id="custom-service-picker">
+        <div class="service-option selected" data-value="breakin_500" data-title="1er Servicio (500 km - Aceite + Filtro)">
+          <span class="srv-dot"></span>
+          <div class="srv-text"><strong>1er Servicio (500 km)</strong><small>Aceite + Filtro original</small></div>
+        </div>
+        <div class="service-option" data-value="oil_change" data-title="Cambio de Aceite (20W-50) y Filtro">
+          <span class="srv-dot"></span>
+          <div class="srv-text"><strong>Aceite y Filtro</strong><small>SAE 20W-50 (1.0 L)</small></div>
+        </div>
+        <div class="service-option" data-value="chain_lube" data-title="Limpieza, Lubricación y Tensión de Cadena">
+          <span class="srv-dot"></span>
+          <div class="srv-text"><strong>Kit de Cadena</strong><small>Limpieza y tensión</small></div>
+        </div>
+        <div class="service-option" data-value="air_spark" data-title="Filtro de Aire y Bujías DTS-i">
+          <span class="srv-dot"></span>
+          <div class="srv-text"><strong>Filtro Aire y Bujías</strong><small>Inspección / calibración</small></div>
+        </div>
+        <div class="service-option" data-value="brakes_abs" data-title="Pastillas y Líquido de Frenos ABS">
+          <span class="srv-dot"></span>
+          <div class="srv-text"><strong>Frenos ABS</strong><small>Pastillas y líquido DOT 4</small></div>
+        </div>
+        <div class="service-option" data-value="valve_calib" data-title="Calibración de Válvulas y Cambio Filtro Aire">
+          <span class="srv-dot"></span>
+          <div class="srv-text"><strong>Válvulas y Filtro 10k</strong><small>Calibración 0.05 / 0.08mm</small></div>
+        </div>
+        <div class="service-option" data-value="fork_oil" data-title="Mantenimiento Barras Telescópicas (37 mm)">
+          <span class="srv-dot"></span>
+          <div class="srv-text"><strong>Barras 37 mm (15k)</strong><small>Líquido hidráulico y retenes</small></div>
+        </div>
+        <div class="service-option" data-value="other" data-title="Otro Mantenimiento / Taller">
+          <span class="srv-dot"></span>
+          <div class="srv-text"><strong>Otro Servicio</strong><small>Ajuste general</small></div>
+        </div>
+      </div>
+
+      <div class="form-row-3">
+        <div><label class="modal-label">Repuestos (S/):</label><input type="number" id="log-parts-cost" placeholder="60.00" step="0.5" min="0"></div>
+        <div><label class="modal-label">Mano Obra (S/):</label><input type="number" id="log-labor-cost" placeholder="25.00" step="0.5" min="0"></div>
+        <div><label class="modal-label">Total Hoy (S/):</label><input type="number" id="log-cost" placeholder="85.00" step="0.5" readonly style="opacity:0.85;"></div>
+      </div>
+
+      <div class="form-row-2">
+        <div><label class="modal-label">Kilometraje:</label><input type="number" id="log-km" placeholder="500"></div>
+        <div><label class="modal-label">Fecha:</label><input type="date" id="log-date"></div>
+      </div>
+
+      <div id="maint-memory-banner" class="memory-pill-bar">
+        <span>💡 Sin registro previo de este servicio en tu historial.</span>
+      </div>
+
+      <label class="modal-label">Taller / Insumos utilizados (Opcional):</label>
+      <input type="text" id="log-notes" placeholder="Ej: Hecho en casa / Bajaj Crosland - Aceite 20W50 + Filtro JG571014">
+
+      <div class="modal-actions">
+        <button id="btn-cancel-log" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-log" class="btn-neon">Guardar Servicio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRAR / EDITAR COMBUSTIBLE (EXCLUSIVO PREMIUM) -->
+  <div id="modal-fuel" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag">EXCLUSIVO GASOLINA PREMIUM (95 / 97 OCTANOS)</span>
+          <h3 class="modal-pulsar-title" id="fuel-modal-title">Nuevo Abastecimiento</h3>
+        </div>
+        <button id="btn-close-fuel-x" class="btn-close-x">✕</button>
+      </div>
+
+      <label class="modal-label">MODO DE CARGA EN EL GRIFO:</label>
+      <div class="fuel-type-pills" id="fuel-mode-picker" style="margin-bottom: 6px;">
+        <button type="button" class="mode-pill selected" data-full="true">⛽ Tanque Lleno (1er Corte)</button>
+        <button type="button" class="mode-pill" data-full="false">⚡ Carga Parcial</button>
+      </div>
+
+      <div class="form-row-3">
+        <div><label class="modal-label">Odómetro (Km):</label><input type="number" id="fuel-km" placeholder="350"></div>
+        <div><label class="modal-label">Total Pagado (S/):</label><input type="number" id="fuel-cost" placeholder="40.00" step="0.1"></div>
+        <div><label class="modal-label">S/ x Galón:</label><input type="number" id="fuel-price-gal" placeholder="16.50" step="0.01"></div>
+      </div>
+
+      <div id="fuel-memory-banner" class="memory-pill-bar">
+        <span>⛽ Ingresa el precio por galón Premium para compararlo con tu última tanqueada.</span>
+      </div>
+
+      <div class="form-row-3">
+        <div><label class="modal-label">Galones:</label><input type="number" id="fuel-gallons" placeholder="0.00" step="0.01"></div>
+        <div><label class="modal-label">Fecha:</label><input type="date" id="fuel-date"></div>
+        <div><label class="modal-label">Estación / Nota:</label><input type="text" id="fuel-notes" placeholder="Ej: Primax"></div>
+      </div>
+
+      <div id="live-fuel-preview" class="live-calc-sleek">
+        <span>Ingresa el kilometraje actual y el monto para calcular el rendimiento del tramo.</span>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-cancel-fuel" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-fuel" class="btn-neon">Guardar Carga</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL REGISTRAR / EDITAR OTRO GASTO (PEAJES, COCHERA, PARCHES, TRÁMITES) -->
+  <div id="modal-expense" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag">GASTOS ADMINISTRATIVOS & RUTA</span>
+          <h3 class="modal-pulsar-title" id="expense-modal-title">Registrar Gasto</h3>
+        </div>
+        <button id="btn-close-expense-x" class="btn-close-x">✕</button>
+      </div>
+
+      <label class="modal-label">CATEGORÍA DEL GASTO:</label>
+      <div class="fuel-type-pills-3" id="expense-cat-picker">
+        <button type="button" class="compound-pill selected" data-expcat="Cochera / Peaje">🅿️ Cochera/Peaje</button>
+        <button type="button" class="compound-pill" data-expcat="Parche / Auxilio">🛞 Parche/Ruta</button>
+        <button type="button" class="compound-pill" data-expcat="Trámite / Legal">🪪 Trámite/Legal</button>
+      </div>
+
+      <div class="form-row-2">
+        <div><label class="modal-label">Concepto / Descripción:</label><input type="text" id="expense-title" placeholder="Ej: Parche tubeless / Cochera centro"></div>
+        <div><label class="modal-label">Monto Pagado (S/):</label><input type="number" id="expense-cost" placeholder="10.00" step="0.5" min="0"></div>
+      </div>
+
+      <div class="form-row-2">
+        <div><label class="modal-label">Kilometraje (Km):</label><input type="number" id="expense-km" placeholder="500"></div>
+        <div><label class="modal-label">Fecha:</label><input type="date" id="expense-date"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-cancel-expense" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-expense" class="btn-neon">Guardar Gasto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AJUSTES, PORTADA Y COPIA DE SEGURIDAD -->
+  <div id="modal-backup" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-pulsar-title">Ajustes y Respaldo</h3>
+        <button id="btn-close-backup-x" class="btn-close-x">✕</button>
+      </div>
+
+      <label class="modal-label">☁️ NUBE FIREBASE (SINCRONIZACIÓN EN LÍNEA):</label>
+      <div id="cloud-status-banner" class="memory-pill-bar" style="margin-bottom: 8px;">
+        <span>☁️ Configura tus llaves en <strong>firebase.js</strong> para activar el respaldo automático en la nube.</span>
+      </div>
+      <div class="backup-actions" style="margin-bottom: 12px;">
+        <button id="btn-cloud-push" class="btn-neon">☁️ Subir a Nube</button>
+        <button id="btn-cloud-pull" class="btn-secondary">🔄 Bajar de Nube</button>
+      </div>
+
+      <label class="modal-label">📁 ARCHIVO LOCAL (OFFLINE JSON):</label>
+      <div class="backup-actions" style="margin-bottom: 8px;">
+        <button id="btn-export" class="btn-secondary">⬇️ Exportar JSON</button>
+        <button id="btn-import-trigger" class="btn-secondary">⬆️ Importar JSON</button>
+        <input type="file" id="import-input" accept=".json" class="hidden">
+      </div>
+      <button id="btn-reset-onboarding" class="btn-secondary" style="width: 100%;">📷 Cambiar Foto de Portada / Km Inicial</button>
+    </div>
+  </div>
+  
+
+  <!-- MODAL CONFIRMACIÓN PERSONALIZADA -->
+  <div id="modal-confirm" class="modal-backdrop hidden" style="z-index: 1100;">
+    <div class="modal-card confirm-box">
+      <div class="confirm-icon-wrap" id="confirm-icon-badge">⚡</div>
+      <h3 class="modal-pulsar-title" id="confirm-title">Confirmar Acción</h3>
+      <p id="confirm-message">¿Estás seguro de realizar este cambio?</p>
+      <div class="modal-actions confirm-actions">
+        <button id="btn-confirm-cancel" class="btn-secondary">Cancelar</button>
+        <button id="btn-confirm-ok" class="btn-neon">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FICHA EXPLICATIVA CONTEXTUAL (ⓘ) -->
+  <div id="modal-info-guide" class="modal-backdrop hidden" style="z-index: 1050;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag" id="info-guide-category">GUÍA TÉCNICA N160</span>
+          <h3 class="modal-pulsar-title" id="info-guide-title">Detalle Técnico</h3>
+        </div>
+        <button id="btn-close-info-x" class="btn-close-x">✕</button>
+      </div>
+      <div class="info-guide-body">
+        <div class="info-section-box">
+          <span class="info-sub-label">¿CÓMO SE HACE / CÓMO SE MIDE?</span>
+          <p id="info-guide-how"></p>
+        </div>
+        <div class="info-section-box why">
+          <span class="info-sub-label">¿A QUÉ SE DEBE Y POR QUÉ ES IMPORTANTE?</span>
+          <p id="info-guide-why"></p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-close-info-ok" class="btn-neon">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL GUANTERA DIGITAL (SOAT + COSTO + BREVETE) -->
+  <div id="modal-docs" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag">BÓVEDA PERSONAL</span>
+          <h3 class="modal-pulsar-title">Guantera Digital N160</h3>
+        </div>
+        <button id="btn-close-docs-x" class="btn-close-x">✕</button>
+      </div>
+      <p>La app evaluará la vigencia tanto de tu SOAT como de tu Brevete y sumará el costo del SOAT a tu contabilidad:</p>
+      <div class="form-row-3">
+        <div><label class="modal-label">Placa:</label><input type="text" id="doc-plate" placeholder="1234-AB" style="text-transform: uppercase;"></div>
+        <div><label class="modal-label">Aseguradora:</label><input type="text" id="doc-insurance" placeholder="Interseguro"></div>
+        <div><label class="modal-label">Costo SOAT (S/):</label><input type="number" id="doc-soat-cost" placeholder="0.00" step="1" min="0"></div>
+      </div>
+      <div class="form-row-2">
+        <div><label class="modal-label">Vencimiento SOAT:</label><input type="date" id="doc-soat-exp"></div>
+        <div><label class="modal-label">Vencimiento Brevete B-IIc:</label><input type="date" id="doc-license-exp"></div>
+      </div>
+      <label class="modal-label">Serie de Chasis (VIN) / Número de Motor (Opcional):</label>
+      <input type="text" id="doc-vin" placeholder="Para compras de repuestos o controles">
+      <div id="docs-status-summary" class="memory-pill-bar" style="margin-top: 10px;">
+        <span>🪪 Tus datos se guardan únicamente en la memoria privada de tu teléfono.</span>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-cancel-docs" class="btn-secondary">Cerrar</button>
+        <button id="btn-save-docs" class="btn-neon">Guardar Documentos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL LLANTA -->
+  <div id="modal-tire" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag" id="tire-modal-pos-tag">POSICIÓN DE NEUMÁTICO</span>
+          <h3 class="modal-pulsar-title" id="tire-modal-title">Configurar Llanta</h3>
+        </div>
+        <button id="btn-close-tire-x" class="btn-close-x">✕</button>
+      </div>
+
+      <label class="modal-label">ACCIÓN A REALIZAR:</label>
+      <div class="fuel-type-pills" id="tire-action-picker" style="margin-bottom: 6px;">
+        <button type="button" class="mode-pill selected" data-tireaction="edit">✏️ Editar Llanta Actual</button>
+        <button type="button" class="mode-pill" data-tireaction="replace">🔄 Montar Llanta Nueva</button>
+      </div>
+
+      <div class="form-row-2">
+        <div><label class="modal-label">Marca y Modelo:</label><input type="text" id="tire-brand" placeholder="Ej: Timsun TS-659A / Pirelli"></div>
+        <div><label class="modal-label">Medida Instalada:</label><input type="text" id="tire-size" placeholder="Ej: 100/80-17 TL"></div>
+      </div>
+      <label class="modal-label">COMPUESTO / USO (DEFINE LA VIDA ÚTIL SUGERIDA):</label>
+      <div class="fuel-type-pills-3" id="tire-compound-picker">
+        <button type="button" class="compound-pill selected" data-compound="Touring / Calle" data-life="18000">🛣️ Calle (18k)</button>
+        <button type="button" class="compound-pill" data-compound="Sport / Blando" data-life="13000">⚡ Sport (13k)</button>
+        <button type="button" class="compound-pill" data-compound="Mixta / Dual" data-life="16000">⛰️ Mixta (16k)</button>
+      </div>
+      <div class="form-row-3">
+        <div><label class="modal-label">Km Instalación:</label><input type="number" id="tire-install-km" placeholder="0"></div>
+        <div><label class="modal-label">Vida Útil (Km):</label><input type="number" id="tire-life-km" placeholder="18000"></div>
+        <div><label class="modal-label">Costo (S/):</label><input type="number" id="tire-cost" placeholder="220.00" step="1"></div>
+      </div>
+      <div class="form-row-2">
+        <div>
+          <div class="title-with-info" style="margin: 6px 0 3px;">
+            <label class="modal-label" style="margin:0;">Código DOT (4 dígitos):</label>
+            <button type="button" class="btn-info-dot" data-info-key="tire_dot_guide" style="width:17px;height:17px;font-size:9px;">ⓘ</button>
+          </div>
+          <input type="text" id="tire-dot" maxlength="4" placeholder="Ej: 1826 (Sem 18, 2026)">
+        </div>
+        <div><label class="modal-label">Fecha de Montaje:</label><input type="date" id="tire-date"></div>
+      </div>
+      <div id="tire-memory-banner" class="memory-pill-bar">
+        <span>🛞 Usa "Editar" para corregir datos o "Montar Nueva" para archivar la anterior en el historial.</span>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-cancel-tire" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-tire" class="btn-neon">Guardar Neumático</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ACCESORIO / MOD -->
+  <div id="modal-mod" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag">EQUIPAMIENTO & MODS</span>
+          <h3 class="modal-pulsar-title" id="mod-modal-title">Agregar Accesorio</h3>
+        </div>
+        <button id="btn-close-mod-x" class="btn-close-x">✕</button>
+      </div>
+      <label class="modal-label">CATEGORÍA DEL ACCESORIO:</label>
+      <div class="custom-service-grid" id="mod-category-picker">
+        <div class="service-option selected" data-modcat="protection" data-elec="false">
+          <span class="srv-dot"></span><div class="srv-text"><strong>Protección / Chasis</strong><small>Sliders, defensas, protector</small></div>
+        </div>
+        <div class="service-option" data-modcat="security" data-elec="true">
+          <span class="srv-dot"></span><div class="srv-text"><strong>Seguridad / Alarma</strong><small>Alarma, GPS, trabadisco</small></div>
+        </div>
+        <div class="service-option" data-modcat="electric" data-elec="true">
+          <span class="srv-dot"></span><div class="srv-text"><strong>Eléctrico / Cockpit</strong><small>Soporte cel, exploradoras</small></div>
+        </div>
+        <div class="service-option" data-modcat="gear" data-elec="false">
+          <span class="srv-dot"></span><div class="srv-text"><strong>Casco / Piloto</strong><small>Casco certificado, guantes</small></div>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div><label class="modal-label">Nombre del Accesorio:</label><input type="text" id="mod-name" placeholder="Ej: Sliders de motor con tope"></div>
+        <div><label class="modal-label">Marca / Modelo / Código:</label><input type="text" id="mod-brand" placeholder="Ej: Bison / Positron / LS2"></div>
+      </div>
+      <div class="form-row-3">
+        <div><label class="modal-label">Costo (S/):</label><input type="number" id="mod-cost" placeholder="180.00" step="1"></div>
+        <div><label class="modal-label">Km Instalación:</label><input type="number" id="mod-km" placeholder="0"></div>
+        <div><label class="modal-label">Fecha Compra:</label><input type="date" id="mod-date"></div>
+      </div>
+      <label class="modal-label">Notas / Garantía / Taller donde se instaló:</label>
+      <input type="text" id="mod-notes" placeholder="Ej: Conectado con relé independiente sin cortar ramal original">
+      <div id="mod-smart-tip" class="memory-pill-bar">
+        <span>🛡️ Tip: En sliders de motor para la N160 verifica que usen pernos grado 8.8 o 10.9.</span>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-cancel-mod" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-mod" class="btn-neon">Guardar Accesorio</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "id": "./",
+  "name": "Mi Moto - Pulsar N160 FI",
+  "short_name": "MiMoto",
+  "description": "Telemetría de consumo Premium, control financiero integral y bitácora mecánica para Bajaj Pulsar N160 FI.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#060A0F",
+  "theme_color": "#060A0F",
+  "lang": "es-PE",
+  "icons": [
+    {
+      "src": "./icono.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icono.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
