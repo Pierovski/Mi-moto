@@ -1232,14 +1232,18 @@ function setupEventListeners() {
   // Modal Ajustes y Copia de Seguridad (con validación profunda de estructura JSON)
     // Eventos de Nube Firebase dentro del Modal Ajustes
     // Selector de Color de la Moto (en Bienvenida y en Ajustes)
+    // Selector de Color de la Moto (en Bienvenida y en Ajustes)
   document.querySelectorAll('.theme-pill').forEach((pill) => {
-    pill.addEventListener('click', () => {
+    pill.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const chosen = pill.getAttribute('data-theme') || 'blue';
       applyBikeTheme(chosen);
       saveState();
-      showToast(`🎨 Tema aplicado: ${pill.querySelector('span:last-child').textContent}`);
+      showToast(`🎨 Tema aplicado`);
     });
   });
+  
 
   // Eventos de Autenticación Multiusuario y Nube Firebase
   const cloudBanner = document.getElementById('cloud-status-banner');
