@@ -1,4 +1,4 @@
-import { isFirebaseConfigured, pushStateToCloud, pullStateFromCloud } from './firebase.js';
+import{isFirebaseConfigured,subscribeToAuthChanges,getCurrentUser,loginPilot,registerPilot,logoutPilot,pushStateToCloud,pullStateFromCloud} from './firebase.js';
 import { DEFAULT_TIRES } from './constants.js';
 import {
   appState,
@@ -54,6 +54,23 @@ let selectedExpenseCat = 'Cochera / Peaje';
 let editingTirePos = 'front';
 let selectedTireAction = 'edit';
 let selectedTireCompound = 'Touring / Calle';
+
+function applyBikeTheme(themeName = 'blue') {
+  appState.colorTheme = themeName;
+  document.body.setAttribute('data-theme', themeName);
+  const editionMap = {
+    blue: 'CARIBBEAN BLUE EDITION',
+    red: 'RACING RED EDITION',
+    black: 'BROOKLYN BLACK EDITION',
+    grey: 'PEWTER GREY EDITION'
+  };
+  const badge = document.getElementById('onboarding-edition-badge');
+  if (badge) badge.textContent = editionMap[themeName] || editionMap.blue;
+
+  document.querySelectorAll('.theme-pill').forEach((btn) => {
+    btn.classList.toggle('selected', btn.getAttribute('data-theme') === themeName);
+  });
+}
 
 function showOnboardingScreen() {
   closeModalById('modal-backup');
@@ -1214,26 +1231,81 @@ function setupEventListeners() {
 
   // Modal Ajustes y Copia de Seguridad (con validación profunda de estructura JSON)
     // Eventos de Nube Firebase dentro del Modal Ajustes
-  const cloudBanner = document.getElementById('cloud-status-banner');
-  const updateCloudBannerUI = () => {
-    if (!cloudBanner) return;
-    if (isFirebaseConfigured()) {
-      cloudBanner.innerHTML = `<span>🟢 <strong>Firebase Conectado:</strong> Tus cambios se respaldan automáticamente cuando tienes internet.</span>`;
-    } else {
-      cloudBanner.innerHTML = `<span>☁️ Pega tus llaves en <strong>firebase.js</strong> para activar la sincronización en línea.</span>`;
-    }
-  };
-  updateCloudBannerUI();
+    // Selector de Color de la Moto (en Bienvenida y en Ajustes)
+  document.querySelectorAll('.theme-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      const chosen = pill.getAttribute('data-theme') || 'blue';
+      applyBikeTheme(chosen);
+      saveState();
+      showToast(`🎨 Tema aplicado: ${pill.querySelector('span:last-child').textContent}`);
+    });
+  });
 
-  document.getElementById('btn-cloud-push').addEventListener('click', async () => {
-    if (!isFirebaseConfigured()) {
-      showToast('⚠️ Primero pega tus credenciales en firebase.js');
+  // Eventos de Autenticación Multiusuario y Nube Firebase
+  const cloudBanner = document.getElementById('cloud-status-banner');
+  const loggedOutBox = document.getElementById('auth-logged-out-box');
+  const loggedInBox = document.getElementById('auth-logged-in-box');
+
+  subscribeToAuthChanges((user) => {
+    if (!cloudBanner) return;
+    if (user) {
+      cloudBanner.innerHTML = `<span>🟢 <strong>Piloto activo:</strong> ${escapeHTML(user.email)}<br><small>Tus datos se guardan solo en tu bóveda privada.</small></span>`;
+      loggedOutBox.classList.add('hidden');
+      loggedInBox.classList.remove('hidden');
+    } else {
+      cloudBanner.innerHTML = `<span>🔒 Inicia sesión o crea tu cuenta para respaldar tu moto en tu bóveda privada.</span>`;
+      loggedOutBox.classList.remove('hidden');
+      loggedInBox.classList.add('hidden');
+    }
+  });
+
+  document.getElementById('btn-auth-login').addEventListener('click', async () => {
+    const email = document.getElementById('auth-email-input').value.trim();
+    const pass = document.getElementById('auth-pass-input').value;
+    if (!email || pass.length < 6) {
+      showToast('⚠️ Ingresa tu correo y contraseña (mín. 6 caracteres)');
       return;
     }
     try {
-      showToast('☁️ Subiendo datos a Firebase...');
+      showToast('🔑 Verificando cuenta...');
+      await loginPilot(email, pass);
+      showToast('✅ Sesión iniciada');
+    } catch (err) {
+      showToast('⚠️ Correo o contraseña incorrectos');
+    }
+  });
+
+  document.getElementById('btn-auth-register').addEventListener('click', async () => {
+    const email = document.getElementById('auth-email-input').value.trim();
+    const pass = document.getElementById('auth-pass-input').value;
+    if (!email || pass.length < 6) {
+      showToast('⚠️ Usa un correo válido y contraseña de mínimo 6 caracteres');
+      return;
+    }
+    try {
+      showToast('✨ Creando tu bóveda privada...');
+      await registerPilot(email, pass);
       await pushStateToCloud(appState);
-      showToast('✅ Sincronizado en Firebase');
+      showToast('✅ Cuenta creada y moto respaldada');
+    } catch (err) {
+      showToast('⚠️ Ese correo ya está registrado o no es válido');
+    }
+  });
+
+  document.getElementById('btn-auth-logout').addEventListener('click', async () => {
+    await logoutPilot();
+    showToast('🚪 Sesión cerrada');
+  });
+
+  document.getElementById('btn-cloud-push').addEventListener('click', async () => {
+    if (!getCurrentUser()) {
+      showToast('⚠️ Inicia sesión primero');
+      return;
+    }
+    try {
+      showToast('☁️ Subiendo a tu bóveda privada...');
+      await pushStateToCloud(appState);
+      showToast('✅ Sincronizado en tu nube');
     } catch (err) {
       showToast('⚠️ Error al subir a Firebase');
       console.error(err);
@@ -1241,28 +1313,29 @@ function setupEventListeners() {
   });
 
   document.getElementById('btn-cloud-pull').addEventListener('click', async () => {
-    if (!isFirebaseConfigured()) {
-      showToast('⚠️ Primero pega tus credenciales en firebase.js');
+    if (!getCurrentUser()) {
+      showToast('⚠️ Inicia sesión primero');
       return;
     }
     try {
-      showToast('🔄 Consultando Firebase...');
+      showToast('🔄 Consultando tu bóveda...');
       const cloudData = await pullStateFromCloud();
       if (!cloudData || !isValidBackupJson(cloudData)) {
-        showToast('⚠️ No hay respaldo previo en la nube');
+        showToast('⚠️ Aún no tienes respaldo guardado en esta cuenta');
         return;
       }
       closeBackup();
       openCustomConfirm({
-        title: 'Restaurar desde Firebase',
-        message: `Se encontró un respaldo en la nube con ${Number(cloudData.currentKm).toLocaleString('es-PE')} km. ¿Deseas cargar estos datos en tu teléfono?`,
+        title: 'Restaurar Mi Moto',
+        message: `Se encontró tu respaldo privado con ${Number(cloudData.currentKm).toLocaleString('es-PE')} km. ¿Deseas cargarlo en este teléfono?`,
         confirmText: 'Sí, Restaurar',
         isDanger: false,
         icon: '☁️',
         onConfirm: () => {
           replaceFullState(cloudData);
+          applyBikeTheme(appState.colorTheme || 'blue');
           renderAllMain();
-          showToast('✅ Datos restaurados desde Firebase');
+          showToast('✅ Datos restaurados de tu cuenta');
         }
       });
     } catch (err) {
@@ -1300,6 +1373,7 @@ function setupEventListeners() {
           return;
         }
         replaceFullState(imported);
+        applyBikeTheme(appState.colorTheme || 'blue');
         renderAllMain();
         closeBackup();
         showToast('Copia de seguridad restaurada');
@@ -1314,6 +1388,7 @@ function setupEventListeners() {
 
 function initApp() {
   loadState();
+  applyBikeTheme(appState.colorTheme || 'blue');
   if (appState.onboarded) {
     showMainScreen();
   } else {
@@ -1321,9 +1396,18 @@ function initApp() {
   }
   setupEventListeners();
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      reg.update(); // Verifica en GitHub si hay cambios cada vez que abren la app
+    }).catch(() => {});
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   }
-}
 
 document.addEventListener('DOMContentLoaded', initApp);

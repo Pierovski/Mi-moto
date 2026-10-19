@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-moto-n160-cache-v7';
+const CACHE_NAME = 'mi-moto-n160-cache-v9';
 
 const CORE_ASSETS = [
   './',
@@ -18,7 +18,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
   );
-  self.skipWaiting();
+  self.skipWaiting(); // Fuerza al nuevo Service Worker a activarse al instante
 });
 
 self.addEventListener('activate', (event) => {
@@ -33,34 +33,30 @@ self.addEventListener('activate', (event) => {
       )
     )
   );
-  self.clients.claim();
+  self.clients.claim(); // Toma control inmediato de todos los celulares abiertos
 });
 
+// Estrategia Network-First: Siempre trae el último código de GitHub si hay internet; si es offline, usa caché
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
-  // Nunca cachear llamadas dinámicas a la API de Firebase/Firestore
-  if (event.request.url.includes('firestore.googleapis.com') || event.request.url.includes('firebase')) return;
+  if (event.request.url.includes('firestore.googleapis.com') || event.request.url.includes('firebase') || event.request.url.includes('identitytoolkit')) return;
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const networkFetch = fetch(event.request)
-        .then((networkResponse) => {
-          if (
-            networkResponse &&
-            networkResponse.status === 200 &&
-            (networkResponse.type === 'basic' || networkResponse.type === 'cors')
-          ) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || networkFetch;
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          (networkResponse.type === 'basic' || networkResponse.type === 'cors')
+        ) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

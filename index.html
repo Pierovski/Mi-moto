@@ -39,17 +39,36 @@
         <span class="n160-fi-sub">N160 FI • DUAL CHANNEL ABS</span>
       </div>
 
-      <div class="selector-section">
-        <label class="section-label">IDENTIFICACIÓN DE UNIDAD</label>
+            <div class="selector-section">
+        <label class="section-label">IDENTIFICACIÓN Y COLOR DE TU UNIDAD</label>
         <div class="bike-select-card selected" id="select-n160">
           <div class="neon-slash-accent"></div>
           <div class="bike-card-header">
             <div>
-              <span class="badge-fi">CARIBBEAN BLUE EDITION</span>
+              <span class="badge-fi" id="onboarding-edition-badge">CARIBBEAN BLUE EDITION</span>
               <h2 class="pulsar-italic-title">pulsar <span class="n160-accent">N160 FI</span></h2>
               <p>164.82 cc • SOHC 2V • Inyección Electrónica</p>
             </div>
             <div class="check-circle">✓</div>
+          </div>
+
+          <div class="color-theme-grid" id="onboarding-theme-picker">
+            <button type="button" class="theme-pill selected" data-theme="blue" data-edition="CARIBBEAN BLUE EDITION">
+              <span class="swatch-circle" style="background: #1E88A8;"></span>
+              <span>Azul</span>
+            </button>
+            <button type="button" class="theme-pill" data-theme="red" data-edition="RACING RED EDITION">
+              <span class="swatch-circle" style="background: #C81E2B;"></span>
+              <span>Roja</span>
+            </button>
+            <button type="button" class="theme-pill" data-theme="black" data-edition="BROOKLYN BLACK EDITION">
+              <span class="swatch-circle" style="background: #222934;"></span>
+              <span>Negra</span>
+            </button>
+            <button type="button" class="theme-pill" data-theme="grey" data-edition="PEWTER GREY EDITION">
+              <span class="swatch-circle" style="background: #64748B;"></span>
+              <span>Gris</span>
+            </button>
           </div>
 
           <div class="bike-photo-box" id="photo-trigger">
@@ -70,9 +89,9 @@
           ENCENDER TABLERO ⚡
         </button>
       </div>
-    </div>
+      </div>
   </section>
-
+  
   <!-- ================= PANTALLA 2: PANEL PRINCIPAL ================= -->
   <section id="main-screen" class="screen hidden">
     
@@ -947,21 +966,69 @@
     </div>
   </div>
 
-  <!-- MODAL AJUSTES, PORTADA Y COPIA DE SEGURIDAD -->
+    <!-- MODAL AJUSTES, CUENTA DE PILOTO Y COPIA DE SEGURIDAD -->
   <div id="modal-backup" class="modal-backdrop hidden">
-    <div class="modal-card">
+    <div class="modal-card modal-wide">
       <div class="modal-header">
-        <h3 class="modal-pulsar-title">Ajustes y Respaldo</h3>
+        <div>
+          <span class="info-modal-tag">CUENTA PRIVADA & PERSONALIZACIÓN</span>
+          <h3 class="modal-pulsar-title">Ajustes y Nube</h3>
+        </div>
         <button id="btn-close-backup-x" class="btn-close-x">✕</button>
       </div>
 
-      <label class="modal-label">☁️ NUBE FIREBASE (SINCRONIZACIÓN EN LÍNEA):</label>
-      <div id="cloud-status-banner" class="memory-pill-bar" style="margin-bottom: 8px;">
-        <span>☁️ Configura tus llaves en <strong>firebase.js</strong> para activar el respaldo automático en la nube.</span>
+      <label class="modal-label">🎨 COLOR DE TU MOTO (TEMA DE LA APP):</label>
+      <div class="color-theme-grid" id="settings-theme-picker">
+        <button type="button" class="theme-pill selected" data-theme="blue" data-edition="CARIBBEAN BLUE EDITION">
+          <span class="swatch-circle" style="background: #1E88A8;"></span>
+          <span>Azul</span>
+        </button>
+        <button type="button" class="theme-pill" data-theme="red" data-edition="RACING RED EDITION">
+          <span class="swatch-circle" style="background: #C81E2B;"></span>
+          <span>Roja</span>
+        </button>
+        <button type="button" class="theme-pill" data-theme="black" data-edition="BROOKLYN BLACK EDITION">
+          <span class="swatch-circle" style="background: #222934;"></span>
+          <span>Negra</span>
+        </button>
+        <button type="button" class="theme-pill" data-theme="grey" data-edition="PEWTER GREY EDITION">
+          <span class="swatch-circle" style="background: #64748B;"></span>
+          <span>Gris</span>
+        </button>
       </div>
-      <div class="backup-actions" style="margin-bottom: 12px;">
-        <button id="btn-cloud-push" class="btn-neon">☁️ Subir a Nube</button>
-        <button id="btn-cloud-pull" class="btn-secondary">🔄 Bajar de Nube</button>
+
+      <label class="modal-label">🔐 CUENTA PRIVADA EN LA NUBE (CLUB MOTERO):</label>
+      <div id="cloud-status-banner" class="memory-pill-bar" style="margin-bottom: 8px;">
+        <span>🔒 Inicia sesión o crea tu cuenta para respaldar tu moto en tu bóveda privada.</span>
+      </div>
+
+      <!-- Vista cuando NO ha iniciado sesión -->
+      <div id="auth-logged-out-box">
+        <div class="form-row-2" style="margin-bottom: 8px;">
+          <div>
+            <label class="modal-label">Tu Correo:</label>
+            <input type="email" id="auth-email-input" placeholder="piloto@correo.com">
+          </div>
+          <div>
+            <label class="modal-label">Contraseña (mín. 6):</label>
+            <input type="password" id="auth-pass-input" placeholder="••••••">
+          </div>
+        </div>
+        <div class="backup-actions" style="margin-bottom: 12px;">
+          <button type="button" id="btn-auth-login" class="btn-neon">🔑 Iniciar Sesión</button>
+          <button type="button" id="btn-auth-register" class="btn-secondary">✨ Crear Cuenta</button>
+        </div>
+      </div>
+
+      <!-- Vista cuando SÍ tiene sesión activa -->
+      <div id="auth-logged-in-box" class="hidden">
+        <div class="backup-actions" style="margin-bottom: 8px;">
+          <button type="button" id="btn-cloud-push" class="btn-neon">☁️ Subir Mi Moto</button>
+          <button type="button" id="btn-cloud-pull" class="btn-secondary">🔄 Bajar de Mi Nube</button>
+        </div>
+        <button type="button" id="btn-auth-logout" class="btn-secondary" style="width: 100%; margin-bottom: 12px; color: var(--red-danger);">
+          🚪 Cerrar Sesión de Nube
+        </button>
       </div>
 
       <label class="modal-label">📁 ARCHIVO LOCAL (OFFLINE JSON):</label>

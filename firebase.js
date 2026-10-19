@@ -1,4 +1,4 @@
-// firebase.js - Sincronización en la nube con Cloud Firestore (Modular SDK)
+// firebase.js - Sistema Multiusuario con Firebase Auth + Cloud Firestore
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {
   getFirestore,
@@ -6,8 +6,14 @@ import {
   setDoc,
   getDoc
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut
+} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
-// 1. REEMPLAZA ESTOS VALORES CON LOS DE TU PROYECTO EN FIREBASE CONSOLE
 const firebaseConfig = {
   apiKey: "AIzaSyBQSNPrIFPuLk0JJrcqdH6gPOsnoJhujrw",
   authDomain: "mi-moto-n160.firebaseapp.com",
@@ -17,41 +23,71 @@ const firebaseConfig = {
   appId: "1:910405935632:web:6a09398a86dc3363036095"
 };
 
-// ID único del documento en Firestore donde se guardará tu Pulsar N160
-const CLOUD_COLLECTION = 'mimoto_unidades';
-const CLOUD_DOC_ID = 'pulsar_n160_principal';
+const USERS_COLLECTION = 'mimoto_usuarios';
 
+let app = null;
 let db = null;
+let auth = null;
+let currentUser = null;
 let syncTimer = null;
 
 export function isFirebaseConfigured() {
-  return (
-    firebaseConfig.apiKey &&
-    !firebaseConfig.apiKey.includes('PEGA_AQUI') &&
-    firebaseConfig.projectId &&
-    firebaseConfig.projectId !== 'tu-proyecto'
-  );
+  return Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 }
 
-function getDbInstance() {
-  if (!isFirebaseConfigured()) return null;
-  if (!db) {
-    const app = initializeApp(firebaseConfig);
+function initFirebaseServices() {
+  if (!app) {
+    app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    auth = getAuth(app);
   }
-  return db;
+  return { db, auth };
 }
 
-// Sube todo el estado actual a Firestore
+export function getCurrentUser() {
+  return currentUser;
+}
+
+// Escucha en tiempo real si el motero inició o cerró sesión
+export function subscribeToAuthChanges(callback) {
+  const { auth: authInstance } = initFirebaseServices();
+  onAuthStateChanged(authInstance, (user) => {
+    currentUser = user || null;
+    if (callback) callback(currentUser);
+  });
+}
+
+// Iniciar sesión con Correo y Contraseña
+export async function loginPilot(email, password) {
+  const { auth: authInstance } = initFirebaseServices();
+  const cred = await signInWithEmailAndPassword(authInstance, email.trim(), password);
+  return cred.user;
+}
+
+// Registrar un nuevo motero en el club
+export async function registerPilot(email, password) {
+  const { auth: authInstance } = initFirebaseServices();
+  const cred = await createUserWithEmailAndPassword(authInstance, email.trim(), password);
+  return cred.user;
+}
+
+// Cerrar sesión
+export async function logoutPilot() {
+  const { auth: authInstance } = initFirebaseServices();
+  await signOut(authInstance);
+}
+
+// Sube el estado únicamente a la bóveda privada del usuario autenticado (UID)
 export async function pushStateToCloud(stateObj) {
-  const database = getDbInstance();
-  if (!database) {
-    throw new Error('Falta configurar las credenciales en firebase.js');
+  const { db: database } = initFirebaseServices();
+  if (!currentUser) {
+    throw new Error('Debes iniciar sesión para respaldar en la nube.');
   }
 
-  const ref = doc(database, CLOUD_COLLECTION, CLOUD_DOC_ID);
+  const ref = doc(database, USERS_COLLECTION, currentUser.uid);
   const payload = {
     ...stateObj,
+    ownerEmail: currentUser.email || '',
     lastCloudSync: new Date().toISOString()
   };
 
@@ -59,14 +95,14 @@ export async function pushStateToCloud(stateObj) {
   return payload.lastCloudSync;
 }
 
-// Descarga el estado guardado en Firestore
+// Descarga el estado únicamente de la bóveda privada del usuario autenticado (UID)
 export async function pullStateFromCloud() {
-  const database = getDbInstance();
-  if (!database) {
-    throw new Error('Falta configurar las credenciales en firebase.js');
+  const { db: database } = initFirebaseServices();
+  if (!currentUser) {
+    throw new Error('Debes iniciar sesión para descargar tu respaldo.');
   }
 
-  const ref = doc(database, CLOUD_COLLECTION, CLOUD_DOC_ID);
+  const ref = doc(database, USERS_COLLECTION, currentUser.uid);
   const snap = await getDoc(ref);
 
   if (!snap.exists()) {
@@ -75,9 +111,9 @@ export async function pullStateFromCloud() {
   return snap.data();
 }
 
-// Sincronización automática silenciosa con espera de 1.5s (Debounce) para ahorrar cuota
+// Auto-guardado silencioso solo si el motero tiene sesión activa
 export function scheduleAutoCloudSync(stateObj, onStatusChange) {
-  if (!isFirebaseConfigured() || !navigator.onLine) return;
+  if (!isFirebaseConfigured() || !navigator.onLine || !currentUser) return;
 
   if (syncTimer) clearTimeout(syncTimer);
   syncTimer = setTimeout(async () => {
