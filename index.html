@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icono.png">
   <title>Mi Moto - Pulsar N160 FI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,14 +35,14 @@
       </div>
 
       <div class="brand-emblem-wrap">
-        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA</span>
+        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA V2.0</span>
         <h1 class="pulsar-script-logo">pulsar</h1>
         <span class="n160-fi-sub">N160 FI • DUAL CHANNEL ABS</span>
       </div>
 
-            <div class="selector-section">
+      <div class="selector-section">
         <label class="section-label">IDENTIFICACIÓN Y COLOR DE TU UNIDAD</label>
-                <div class="bike-select-card selected" id="select-n160">
+        <div class="bike-select-card selected" id="select-n160">
           <div class="neon-slash-accent"></div>
           <div class="bike-card-header">
             <div>
@@ -52,7 +53,6 @@
             <div class="check-circle">✓</div>
           </div>
 
-          <!-- Los botones de colores ahora están en una capa superior accesible -->
           <div class="color-theme-grid" id="onboarding-theme-picker" style="position: relative; z-index: 10;">
             <button type="button" class="theme-pill selected" data-theme="blue" data-edition="CARIBBEAN BLUE EDITION">
               <span class="swatch-circle" style="background: #1E88A8;"></span>
@@ -81,22 +81,28 @@
           </div>
         </div>
 
-        <div class="initial-km-box">
-          <label for="init-km-input">Odómetro inicial al empezar el control (Km):</label>
-          <input type="number" id="init-km-input" placeholder="Ej: 0" value="0" min="0">
+        <div class="form-row-2" style="margin-bottom: 14px;">
+          <div class="initial-km-box" style="margin-bottom: 0;">
+            <label for="init-km-input">Odómetro inicial (Km):</label>
+            <input type="number" id="init-km-input" placeholder="Ej: 0" value="0" min="0">
+          </div>
+          <div class="initial-km-box" style="margin-bottom: 0;">
+            <label for="init-price-input">Precio Moto S/ (Opcional):</label>
+            <input type="number" id="init-price-input" placeholder="Ej: 10990" min="0" step="100">
+          </div>
         </div>
 
         <button id="btn-start-app" class="btn-neon-full">
           ENCENDER TABLERO ⚡
         </button>
       </div>
-      </div>
+    </div>
   </section>
-  
+
   <!-- ================= PANTALLA 2: PANEL PRINCIPAL ================= -->
   <section id="main-screen" class="screen hidden">
     
-    <!-- Cabecera Limpia y Descontaminada -->
+    <!-- Cabecera con Indicador de Nube Dinámico -->
     <header class="app-header">
       <div class="header-left">
         <div class="mini-logo-wrap" id="header-logo-btn" title="Cambiar icono">
@@ -113,6 +119,11 @@
         </div>
       </div>
       <div class="header-actions">
+        <!-- Indicador de Nube Dinámico -->
+        <button type="button" id="cloud-live-indicator" class="cloud-live-pill" title="Estado de sincronización en la nube">
+          <span class="cloud-live-dot" id="cloud-live-dot"></span>
+          <span id="cloud-live-text">Local</span>
+        </button>
         <!-- Guantera Digital (SOAT + Brevete) -->
         <button id="btn-open-docs-modal" class="btn-icon-sleek" title="Guantera Digital (SOAT y Brevete)">
           <span id="docs-alert-dot" class="notif-dot hidden"></span>
@@ -161,13 +172,28 @@
       </button>
     </div>
 
-    <!-- Navegación Principal de 5 Módulos -->
-    <nav class="tabs-nav-5">
-      <button class="tab-btn active" data-tab="tab-maint">Taller</button>
-      <button class="tab-btn" data-tab="tab-fuel">Grifo</button>
-      <button class="tab-btn" data-tab="tab-garage">Garaje</button>
-      <button class="tab-btn" data-tab="tab-route">Finanzas</button>
-      <button class="tab-btn" data-tab="tab-specs">Ficha</button>
+    <!-- Barra de Navegación Inferior Fija (Zona del Pulgar) -->
+    <nav class="tabs-nav-5" aria-label="Navegación Principal">
+      <button class="tab-btn active" data-tab="tab-maint">
+        <span class="nav-ico">🔧</span>
+        <span>Taller</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-fuel">
+        <span class="nav-ico">⛽</span>
+        <span>Grifo</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-garage">
+        <span class="nav-ico">🛡️</span>
+        <span>Garaje</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-route">
+        <span class="nav-ico">📊</span>
+        <span>Finanzas</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-specs">
+        <span class="nav-ico">🔩</span>
+        <span>Ficha</span>
+      </button>
     </nav>
 
     <!-- ================= PESTAÑA 1: TALLER ================= -->
@@ -179,8 +205,24 @@
 
       <div id="maint-alerts-grid" class="alerts-grid"></div>
 
-      <!-- Resumen Financiero Compacto + Bitácora Desplegable con Filtro -->
+      <!-- Ranking de Talleres y Ahorro Hecho en Casa -->
       <div class="progressive-drawer-card" style="margin-top: 12px;">
+        <div class="drawer-summary-row">
+          <div>
+            <span class="section-title-sleek">RANKING DE TALLERES & MECÁNICA</span>
+            <div class="maint-sub" id="workshop-diy-summary">Historial por taller y servicios hechos por ti</div>
+          </div>
+          <button type="button" id="btn-toggle-workshop-rank" class="btn-drawer-toggle">
+            Talleres (<span id="workshop-count-badge">0</span>) <span id="workshop-saved-arrow">▾</span>
+          </button>
+        </div>
+        <div id="drawer-workshop-rank" class="drawer-body hidden">
+          <div id="workshop-rank-container" class="compact-scroll-list" style="max-height: 180px;"></div>
+        </div>
+      </div>
+
+      <!-- Resumen Financiero Compacto + Bitácora Desplegable con Filtro -->
+      <div class="progressive-drawer-card" style="margin-top: 10px;">
         <div class="drawer-summary-row">
           <div class="fin-mini-pair">
             <span>Mes: <strong id="maint-month-total" class="neon-txt">S/ 0.00</strong></span>
@@ -211,6 +253,18 @@
         <button class="period-btn" data-period="week">Semana</button>
         <button class="period-btn active" data-period="month">Mes</button>
         <button class="period-btn" data-period="year">Año</button>
+      </div>
+
+      <!-- Interruptor de Modo Préstamo (Aislamiento de Telemetría) -->
+      <div class="loan-mode-strip" id="loan-mode-banner">
+        <div class="loan-left">
+          <span>🤝</span>
+          <div>
+            <strong id="loan-mode-title">Modo Préstamo: Desactivado</strong>
+            <small id="loan-mode-desc">Actívalo si prestas la moto para no alterar tu promedio km/gal</small>
+          </div>
+        </div>
+        <button type="button" id="btn-toggle-loan-mode" class="btn-loan-toggle">Activar</button>
       </div>
 
       <div class="fuel-stats-grid">
@@ -272,6 +326,9 @@
         </div>
       </div>
 
+      <!-- Diagnóstico Preventivo de Inyección FI -->
+      <div id="fi-diagnostic-banner" class="diag-alert-box hidden"></div>
+
       <!-- Curva Sparkline -->
       <div id="sparkline-card" class="sparkline-box hidden">
         <div class="sparkline-header">
@@ -283,6 +340,22 @@
 
       <div class="tele-tip-banner" id="tele-status-msg">
         Registra tu primera carga hoy con tu kilometraje actual para activar la telemetría.
+      </div>
+
+      <!-- Detector de Grifo Más Barato y Rentable -->
+      <div class="progressive-drawer-card" style="margin-top: 10px;">
+        <div class="drawer-summary-row">
+          <div>
+            <span class="section-title-sleek">DETECTOR DE GRIFOS RENTABLES</span>
+            <div class="maint-sub" id="best-station-sub">Compara S/ por galón y rendimiento real km/gal</div>
+          </div>
+          <button type="button" id="btn-toggle-station-rank" class="btn-drawer-toggle">
+            Grifos (<span id="station-count-badge">0</span>) <span id="station-saved-arrow">▾</span>
+          </button>
+        </div>
+        <div id="drawer-station-rank" class="drawer-body hidden">
+          <div id="station-rank-container" class="compact-scroll-list" style="max-height: 180px;"></div>
+        </div>
       </div>
 
       <!-- Cajón Desplegable del Historial de Cargas -->
@@ -302,7 +375,7 @@
     <!-- ================= PESTAÑA 3: GARAJE (LAVADO UNIFICADO, LLANTAS Y MODS) ================= -->
     <div id="tab-garage" class="tab-content hidden">
       
-      <!-- Tarjeta de Lavado y Cuidado con la MISMA tipografía que el resto de la app -->
+      <!-- Tarjeta de Lavado y Cuidado -->
       <div class="maint-card" id="spa-widget-card" style="margin-bottom: 11px;">
         <div class="maint-top">
           <div>
@@ -397,11 +470,11 @@
       </div>
     </div>
 
-    <!-- ================= PESTAÑA 4: FINANZAS TOTALES, RUTA Y CHECKLIST ================= -->
+    <!-- ================= PESTAÑA 4: FINANZAS (CAPEX vs OPEX), RUTA Y CHECKLIST ================= -->
     <div id="tab-route" class="tab-content hidden">
       <div class="subtabs-bar-3">
         <button class="subtab-route-btn active" data-routesub="sub-route-fin">
-          Gastos Totales
+          CAPEX / OPEX
         </button>
         <button class="subtab-route-btn" data-routesub="sub-route-calc">
           Simulador Ruta
@@ -411,15 +484,36 @@
         </button>
       </div>
 
-      <!-- SUB-VISTA 4A: PANEL FINANCIERO MAESTRO + GASTOS EXTRA -->
+      <!-- SUB-VISTA 4A: PANEL FINANCIERO MAESTRO (CAPEX vs OPEX) + GASTOS EXTRA -->
       <div id="sub-route-fin" class="route-panel">
+        
+        <!-- Tarjetas Separadas: Patrimonio Físico (CAPEX) vs Gasto Operativo (OPEX) -->
+        <div class="capex-opex-grid">
+          <div class="co-card capex">
+            <span class="co-tag">🏛️ PATRIMONIO (CAPEX)</span>
+            <strong class="co-val carib-txt" id="capex-total-display">S/ 0.00</strong>
+            <div class="co-sub">
+              <span id="capex-bike-sub">Moto: S/ 0</span>
+              <button type="button" id="btn-edit-bike-price" class="btn-link-mini">✏️ Precio Moto</button>
+            </div>
+          </div>
+          <div class="co-card opex">
+            <span class="co-tag">🔥 OPERATIVO (OPEX)</span>
+            <strong class="co-val neon-txt" id="opex-total-display">S/ 0.00</strong>
+            <div class="co-sub">
+              <span>Grifo + Taller + Uso</span>
+              <strong id="opex-per-km-mini">S/ 0.00/km</strong>
+            </div>
+          </div>
+        </div>
+
         <div class="tco-card">
           <div class="section-header-row" style="margin-bottom: 6px;">
-            <span class="section-title-sleek">INVERSIÓN TOTAL ACUMULADA</span>
+            <span class="section-title-sleek">DESGLOSE TOTAL ACUMULADO (CAPEX + OPEX)</span>
             <strong class="fin-val" id="master-grand-total">S/ 0.00</strong>
           </div>
 
-          <!-- Barra de Proporción de Gastos -->
+          <!-- Barra de Proporción de Gastos Operativos -->
           <div class="expense-split-bar" id="expense-split-bar">
             <div class="split-seg seg-fuel" id="seg-fuel" style="width: 25%"></div>
             <div class="split-seg seg-maint" id="seg-maint" style="width: 25%"></div>
@@ -428,6 +522,10 @@
           </div>
 
           <div class="tco-grid">
+            <div class="tco-item">
+              <span>🏍️ Valor de Compra Moto + Accesorios (CAPEX)</span>
+              <strong class="carib-txt" id="tco-capex-row">S/ 0.00</strong>
+            </div>
             <div class="tco-item">
               <span>⛽ Combustible Premium (<small id="pct-fuel">0%</small>)</span>
               <strong id="tco-fuel-all">S/ 0.00</strong>
@@ -453,11 +551,11 @@
               <strong id="tco-admin-all">S/ 0.00</strong>
             </div>
             <div class="tco-item">
-              <span>⚡ Costo Operativo Real por Km (<small id="tracked-km-label">0 km</small>)</span>
+              <span>⚡ Costo Operativo Real OPEX por Km (<small id="tracked-km-label">0 km</small>)</span>
               <strong class="neon-txt" id="tco-real-km">S/ 0.00 / km</strong>
             </div>
             <div class="tco-item">
-              <span>📅 Costo Operativo por Día de Uso</span>
+              <span>📅 Costo Operativo OPEX por Día de Uso</span>
               <strong class="carib-txt" id="tco-daily-cost">S/ 0.00 / día</strong>
             </div>
           </div>
@@ -761,6 +859,25 @@
     </div>
   </div>
 
+  <!-- MODAL PRECIO DE COMPRA DE LA MOTO (CAPEX) -->
+  <div id="modal-bike-price" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag">PATRIMONIO FÍSICO (CAPEX)</span>
+          <h3 class="modal-pulsar-title">Precio de Compra N160</h3>
+        </div>
+        <button id="btn-close-bike-price-x" class="btn-close-x">✕</button>
+      </div>
+      <p>Ingresa cuánto te costó tu Pulsar N160 FI en tienda (S/). Se sumará a tu Patrimonio (CAPEX) sin distorsionar tu costo operativo por kilómetro (OPEX):</p>
+      <input type="number" id="input-bike-price" placeholder="Ej: 10990" min="0" step="50">
+      <div class="modal-actions">
+        <button id="btn-cancel-bike-price" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-bike-price" class="btn-neon">Guardar Precio</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL META PRESUPUESTO MENSUAL -->
   <div id="modal-budget" class="modal-backdrop hidden">
     <div class="modal-card">
@@ -820,7 +937,7 @@
     </div>
   </div>
 
-  <!-- MODAL REGISTRAR / EDITAR MANTENIMIENTO (CON DESGLOSE REPUESTOS + MANO DE OBRA) -->
+  <!-- MODAL REGISTRAR / EDITAR MANTENIMIENTO (CON TALLER + REPUESTOS + MANO DE OBRA) -->
   <div id="modal-log" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -869,17 +986,18 @@
         <div><label class="modal-label">Total Hoy (S/):</label><input type="number" id="log-cost" placeholder="85.00" step="0.5" readonly style="opacity:0.85;"></div>
       </div>
 
-      <div class="form-row-2">
+      <div class="form-row-3">
         <div><label class="modal-label">Kilometraje:</label><input type="number" id="log-km" placeholder="500"></div>
         <div><label class="modal-label">Fecha:</label><input type="date" id="log-date"></div>
+        <div><label class="modal-label">Taller / Mecánico:</label><input type="text" id="log-workshop" placeholder="Ej: Crosland / En casa"></div>
       </div>
 
       <div id="maint-memory-banner" class="memory-pill-bar">
         <span>💡 Sin registro previo de este servicio en tu historial.</span>
       </div>
 
-      <label class="modal-label">Taller / Insumos utilizados (Opcional):</label>
-      <input type="text" id="log-notes" placeholder="Ej: Hecho en casa / Bajaj Crosland - Aceite 20W50 + Filtro JG571014">
+      <label class="modal-label">Insumos / Notas adicionales (Opcional):</label>
+      <input type="text" id="log-notes" placeholder="Ej: Aceite 20W50 + Filtro original JG571014">
 
       <div class="modal-actions">
         <button id="btn-cancel-log" class="btn-secondary">Cancelar</button>
@@ -918,7 +1036,7 @@
       <div class="form-row-3">
         <div><label class="modal-label">Galones:</label><input type="number" id="fuel-gallons" placeholder="0.00" step="0.01"></div>
         <div><label class="modal-label">Fecha:</label><input type="date" id="fuel-date"></div>
-        <div><label class="modal-label">Estación / Nota:</label><input type="text" id="fuel-notes" placeholder="Ej: Primax"></div>
+        <div><label class="modal-label">Grifo / Estación:</label><input type="text" id="fuel-notes" placeholder="Ej: Primax / Repsol"></div>
       </div>
 
       <div id="live-fuel-preview" class="live-calc-sleek">
@@ -967,7 +1085,7 @@
     </div>
   </div>
 
-    <!-- MODAL AJUSTES, CUENTA DE PILOTO Y COPIA DE SEGURIDAD -->
+  <!-- MODAL AJUSTES, CUENTA DE PILOTO Y COPIA DE SEGURIDAD -->
   <div id="modal-backup" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1041,7 +1159,6 @@
       <button id="btn-reset-onboarding" class="btn-secondary" style="width: 100%;">📷 Cambiar Foto de Portada / Km Inicial</button>
     </div>
   </div>
-  
 
   <!-- MODAL CONFIRMACIÓN PERSONALIZADA -->
   <div id="modal-confirm" class="modal-backdrop hidden" style="z-index: 1100;">
@@ -1082,25 +1199,35 @@
     </div>
   </div>
 
-  <!-- MODAL GUANTERA DIGITAL (SOAT + COSTO + BREVETE) -->
+  <!-- MODAL GUANTERA DIGITAL (SOAT + COSTO + BREVETE + CALENDARIO .ICS) -->
   <div id="modal-docs" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
         <div>
-          <span class="info-modal-tag">BÓVEDA PERSONAL</span>
+          <span class="info-modal-tag">BÓVEDA PERSONAL & RECORDATORIOS</span>
           <h3 class="modal-pulsar-title">Guantera Digital N160</h3>
         </div>
         <button id="btn-close-docs-x" class="btn-close-x">✕</button>
       </div>
-      <p>La app evaluará la vigencia tanto de tu SOAT como de tu Brevete y sumará el costo del SOAT a tu contabilidad:</p>
+      <p>Evalúa la vigencia de tu SOAT y Brevete, y agenda recordatorios directos en el calendario de tu celular:</p>
       <div class="form-row-3">
         <div><label class="modal-label">Placa:</label><input type="text" id="doc-plate" placeholder="1234-AB" style="text-transform: uppercase;"></div>
         <div><label class="modal-label">Aseguradora:</label><input type="text" id="doc-insurance" placeholder="Interseguro"></div>
         <div><label class="modal-label">Costo SOAT (S/):</label><input type="number" id="doc-soat-cost" placeholder="0.00" step="1" min="0"></div>
       </div>
       <div class="form-row-2">
-        <div><label class="modal-label">Vencimiento SOAT:</label><input type="date" id="doc-soat-exp"></div>
-        <div><label class="modal-label">Vencimiento Brevete B-IIc:</label><input type="date" id="doc-license-exp"></div>
+        <div>
+          <label class="modal-label">Vencimiento SOAT:</label>
+          <input type="date" id="doc-soat-exp">
+        </div>
+        <div>
+          <label class="modal-label">Vencimiento Brevete B-IIc:</label>
+          <input type="date" id="doc-license-exp">
+        </div>
+      </div>
+      <div class="backup-actions" style="margin-top: 8px;">
+        <button type="button" id="btn-cal-soat" class="btn-cal-ics">📅 Agendar SOAT (.ics)</button>
+        <button type="button" id="btn-cal-license" class="btn-cal-ics">📅 Agendar Brevete (.ics)</button>
       </div>
       <label class="modal-label">Serie de Chasis (VIN) / Número de Motor (Opcional):</label>
       <input type="text" id="doc-vin" placeholder="Para compras de repuestos o controles">

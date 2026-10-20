@@ -1,4 +1,13 @@
-import{isFirebaseConfigured,subscribeToAuthChanges,getCurrentUser,loginPilot,registerPilot,logoutPilot,pushStateToCloud,pullStateFromCloud} from './firebase.js';
+import {
+  isFirebaseConfigured,
+  subscribeToAuthChanges,
+  getCurrentUser,
+  loginPilot,
+  registerPilot,
+  logoutPilot,
+  pushStateToCloud,
+  pullStateFromCloud
+} from './firebase.js';
 import { DEFAULT_TIRES } from './constants.js';
 import {
   appState,
@@ -13,7 +22,13 @@ import {
   triggerHaptic,
   compressImage
 } from './state.js';
-import { getLastServiceRecord, getLastFuelPriceRecord, getFuelPreviewBaseline } from './telemetry.js';
+import {
+  getLastServiceRecord,
+  getLastFuelPriceRecord,
+  getFuelPreviewBaseline,
+  estimateMonthlyKmRate,
+  downloadCalendarReminder
+} from './telemetry.js';
 import {
   uiConfig,
   openModalById,
@@ -72,11 +87,49 @@ function applyBikeTheme(themeName = 'blue') {
   });
 }
 
+function updateHeaderCloudIndicator(status = 'idle') {
+  const pill = document.getElementById('cloud-live-indicator');
+  const text = document.getElementById('cloud-live-text');
+  if (!pill || !text) return;
+
+  pill.classList.remove('syncing', 'ok', 'error');
+  const user = getCurrentUser();
+
+  if (!user) {
+    text.textContent = 'Local';
+    return;
+  }
+
+  if (status === 'syncing') {
+    pill.classList.add('syncing');
+    text.textContent = 'Subiendo...';
+  } else if (status === 'error') {
+    pill.classList.add('error');
+    text.textContent = 'Error Nube';
+  } else {
+    pill.classList.add('ok');
+    text.textContent = 'Nube OK';
+  }
+}
+
+function switchMainTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach((b) => {
+    b.classList.toggle('active', b.getAttribute('data-tab') === tabId);
+  });
+  document.querySelectorAll('.tab-content').forEach((c) => {
+    c.classList.toggle('hidden', c.id !== tabId);
+  });
+}
+
 function showOnboardingScreen() {
   closeModalById('modal-backup');
   document.getElementById('onboarding-screen').classList.remove('hidden');
   document.getElementById('main-screen').classList.add('hidden');
   document.getElementById('init-km-input').value = appState.initialKm || appState.currentKm || 0;
+  const priceInp = document.getElementById('init-price-input');
+  if (priceInp) {
+    priceInp.value = appState.bikePurchasePrice > 0 ? appState.bikePurchasePrice : '';
+  }
   renderImages();
 }
 
@@ -139,6 +192,8 @@ function openLogModal(preselectSrvId = null, editItem = null) {
   editingLogId = editItem ? editItem.id : null;
   document.getElementById('log-modal-title').textContent = editItem ? 'Editar Mantenimiento' : 'Registrar Mantenimiento';
 
+  const workshopInput = document.getElementById('log-workshop');
+
   if (editItem) {
     const parts = Number(editItem.partsCost ?? editItem.cost) || 0;
     const labor = Number(editItem.laborCost) || 0;
@@ -147,6 +202,7 @@ function openLogModal(preselectSrvId = null, editItem = null) {
     document.getElementById('log-cost').value = (parts + labor) > 0 ? (parts + labor).toFixed(2) : '';
     document.getElementById('log-km').value = editItem.km;
     document.getElementById('log-date').value = editItem.date || getLocalISODate();
+    if (workshopInput) workshopInput.value = editItem.workshop || '';
     document.getElementById('log-notes').value = editItem.notes || '';
     selectServiceInModal(editItem.typeId || 'other');
   } else {
@@ -155,6 +211,7 @@ function openLogModal(preselectSrvId = null, editItem = null) {
     document.getElementById('log-cost').value = '';
     document.getElementById('log-km').value = appState.currentKm;
     document.getElementById('log-date').value = getLocalISODate();
+    if (workshopInput) workshopInput.value = '';
     document.getElementById('log-notes').value = '';
     selectServiceInModal(preselectSrvId || selectedServiceType);
   }
@@ -195,6 +252,11 @@ function updateFuelPreview(sourceId = null) {
     } else {
       fuelMemBanner.innerHTML = `<span>🧠 <strong>Último precio pagado:</strong> S/ ${prevP.toFixed(2)} por galón Premium.</span>`;
     }
+  }
+
+  if (appState.loanModeActive && !editingFuelId) {
+    livePreview.innerHTML = `🤝 <strong>Modo Préstamo Activo:</strong> Esta carga quedará aislada para no alterar tu rendimiento personal (km/gal).`;
+    return;
   }
 
   const kmToday = parseInt(fuelKmInput.value, 10);
@@ -394,6 +456,7 @@ function setupEventListeners() {
       'modal-confirm',
       'modal-info-guide',
       'modal-km',
+      'modal-bike-price',
       'modal-budget',
       'modal-spa',
       'modal-log',
@@ -413,12 +476,42 @@ function setupEventListeners() {
     }
   });
 
+  // Listener de estado de sincronización en nube para el indicador dinámico en cabecera
+  window.addEventListener('cloud-sync-status', (ev) => {
+    updateHeaderCloudIndicator(ev.detail);
+  });
+
+  const cloudHeaderPill = document.getElementById('cloud-live-indicator');
+  if (cloudHeaderPill) {
+    cloudHeaderPill.addEventListener('click', () => openModalById('modal-backup'));
+  }
+
   document.body.addEventListener('click', (e) => {
     const infoBtn = e.target.closest('[data-info-key]');
     if (infoBtn) {
       e.preventDefault();
       e.stopPropagation();
       openInfoGuide(infoBtn.getAttribute('data-info-key'));
+      return;
+    }
+
+    const calMaintBtn = e.target.closest('[data-cal-maint]');
+    if (calMaintBtn) {
+      const title = calMaintBtn.getAttribute('data-cal-maint');
+      const targetKm = Number(calMaintBtn.getAttribute('data-cal-targetkm')) || appState.currentKm;
+      const kmLeft = Math.max(0, targetKm - appState.currentKm);
+      const dailyRate = Math.max(10, estimateMonthlyKmRate() / 30);
+      const daysUntil = Math.min(60, Math.max(1, Math.round(kmLeft / dailyRate)));
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + daysUntil);
+      const isoDate = targetDate.toISOString().slice(0, 10);
+
+      downloadCalendarReminder({
+        title: `${title} (${targetKm.toLocaleString('es-PE')} km)`,
+        description: `Mantenimiento preventivo programado para tu Bajaj Pulsar N160 FI a los ${targetKm.toLocaleString('es-PE')} km (Odómetro actual: ${appState.currentKm.toLocaleString('es-PE')} km).`,
+        dateStr: isoDate
+      });
+      showToast(`📅 Recordatorio .ics descargado (${isoDate})`);
       return;
     }
 
@@ -619,11 +712,29 @@ function setupEventListeners() {
       if (arrow) arrow.textContent = isHidden ? '▾' : '▴';
     });
   };
+  setupDrawer('btn-toggle-workshop-rank', 'drawer-workshop-rank', 'workshop-saved-arrow');
   setupDrawer('btn-toggle-maint-logs', 'drawer-maint-logs', 'maint-saved-arrow');
+  setupDrawer('btn-toggle-station-rank', 'drawer-station-rank', 'station-saved-arrow');
   setupDrawer('btn-toggle-fuel-logs', 'drawer-fuel-logs', 'fuel-saved-arrow');
   setupDrawer('btn-toggle-tire-hist', 'drawer-tire-hist', 'tire-saved-arrow');
   setupDrawer('btn-toggle-spa-logs', 'drawer-spa-logs', 'spa-saved-arrow');
   setupDrawer('btn-toggle-expense-logs', 'drawer-expense-logs', 'expense-saved-arrow');
+
+  // Botón de Modo Préstamo
+  const loanToggleBtn = document.getElementById('btn-toggle-loan-mode');
+  if (loanToggleBtn) {
+    loanToggleBtn.addEventListener('click', () => {
+      appState.loanModeActive = !appState.loanModeActive;
+      saveState();
+      renderFuelSection();
+      triggerHaptic(15);
+      showToast(
+        appState.loanModeActive
+          ? '🤝 Modo Préstamo Activado (Cargas aisladas)'
+          : '⚡ Modo Préstamo Desactivado'
+      );
+    });
+  }
 
   document.querySelectorAll('#maint-log-filters .mod-filter-pill').forEach((pill) => {
     pill.addEventListener('click', () => {
@@ -665,7 +776,12 @@ function setupEventListeners() {
 
   document.getElementById('btn-start-app').addEventListener('click', () => {
     const initKm = Math.max(0, parseInt(document.getElementById('init-km-input').value, 10) || 0);
+    const priceInp = document.getElementById('init-price-input');
+    const initPrice = priceInp ? Math.max(0, parseFloat(priceInp.value) || 0) : 0;
+
     appState.initialKm = initKm;
+    if (initPrice > 0) appState.bikePurchasePrice = initPrice;
+
     if (!appState.onboarded || appState.currentKm < initKm) {
       appState.currentKm = initKm;
       appState.tripBaseKm = initKm;
@@ -701,10 +817,7 @@ function setupEventListeners() {
 
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach((c) => c.classList.add('hidden'));
-      btn.classList.add('active');
-      document.getElementById(btn.getAttribute('data-tab')).classList.remove('hidden');
+      switchMainTab(btn.getAttribute('data-tab'));
     });
   });
 
@@ -817,6 +930,27 @@ function setupEventListeners() {
     }
   });
 
+  // Modal Precio de Compra de la Moto (CAPEX)
+  const closeBikePrice = () => closeModalById('modal-bike-price');
+  const editBikePriceBtn = document.getElementById('btn-edit-bike-price');
+  if (editBikePriceBtn) {
+    editBikePriceBtn.addEventListener('click', () => {
+      document.getElementById('input-bike-price').value = appState.bikePurchasePrice > 0 ? appState.bikePurchasePrice : '';
+      openModalById('modal-bike-price');
+    });
+  }
+  document.getElementById('btn-close-bike-price-x').addEventListener('click', closeBikePrice);
+  document.getElementById('btn-cancel-bike-price').addEventListener('click', closeBikePrice);
+  document.getElementById('btn-save-bike-price').addEventListener('click', () => {
+    const val = Math.max(0, parseFloat(document.getElementById('input-bike-price').value) || 0);
+    appState.bikePurchasePrice = val;
+    saveState();
+    renderAllMain();
+    closeBikePrice();
+    triggerHaptic(12);
+    showToast(`Patrimonio Moto: S/ ${val.toLocaleString('es-PE')}`);
+  });
+
   // Modal Presupuesto Mensual
   const closeBudget = () => closeModalById('modal-budget');
   document.getElementById('btn-edit-budget').addEventListener('click', () => {
@@ -897,6 +1031,7 @@ function setupEventListeners() {
     const cost = partsCost + laborCost;
     const km = parseInt(document.getElementById('log-km').value, 10) || appState.currentKm;
     const date = document.getElementById('log-date').value || getLocalISODate();
+    const workshop = (document.getElementById('log-workshop')?.value || '').trim();
     const notes = document.getElementById('log-notes').value.trim();
 
     if (km > appState.currentKm) appState.currentKm = km;
@@ -904,7 +1039,7 @@ function setupEventListeners() {
     if (editingLogId) {
       appState.logs = appState.logs.map((l) =>
         String(l.id) === String(editingLogId)
-          ? { ...l, typeId: selectedServiceType, title: selectedServiceTitle, km, partsCost, laborCost, cost, date, notes }
+          ? { ...l, typeId: selectedServiceType, title: selectedServiceTitle, km, partsCost, laborCost, cost, date, workshop, notes }
           : l
       );
     } else {
@@ -917,6 +1052,7 @@ function setupEventListeners() {
         laborCost,
         cost,
         date,
+        workshop,
         notes
       });
     }
@@ -977,6 +1113,7 @@ function setupEventListeners() {
         id: Date.now(),
         fuelType: 'Premium',
         fullTank: selectedFullTank,
+        isLoan: Boolean(appState.loanModeActive),
         cost,
         priceGal,
         gallons,
@@ -1196,7 +1333,7 @@ function setupEventListeners() {
     showToast(editingModId ? 'Accesorio actualizado' : 'Accesorio agregado a tu Garaje');
   });
 
-  // Modal Guantera Digital
+  // Modal Guantera Digital + Calendario .ICS
   const closeDocs = () => closeModalById('modal-docs');
 
   document.getElementById('btn-open-docs-modal').addEventListener('click', () => {
@@ -1209,6 +1346,35 @@ function setupEventListeners() {
     document.getElementById('doc-vin').value = d.vin || '';
     checkDocsStatusUI();
     openModalById('modal-docs');
+  });
+
+  document.getElementById('btn-cal-soat').addEventListener('click', () => {
+    const exp = document.getElementById('doc-soat-exp').value;
+    if (!exp) {
+      showToast('⚠️ Primero selecciona la fecha de vencimiento del SOAT');
+      return;
+    }
+    const plate = document.getElementById('doc-plate').value.trim().toUpperCase() || 'N160';
+    downloadCalendarReminder({
+      title: `Renovar SOAT (${plate})`,
+      description: `Vencimiento del SOAT de tu Bajaj Pulsar N160 FI (${plate}). Aseguradora: ${document.getElementById('doc-insurance').value || 'Vigilar'}.`,
+      dateStr: exp
+    });
+    showToast('📅 Recordatorio de SOAT (.ics) descargado');
+  });
+
+  document.getElementById('btn-cal-license').addEventListener('click', () => {
+    const exp = document.getElementById('doc-license-exp').value;
+    if (!exp) {
+      showToast('⚠️ Primero selecciona la fecha de vencimiento de tu Brevete');
+      return;
+    }
+    downloadCalendarReminder({
+      title: 'Revalidar Brevete B-IIc',
+      description: 'Fecha de vencimiento de tu licencia de conducir categoría B-IIc.',
+      dateStr: exp
+    });
+    showToast('📅 Recordatorio de Brevete (.ics) descargado');
   });
 
   document.getElementById('btn-close-docs-x').addEventListener('click', closeDocs);
@@ -1229,10 +1395,7 @@ function setupEventListeners() {
     showToast('Guantera Digital actualizada');
   });
 
-  // Modal Ajustes y Copia de Seguridad (con validación profunda de estructura JSON)
-    // Eventos de Nube Firebase dentro del Modal Ajustes
-    // Selector de Color de la Moto (en Bienvenida y en Ajustes)
-    // Selector de Color de la Moto (en Bienvenida y en Ajustes)
+  // Selector de Color de la Moto (en Bienvenida y en Ajustes)
   document.querySelectorAll('.theme-pill').forEach((pill) => {
     pill.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1243,7 +1406,6 @@ function setupEventListeners() {
       showToast(`🎨 Tema aplicado`);
     });
   });
-  
 
   // Eventos de Autenticación Multiusuario y Nube Firebase
   const cloudBanner = document.getElementById('cloud-status-banner');
@@ -1251,6 +1413,7 @@ function setupEventListeners() {
   const loggedInBox = document.getElementById('auth-logged-in-box');
 
   subscribeToAuthChanges((user) => {
+    updateHeaderCloudIndicator(user ? 'ok' : 'idle');
     if (!cloudBanner) return;
     if (user) {
       cloudBanner.innerHTML = `<span>🟢 <strong>Piloto activo:</strong> ${escapeHTML(user.email)}<br><small>Tus datos se guardan solo en tu bóveda privada.</small></span>`;
@@ -1273,6 +1436,7 @@ function setupEventListeners() {
     try {
       showToast('🔑 Verificando cuenta...');
       await loginPilot(email, pass);
+      updateHeaderCloudIndicator('ok');
       showToast('✅ Sesión iniciada');
     } catch (err) {
       showToast('⚠️ Correo o contraseña incorrectos');
@@ -1289,7 +1453,9 @@ function setupEventListeners() {
     try {
       showToast('✨ Creando tu bóveda privada...');
       await registerPilot(email, pass);
+      updateHeaderCloudIndicator('syncing');
       await pushStateToCloud(appState);
+      updateHeaderCloudIndicator('ok');
       showToast('✅ Cuenta creada y moto respaldada');
     } catch (err) {
       showToast('⚠️ Ese correo ya está registrado o no es válido');
@@ -1298,6 +1464,7 @@ function setupEventListeners() {
 
   document.getElementById('btn-auth-logout').addEventListener('click', async () => {
     await logoutPilot();
+    updateHeaderCloudIndicator('idle');
     showToast('🚪 Sesión cerrada');
   });
 
@@ -1307,10 +1474,13 @@ function setupEventListeners() {
       return;
     }
     try {
+      updateHeaderCloudIndicator('syncing');
       showToast('☁️ Subiendo a tu bóveda privada...');
       await pushStateToCloud(appState);
+      updateHeaderCloudIndicator('ok');
       showToast('✅ Sincronizado en tu nube');
     } catch (err) {
+      updateHeaderCloudIndicator('error');
       showToast('⚠️ Error al subir a Firebase');
       console.error(err);
     }
@@ -1322,8 +1492,10 @@ function setupEventListeners() {
       return;
     }
     try {
+      updateHeaderCloudIndicator('syncing');
       showToast('🔄 Consultando tu bóveda...');
       const cloudData = await pullStateFromCloud();
+      updateHeaderCloudIndicator('ok');
       if (!cloudData || !isValidBackupJson(cloudData)) {
         showToast('⚠️ Aún no tienes respaldo guardado en esta cuenta');
         return;
@@ -1343,10 +1515,12 @@ function setupEventListeners() {
         }
       });
     } catch (err) {
+      updateHeaderCloudIndicator('error');
       showToast('⚠️ Error de conexión con Firebase');
       console.error(err);
     }
   });
+
   const closeBackup = () => closeModalById('modal-backup');
   document.getElementById('btn-open-backup-modal').addEventListener('click', () => openModalById('modal-backup'));
   document.getElementById('btn-close-backup-x').addEventListener('click', closeBackup);
@@ -1390,6 +1564,29 @@ function setupEventListeners() {
   });
 }
 
+// Ejecuta los Shortcuts de Pantalla de Inicio (?action=fuel | maint | spa)
+function handleAppShortcutActions() {
+  if (!appState.onboarded) return;
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get('action');
+  if (!action) return;
+
+  window.history.replaceState({}, document.title, window.location.pathname);
+
+  setTimeout(() => {
+    if (action === 'fuel') {
+      switchMainTab('tab-fuel');
+      openFuelModal(null);
+    } else if (action === 'maint') {
+      switchMainTab('tab-maint');
+      openLogModal(null, null);
+    } else if (action === 'spa') {
+      switchMainTab('tab-garage');
+      openSpaModal(null);
+    }
+  }, 250);
+}
+
 function initApp() {
   loadState();
   applyBikeTheme(appState.colorTheme || 'blue');
@@ -1399,10 +1596,11 @@ function initApp() {
     showOnboardingScreen();
   }
   setupEventListeners();
+  handleAppShortcutActions();
 
-    if ('serviceWorker' in navigator) {
+  if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').then((reg) => {
-      reg.update(); // Verifica en GitHub si hay cambios cada vez que abren la app
+      reg.update();
     }).catch(() => {});
 
     let refreshing = false;
@@ -1413,6 +1611,6 @@ function initApp() {
       }
     });
   }
- }
+}
 
 document.addEventListener('DOMContentLoaded', initApp);

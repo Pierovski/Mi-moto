@@ -95,30 +95,52 @@ export function estimateMonthlyKmRate() {
   return 850;
 }
 
-// Busca el primer tanque lleno real para establecer el Punto Base sin distorsiones por cargas parciales iniciales
 export function getFuelPreviewBaseline(excludeId = null) {
   const logs = appState.fuelLogs
     .filter((f) => String(f.id) !== String(excludeId))
     .sort((a, b) => Number(a.km) - Number(b.km) || a.id - b.id);
 
-  const firstFullIdx = logs.findIndex((f) => f.fullTank !== false);
-  if (firstFullIdx === -1) return { hasBase: false };
-
-  let lastFullKm = Number(logs[firstFullIdx].km);
+  let hasBase = false;
+  let lastFullKm = 0;
   let pendingGal = 0;
   let pendingCost = 0;
 
-  for (let i = firstFullIdx + 1; i < logs.length; i++) {
+  for (let i = 0; i < logs.length; i++) {
     const item = logs[i];
-    if (item.fullTank === false) {
-      pendingGal += Number(item.gallons) || 0;
-      pendingCost += Number(item.cost) || 0;
+    if (item.isLoan) {
+      if (item.fullTank !== false) {
+        hasBase = true;
+        lastFullKm = Number(item.km);
+        pendingGal = 0;
+        pendingCost = 0;
+      } else {
+        hasBase = false;
+        pendingGal = 0;
+        pendingCost = 0;
+      }
+      continue;
+    }
+
+    if (!hasBase) {
+      if (item.fullTank !== false) {
+        hasBase = true;
+        lastFullKm = Number(item.km);
+        pendingGal = 0;
+        pendingCost = 0;
+      }
     } else {
-      lastFullKm = Number(item.km);
-      pendingGal = 0;
-      pendingCost = 0;
+      if (item.fullTank === false) {
+        pendingGal += Number(item.gallons) || 0;
+        pendingCost += Number(item.cost) || 0;
+      } else {
+        lastFullKm = Number(item.km);
+        pendingGal = 0;
+        pendingCost = 0;
+      }
     }
   }
+
+  if (!hasBase) return { hasBase: false };
 
   return {
     hasBase: true,
@@ -129,10 +151,12 @@ export function getFuelPreviewBaseline(excludeId = null) {
   };
 }
 
+// Motor de Telemetría + Diagnóstico Preventivo + Detector de Grifo Más Rentable
 export function computeFuelTelemetry() {
   const sortedAsc = [...appState.fuelLogs].sort((a, b) => Number(a.km) - Number(b.km) || a.id - b.id);
   const enrichedMap = {};
   const intervalPoints = [];
+  const stationMap = {};
 
   let totalDeltaKm = 0;
   let totalGallonsUsed = 0;
@@ -146,6 +170,13 @@ export function computeFuelTelemetry() {
   let lastFullKm = 0;
   let pendingGal = 0;
   let pendingCost = 0;
+
+  const normalizeStationName = (rawNotes) => {
+    const clean = String(rawNotes || '').trim();
+    if (!clean) return 'Sin especificar';
+    const firstPart = clean.split(/[-•,/]/)[0].trim();
+    return firstPart.charAt(0).toUpperCase() + firstPart.slice(1).toLowerCase();
+  };
 
   for (let i = 0; i < sortedAsc.length; i++) {
     const curr = sortedAsc[i];
@@ -161,14 +192,62 @@ export function computeFuelTelemetry() {
     if (currPrice > 0) lastValidPriceGal = currPrice;
 
     const isFull = curr.fullTank !== false;
+    const isLoan = Boolean(curr.isLoan);
+    const stationKey = normalizeStationName(curr.notes);
+
+    if (stationKey !== 'Sin especificar') {
+      if (!stationMap[stationKey]) {
+        stationMap[stationKey] = {
+          name: stationKey,
+          visits: 0,
+          priceSum: 0,
+          priceCount: 0,
+          lastPrice: 0,
+          deltaKmSum: 0,
+          galSum: 0,
+          costSum: 0
+        };
+      }
+      stationMap[stationKey].visits++;
+      if (currPrice > 0) {
+        stationMap[stationKey].priceSum += currPrice;
+        stationMap[stationKey].priceCount++;
+        stationMap[stationKey].lastPrice = currPrice;
+      }
+    }
+
+    // Si el registro fue en Modo Préstamo, se aísla de la telemetría personal
+    if (isLoan) {
+      enrichedMap[curr.id] = {
+        isBase: false,
+        isPartial: !isFull,
+        isLoan: true,
+        deltaKm: 0,
+        kmPerGal: 0,
+        costPerKm: 0,
+        priceDiff,
+        prevPriceGal
+      };
+      if (isFull) {
+        hasBaseFullTank = true;
+        lastFullKm = Number(curr.km);
+        pendingGal = 0;
+        pendingCost = 0;
+      } else {
+        hasBaseFullTank = false;
+        pendingGal = 0;
+        pendingCost = 0;
+      }
+      continue;
+    }
 
     if (!hasBaseFullTank) {
       if (isFull) {
         hasBaseFullTank = true;
         lastFullKm = Number(curr.km);
-        enrichedMap[curr.id] = { isBase: true, isPartial: false, deltaKm: 0, kmPerGal: 0, costPerKm: 0, priceDiff, prevPriceGal };
+        enrichedMap[curr.id] = { isBase: true, isPartial: false, isLoan: false, deltaKm: 0, kmPerGal: 0, costPerKm: 0, priceDiff, prevPriceGal };
       } else {
-        enrichedMap[curr.id] = { isBase: false, isPartial: true, deltaKm: 0, kmPerGal: 0, costPerKm: 0, priceDiff, prevPriceGal };
+        enrichedMap[curr.id] = { isBase: false, isPartial: true, isLoan: false, deltaKm: 0, kmPerGal: 0, costPerKm: 0, priceDiff, prevPriceGal };
       }
     } else {
       const gal = Number(curr.gallons) || 0;
@@ -178,7 +257,7 @@ export function computeFuelTelemetry() {
         pendingGal += gal;
         pendingCost += cost;
         const stepDelta = Math.max(0, Number(curr.km) - Number(sortedAsc[i - 1].km));
-        enrichedMap[curr.id] = { isBase: false, isPartial: true, deltaKm: stepDelta, kmPerGal: 0, costPerKm: 0, priceDiff, prevPriceGal };
+        enrichedMap[curr.id] = { isBase: false, isPartial: true, isLoan: false, deltaKm: stepDelta, kmPerGal: 0, costPerKm: 0, priceDiff, prevPriceGal };
       } else {
         const deltaKm = Number(curr.km) - lastFullKm;
         const effectiveGal = gal + pendingGal;
@@ -187,15 +266,21 @@ export function computeFuelTelemetry() {
         if (deltaKm > 0 && effectiveGal > 0) {
           const kmPerGal = deltaKm / effectiveGal;
           const costPerKm = effectiveCost / deltaKm;
-          enrichedMap[curr.id] = { isBase: false, isPartial: false, deltaKm, kmPerGal, costPerKm, priceDiff, prevPriceGal };
+          enrichedMap[curr.id] = { isBase: false, isPartial: false, isLoan: false, deltaKm, kmPerGal, costPerKm, priceDiff, prevPriceGal };
           totalDeltaKm += deltaKm;
           totalGallonsUsed += effectiveGal;
           totalCostUsed += effectiveCost;
           validIntervals++;
           lastIntervalData = { deltaKm, kmPerGal, costPerKm, gal: effectiveGal, cost: effectiveCost };
           intervalPoints.push({ km: Number(curr.km), kmPerGal });
+
+          if (stationKey !== 'Sin especificar' && stationMap[stationKey]) {
+            stationMap[stationKey].deltaKmSum += deltaKm;
+            stationMap[stationKey].galSum += effectiveGal;
+            stationMap[stationKey].costSum += effectiveCost;
+          }
         } else {
-          enrichedMap[curr.id] = { isBase: false, isPartial: false, deltaKm: Math.max(0, deltaKm), kmPerGal: 0, costPerKm: 0, priceDiff, prevPriceGal };
+          enrichedMap[curr.id] = { isBase: false, isPartial: false, isLoan: false, deltaKm: Math.max(0, deltaKm), kmPerGal: 0, costPerKm: 0, priceDiff, prevPriceGal };
         }
         lastFullKm = Number(curr.km);
         pendingGal = 0;
@@ -207,7 +292,102 @@ export function computeFuelTelemetry() {
   const avgKmPerGal = totalGallonsUsed > 0 ? totalDeltaKm / totalGallonsUsed : 140;
   const avgCostPerKm = totalDeltaKm > 0 ? totalCostUsed / totalDeltaKm : 0.12;
 
-  return { enrichedMap, validIntervals, avgKmPerGal, avgCostPerKm, lastIntervalData, latestPriceDiff, intervalPoints };
+  // Diagnóstico Preventivo de Inyección FI
+  let diagnosticAlert = null;
+  if (validIntervals >= 2 && lastIntervalData) {
+    const dropRatio = (avgKmPerGal - lastIntervalData.kmPerGal) / avgKmPerGal;
+    if (dropRatio >= 0.12) {
+      diagnosticAlert = {
+        status: 'warn',
+        dropPct: Math.round(dropRatio * 100),
+        title: `Caída de rendimiento detectada (-${Math.round(dropRatio * 100)}%)`,
+        advice: 'Tu último tramo rindió menos que tu media histórica. Revisa: 1) Presión de llantas en frío (25/28 PSI), 2) Limpieza y holgura de cadena O-Ring (20-30 mm), 3) Estado del filtro viscoso y bujías DTS-i.'
+      };
+    } else if (lastIntervalData.kmPerGal >= avgKmPerGal) {
+      diagnosticAlert = {
+        status: 'ok',
+        dropPct: 0,
+        title: 'Inyección FI y combustión en rango óptimo',
+        advice: `Tu último tramo (${lastIntervalData.kmPerGal.toFixed(1)} km/gal) iguala o supera tu media histórica.`
+      };
+    }
+  }
+
+  // Detector de Grifos más Baratos y Rentables
+  const stationRanking = Object.values(stationMap)
+    .map((st) => {
+      const avgPrice = st.priceCount > 0 ? st.priceSum / st.priceCount : 0;
+      const realKmPerGal = st.galSum > 0 ? st.deltaKmSum / st.galSum : 0;
+      const realCostPerKm = st.deltaKmSum > 0 ? st.costSum / st.deltaKmSum : 0;
+      return {
+        name: st.name,
+        visits: st.visits,
+        avgPrice,
+        lastPrice: st.lastPrice,
+        realKmPerGal,
+        realCostPerKm
+      };
+    })
+    .sort((a, b) => {
+      if (a.realCostPerKm > 0 && b.realCostPerKm > 0) return a.realCostPerKm - b.realCostPerKm;
+      if (a.avgPrice > 0 && b.avgPrice > 0) return a.avgPrice - b.avgPrice;
+      return b.visits - a.visits;
+    });
+
+  return {
+    enrichedMap,
+    validIntervals,
+    avgKmPerGal,
+    avgCostPerKm,
+    lastIntervalData,
+    latestPriceDiff,
+    intervalPoints,
+    diagnosticAlert,
+    stationRanking
+  };
+}
+
+// Ranking de Talleres y Ahorro "Hecho en Casa"
+export function computeWorkshopRanking() {
+  const map = {};
+  let diyCount = 0;
+  let diyPartsSpent = 0;
+
+  appState.logs.forEach((l) => {
+    const rawW = String(l.workshop || '').trim();
+    const labor = Number(l.laborCost) || 0;
+    const parts = Number(l.partsCost ?? l.cost) || 0;
+    const total = Number(l.cost) || 0;
+
+    const name = rawW ? rawW : (labor === 0 ? 'Hecho en casa (Tú mismo)' : 'Taller General');
+    if (labor === 0 && parts > 0) {
+      diyCount++;
+      diyPartsSpent += parts;
+    }
+
+    if (!map[name]) {
+      map[name] = {
+        name,
+        visits: 0,
+        totalSpent: 0,
+        partsSpent: 0,
+        laborSpent: 0,
+        lastDate: l.date || '',
+        lastKm: Number(l.km) || 0
+      };
+    }
+    map[name].visits++;
+    map[name].totalSpent += total;
+    map[name].partsSpent += parts;
+    map[name].laborSpent += labor;
+    if ((Number(l.km) || 0) >= map[name].lastKm) {
+      map[name].lastKm = Number(l.km) || 0;
+      map[name].lastDate = l.date || map[name].lastDate;
+    }
+  });
+
+  const list = Object.values(map).sort((a, b) => b.visits - a.visits || b.totalSpent - a.totalSpent);
+  return { list, diyCount, diyPartsSpent };
 }
 
 export function evaluateDocsStatus() {
@@ -261,6 +441,7 @@ export function evaluateDocsStatus() {
   };
 }
 
+// Finanzas Maestras con Separación CAPEX (Patrimonio) vs OPEX (Operativo)
 export function computeMasterFinancials() {
   const allFuel = appState.fuelLogs.reduce((s, f) => s + (Number(f.cost) || 0), 0);
   const allMaint = appState.logs.reduce((s, l) => s + (Number(l.cost) || 0), 0);
@@ -268,18 +449,25 @@ export function computeMasterFinancials() {
   const allLabor = appState.logs.reduce((s, l) => s + (Number(l.laborCost) || 0), 0);
   const allSpa = (appState.washLogs || []).reduce((s, w) => s + (Number(w.cost) || 0), 0);
 
+  // Llantas son consumibles de desgaste (OPEX), Accesorios/Mods + Moto son Patrimonio (CAPEX)
   const frontCost = Number(appState.tires.front.cost) || 0;
   const rearCost = Number(appState.tires.rear.cost) || 0;
   const histTireCost = (appState.tires.history || []).reduce((s, h) => s + (Number(h.cost) || 0), 0);
+  const allTires = frontCost + rearCost + histTireCost;
+
   const modsCost = (appState.accessories || []).reduce((s, m) => s + (Number(m.cost) || 0), 0);
-  const allGarage = frontCost + rearCost + histTireCost + modsCost;
+  const bikePrice = Number(appState.bikePurchasePrice) || 0;
+  const capexTotal = bikePrice + modsCost;
+
+  const allGarage = allTires + modsCost;
 
   const soatCost = Number(appState.docs?.soatCost) || 0;
   const extraDocsAndOther = (appState.otherExpenses || []).reduce((s, e) => s + (Number(e.cost) || 0), 0);
   const allAdmin = soatCost + extraDocsAndOther;
 
-  const opCostTotal = allFuel + allMaint + allSpa + allAdmin;
-  const grandTotalInvested = opCostTotal + allGarage;
+  // OPEX Total = Combustible + Taller + Lavados + Documentos/Peajes + Llantas
+  const opCostTotal = allFuel + allMaint + allSpa + allAdmin + allTires;
+  const grandTotalInvested = opCostTotal + capexTotal;
 
   const trackedKm = Math.max(0, Number(appState.currentKm) - (Number(appState.initialKm) || 0));
   const realOpCostPerKm = trackedKm > 0 ? opCostTotal / trackedKm : 0;
@@ -304,16 +492,20 @@ export function computeMasterFinancials() {
   }
   const dailyOpCost = opCostTotal / activeDays;
 
-  const safeDiv = grandTotalInvested > 0 ? grandTotalInvested : 1;
+  const safeOpDiv = Math.max(1, allFuel + allMaint + allSpa + allGarage + allAdmin);
   const shares = {
-    fuelPct: Math.round((allFuel / safeDiv) * 100),
-    maintPct: Math.round((allMaint / safeDiv) * 100),
-    spaPct: Math.round((allSpa / safeDiv) * 100),
-    garagePct: Math.round((allGarage / safeDiv) * 100),
-    adminPct: Math.round((allAdmin / safeDiv) * 100)
+    fuelPct: Math.round((allFuel / safeOpDiv) * 100),
+    maintPct: Math.round((allMaint / safeOpDiv) * 100),
+    spaPct: Math.round((allSpa / safeOpDiv) * 100),
+    garagePct: Math.round((allGarage / safeOpDiv) * 100),
+    adminPct: Math.round((allAdmin / safeOpDiv) * 100)
   };
 
   return {
+    bikePrice,
+    modsCost,
+    capexTotal,
+    allTires,
     allFuel,
     allMaint,
     allParts,
@@ -329,4 +521,42 @@ export function computeMasterFinancials() {
     dailyOpCost,
     shares
   };
+}
+
+// Generador nativo de recordatorios .ICS para Google Calendar / Apple Calendar
+export function downloadCalendarReminder({ title, description, dateStr }) {
+  let targetDate = dateStr;
+  if (!targetDate) {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    targetDate = d.toISOString().slice(0, 10);
+  }
+  const cleanDate = targetDate.replace(/-/g, '');
+  const icsLines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//MiMoto Pulsar N160 FI//ES',
+    'BEGIN:VEVENT',
+    `DTSTART;VALUE=DATE:${cleanDate}`,
+    `DTEND;VALUE=DATE:${cleanDate}`,
+    `SUMMARY:🏍️ Mi Moto N160: ${title}`,
+    `DESCRIPTION:${String(description || '').replace(/\n/g, '\\n')}`,
+    'BEGIN:VALARM',
+    'TRIGGER:-PT9H',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Recordatorio Mi Moto N160 FI',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([icsLines], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Recordatorio_N160_${cleanDate}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
 }

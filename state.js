@@ -138,6 +138,8 @@ export function createDefaultState() {
     onboarded: false,
     bikeModel: 'Bajaj Pulsar N160 FI',
     colorTheme: 'blue',
+    bikePurchasePrice: 0,
+    loanModeActive: false,
     initialKm: 0,
     currentKm: 0,
     tripBaseKm: 0,
@@ -263,6 +265,8 @@ export function migrateAndNormalizeState(raw) {
     ...raw,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     colorTheme: raw.colorTheme || 'blue',
+    bikePurchasePrice: Math.max(0, Number(raw.bikePurchasePrice) || 0),
+    loanModeActive: Boolean(raw.loanModeActive),
     initialKm: Math.max(0, inferredInitKm),
     currentKm: Math.max(0, Number(raw.currentKm) || 0),
     tripBaseKm: Number(raw.tripBaseKm) || 0,
@@ -320,7 +324,9 @@ export function loadState() {
 export function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-    scheduleAutoCloudSync(appState); // <-- Dispara el respaldo automático a Firebase
+    scheduleAutoCloudSync(appState, (status) => {
+      window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: status }));
+    });
     return true;
   } catch (e) {
     console.error('Error al guardar en localStorage (posible límite de cuota):', e);

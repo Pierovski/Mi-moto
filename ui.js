@@ -9,6 +9,7 @@ import {
   parseDotCode,
   estimateMonthlyKmRate,
   computeFuelTelemetry,
+  computeWorkshopRanking,
   evaluateDocsStatus,
   computeMasterFinancials
 } from './telemetry.js';
@@ -270,17 +271,20 @@ export function renderMaintenanceCards() {
     let statusClass = 'status-ok';
     let statusText = 'AL DÍA';
     let barColor = 'var(--neon-lime)';
+    let showCalBtn = false;
 
     if (effectiveRatio >= 1) {
       statusClass = 'status-danger';
       statusText = timeRatio >= 1 && kmRatio < 1 ? 'VENCIDO (TIEMPO)' : 'VENCIDO';
       barColor = 'var(--red-danger)';
       overdueCount++;
-    } else if (effectiveRatio >= 0.88) {
+      showCalBtn = true;
+    } else if (effectiveRatio >= 0.85) {
       statusClass = 'status-warn';
       statusText = 'PRÓXIMO';
       barColor = 'var(--amber-warn)';
       warnCount++;
+      showCalBtn = true;
     }
 
     const footerRightText =
@@ -290,6 +294,10 @@ export function renderMaintenanceCards() {
 
     const prevRec = getLastServiceRecord(rule.id);
     const lastPriceHint = prevRec ? ` • Último: S/ ${Number(prevRec.cost).toFixed(0)}` : '';
+
+    const calBtnHtml = showCalBtn
+      ? `<button type="button" class="btn-cal-ics" data-cal-maint="${escapeHTML(rule.title)}" data-cal-targetkm="${nextTargetKm}">📅 Agendar</button>`
+      : '';
 
     const card = document.createElement('div');
     card.className = 'maint-card';
@@ -303,6 +311,7 @@ export function renderMaintenanceCards() {
           <div class="maint-sub">${rule.subtitle}${lastPriceHint}</div>
         </div>
         <div class="maint-top-right">
+          ${calBtnHtml}
           <button class="btn-quick-done" data-quick-srv="${rule.id}">✓ Hecho</button>
           <span class="status-pill ${statusClass}">${statusText}</span>
         </div>
@@ -351,6 +360,45 @@ export function renderLogs() {
   document.getElementById('maint-month-total').textContent = `S/ ${monthMaint.toFixed(2)}`;
   document.getElementById('maint-year-total').textContent = `S/ ${yearMaint.toFixed(2)}`;
 
+  // Renderizar Ranking de Talleres
+  const wRank = computeWorkshopRanking();
+  const wCountBadge = document.getElementById('workshop-count-badge');
+  const wSummary = document.getElementById('workshop-diy-summary');
+  const wContainer = document.getElementById('workshop-rank-container');
+
+  if (wCountBadge) wCountBadge.textContent = wRank.list.length;
+  if (wSummary) {
+    wSummary.textContent =
+      wRank.diyCount > 0
+        ? `Has realizado ${wRank.diyCount} servicio(s) tú mismo en casa (S/ 0 mano de obra)`
+        : 'Registra el nombre del taller o mecánico en cada servicio';
+  }
+  if (wContainer) {
+    wContainer.innerHTML = '';
+    if (wRank.list.length === 0) {
+      wContainer.innerHTML = `<div class="empty-logs">Aún no hay talleres registrados en tu bitácora.</div>`;
+    } else {
+      wRank.list.forEach((w, idx) => {
+        const div = document.createElement('div');
+        div.className = 'rank-item-row';
+        div.innerHTML = `
+          <div class="log-left">
+            <h4><span class="rank-medal ${idx === 0 ? 'top1' : ''}">#${idx + 1}</span> ${escapeHTML(w.name)}</h4>
+            <div class="log-meta">${w.visits} visita(s) • Última: ${w.lastKm.toLocaleString('es-PE')} km (${escapeHTML(w.lastDate)})</div>
+            <div class="log-telemetry-badges">
+              <span class="tele-chip">Repuestos: S/ ${w.partsSpent.toFixed(0)}</span>
+              <span class="tele-chip ${w.laborSpent === 0 ? 'neon' : ''}">M.O: S/ ${w.laborSpent.toFixed(0)}</span>
+            </div>
+          </div>
+          <div class="log-right">
+            <span class="log-cost">S/ ${w.totalSpent.toFixed(2)}</span>
+          </div>
+        `;
+        wContainer.appendChild(div);
+      });
+    }
+  }
+
   const filtered =
     uiConfig.activeMaintFilter === 'all'
       ? appState.logs
@@ -370,6 +418,9 @@ export function renderLogs() {
 
     const parts = Number(item.partsCost ?? item.cost) || 0;
     const labor = Number(item.laborCost) || 0;
+    if (item.workshop) {
+      badges.push(`<span class="tele-chip">🏪 ${escapeHTML(item.workshop)}</span>`);
+    }
     if (labor > 0) {
       badges.push(`<span class="tele-chip">Rep: S/ ${parts.toFixed(0)} • M.O: S/ ${labor.toFixed(0)}</span>`);
     } else if (parts > 0) {
@@ -409,6 +460,22 @@ export function renderLogs() {
 
 export function renderFuelSection() {
   document.getElementById('fuel-count-badge').textContent = appState.fuelLogs.length;
+
+  // Estado Visual del Modo Préstamo
+  const loanBanner = document.getElementById('loan-mode-banner');
+  const loanTitle = document.getElementById('loan-mode-title');
+  const loanDesc = document.getElementById('loan-mode-desc');
+  const loanBtn = document.getElementById('btn-toggle-loan-mode');
+
+  if (loanBanner) {
+    const isLoan = Boolean(appState.loanModeActive);
+    loanBanner.classList.toggle('active', isLoan);
+    loanTitle.textContent = isLoan ? 'Modo Préstamo: ACTIVO (Aislando datos)' : 'Modo Préstamo: Desactivado';
+    loanDesc.textContent = isLoan
+      ? 'Las cargas registradas ahora no alterarán tu promedio histórico de km/gal'
+      : 'Actívalo si prestas la moto para no alterar tu promedio km/gal';
+    loanBtn.textContent = isLoan ? 'Desactivar' : 'Activar';
+  }
 
   const labelMap = {
     week: 'PREMIUM (SEMANA)',
@@ -475,6 +542,65 @@ export function renderFuelSection() {
     trendSub.textContent = lastRec ? `Último galón: S/ ${Number(lastRec.priceGal).toFixed(2)}` : 'Grifo + Taller + Lavado + Otros';
   }
 
+  // Banner de Diagnóstico Preventivo FI
+  const diagBanner = document.getElementById('fi-diagnostic-banner');
+  if (diagBanner) {
+    if (tele.diagnosticAlert) {
+      diagBanner.classList.remove('hidden');
+      diagBanner.classList.toggle('ok', tele.diagnosticAlert.status === 'ok');
+      diagBanner.innerHTML = `
+        <strong>${tele.diagnosticAlert.status === 'ok' ? '✅' : '⚠️'} Diagnóstico Preventivo FI: ${escapeHTML(tele.diagnosticAlert.title)}</strong>
+        <span>${escapeHTML(tele.diagnosticAlert.advice)}</span>
+      `;
+    } else {
+      diagBanner.classList.add('hidden');
+    }
+  }
+
+  // Detector del Grifo Más Barato y Rentable
+  const stCount = document.getElementById('station-count-badge');
+  const stSub = document.getElementById('best-station-sub');
+  const stContainer = document.getElementById('station-rank-container');
+
+  if (stCount) stCount.textContent = tele.stationRanking.length;
+  if (stSub) {
+    if (tele.stationRanking.length > 0) {
+      const top = tele.stationRanking[0];
+      stSub.innerHTML =
+        top.realCostPerKm > 0
+          ? `🏆 Más rentable: <strong style="color:var(--neon-lime)">${escapeHTML(top.name)}</strong> (S/ ${top.realCostPerKm.toFixed(2)}/km • ${top.realKmPerGal.toFixed(1)} km/gal)`
+          : `🏆 Mejor precio galón: <strong style="color:var(--caribbean-bright)">${escapeHTML(top.name)}</strong> (S/ ${top.avgPrice.toFixed(2)}/gal)`;
+    } else {
+      stSub.textContent = 'Escribe el nombre del grifo al abastecer (ej. Primax, Repsol)';
+    }
+  }
+  if (stContainer) {
+    stContainer.innerHTML = '';
+    if (tele.stationRanking.length === 0) {
+      stContainer.innerHTML = `<div class="empty-logs">Pon el nombre de la estación en el campo "Grifo" de tus cargas para comparar cuál rinde más.</div>`;
+    } else {
+      tele.stationRanking.forEach((st, idx) => {
+        const div = document.createElement('div');
+        div.className = 'rank-item-row';
+        div.innerHTML = `
+          <div class="log-left">
+            <h4><span class="rank-medal ${idx === 0 ? 'top1' : ''}">#${idx + 1}</span> ⛽ ${escapeHTML(st.name)}</h4>
+            <div class="log-meta">${st.visits} carga(s) • Promedio: S/ ${st.avgPrice > 0 ? st.avgPrice.toFixed(2) : '--'}/gal</div>
+            <div class="log-telemetry-badges">
+              ${st.realKmPerGal > 0 ? `<span class="tele-chip neon">Rinde ${st.realKmPerGal.toFixed(1)} km/gal</span>` : `<span class="tele-chip">Acumulando tramo completo</span>`}
+              ${st.realCostPerKm > 0 ? `<span class="tele-chip">Costo real: S/ ${st.realCostPerKm.toFixed(2)}/km</span>` : ''}
+            </div>
+          </div>
+          <div class="log-right">
+            <span class="log-cost">${st.lastPrice > 0 ? `S/ ${st.lastPrice.toFixed(2)}` : '--'}</span>
+            <small style="font-size:9px;color:var(--alloy-muted);">últ. galón</small>
+          </div>
+        `;
+        stContainer.appendChild(div);
+      });
+    }
+  }
+
   renderSparkline(tele.intervalPoints);
 
   const kmGalEl = document.getElementById('tele-km-per-gal');
@@ -488,7 +614,7 @@ export function renderFuelSection() {
 
   const firstFullRec = [...appState.fuelLogs]
     .sort((a, b) => Number(a.km) - Number(b.km) || a.id - b.id)
-    .find((f) => f.fullTank !== false);
+    .find((f) => f.fullTank !== false && !f.isLoan);
 
   if (tele.validIntervals > 0) {
     const kmPerLit = tele.avgKmPerGal / 3.78541;
@@ -538,7 +664,9 @@ export function renderFuelSection() {
     const tInfo = tele.enrichedMap[f.id];
     const chips = [];
 
-    if (tInfo && tInfo.isBase) {
+    if (tInfo && tInfo.isLoan) {
+      chips.push(`<span class="mem-badge mem-up">🤝 Modo Préstamo (Aislado)</span>`);
+    } else if (tInfo && tInfo.isBase) {
       chips.push(`<span class="tele-chip">Punto Base Inicial (1er Corte)</span>`);
     } else if (tInfo && tInfo.isPartial) {
       chips.push(`<span class="tele-chip">Carga Parcial${tInfo.deltaKm > 0 ? ` (+${tInfo.deltaKm} km)` : ' (Previo a Base)'}</span>`);
@@ -567,7 +695,7 @@ export function renderFuelSection() {
         <h4>Premium • ${Number(f.gallons).toFixed(2)} gal</h4>
         <div class="log-meta">${escapeHTML(f.date)} • Odómetro: ${Number(f.km).toLocaleString('es-PE')} km</div>
         <div class="log-telemetry-badges">${chips.join('')}</div>
-        ${f.notes ? `<div class="log-notes">${escapeHTML(f.notes)}</div>` : ''}
+        ${f.notes ? `<div class="log-notes">⛽ ${escapeHTML(f.notes)}</div>` : ''}
       </div>
       <div class="log-right">
         <span class="log-cost">S/ ${Number(f.cost).toFixed(2)}</span>
@@ -813,6 +941,21 @@ export function renderRouteAndTCO() {
   document.getElementById('route-est-cost').textContent = `S/ ${estCost.toFixed(2)}`;
 
   const fin = computeMasterFinancials();
+
+  // Tarjetas Superiores CAPEX vs OPEX
+  const capexDisp = document.getElementById('capex-total-display');
+  const capexSub = document.getElementById('capex-bike-sub');
+  const opexDisp = document.getElementById('opex-total-display');
+  const opexMini = document.getElementById('opex-per-km-mini');
+  const tcoCapexRow = document.getElementById('tco-capex-row');
+
+  if (capexDisp) capexDisp.textContent = `S/ ${fin.capexTotal.toFixed(2)}`;
+  if (capexSub) {
+    capexSub.textContent = fin.bikePrice > 0 ? `Moto: S/ ${fin.bikePrice.toLocaleString('es-PE')}` : 'Sin precio moto';
+  }
+  if (opexDisp) opexDisp.textContent = `S/ ${fin.opCostTotal.toFixed(2)}`;
+  if (opexMini) opexMini.textContent = `S/ ${fin.realOpCostPerKm.toFixed(2)}/km`;
+  if (tcoCapexRow) tcoCapexRow.textContent = `S/ ${fin.capexTotal.toFixed(2)}`;
 
   document.getElementById('master-grand-total').textContent = `S/ ${fin.grandTotalInvested.toFixed(2)}`;
   document.getElementById('tco-fuel-all').textContent = `S/ ${fin.allFuel.toFixed(2)}`;

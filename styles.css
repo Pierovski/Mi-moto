@@ -993,3 +993,263 @@ body[data-theme="grey"] {
   border-radius: 50%;
   border: 1.5px solid rgba(255, 255, 255, 0.45);
 }
+/* ================= BLOQUE V2.0: BOTTOM NAV, NUBE DINÁMICA Y ANALÍTICA ================= */
+
+/* Espacio inferior extra para que la Barra Fija nunca tape el último registro */
+body {
+  padding-bottom: 84px !important;
+}
+
+/* Barra de Navegación Inferior Fija (Zona del Pulgar) */
+.tabs-nav-5 {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 500px;
+  background: rgba(10, 16, 24, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px 18px 0 0;
+  border: 1px solid var(--border-subtle);
+  border-bottom: none;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  margin-bottom: 0;
+  z-index: 950;
+  box-shadow: 0 -8px 26px rgba(0, 0, 0, 0.72);
+}
+
+.tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 2px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.tab-btn .nav-ico {
+  font-size: 15px;
+  line-height: 1.1;
+}
+
+/* Indicador de Nube Dinámico en Cabecera */
+.cloud-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-engine);
+  border: 1px solid var(--border-subtle);
+  padding: 5px 9px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--alloy-silver);
+  height: 34px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cloud-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--alloy-muted);
+}
+
+.cloud-live-pill.syncing {
+  border-color: var(--caribbean-bright);
+  color: var(--caribbean-bright);
+}
+
+.cloud-live-pill.syncing .cloud-live-dot {
+  background: var(--caribbean-bright);
+  box-shadow: 0 0 8px var(--caribbean-bright);
+  animation: pulseCloud 0.8s infinite alternate;
+}
+
+.cloud-live-pill.ok .cloud-live-dot {
+  background: var(--neon-lime);
+  box-shadow: 0 0 6px var(--neon-lime);
+}
+
+.cloud-live-pill.error {
+  border-color: var(--red-danger);
+  color: var(--red-danger);
+}
+
+.cloud-live-pill.error .cloud-live-dot {
+  background: var(--red-danger);
+}
+
+@keyframes pulseCloud {
+  from { transform: scale(0.8); opacity: 0.5; }
+  to { transform: scale(1.25); opacity: 1; }
+}
+
+/* Switch de Modo Préstamo (Aislamiento de Telemetría) */
+.loan-mode-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 159, 10, 0.08);
+  border: 1px solid rgba(255, 159, 10, 0.3);
+  border-radius: 10px;
+  padding: 7px 11px;
+  margin-bottom: 10px;
+}
+
+.loan-mode-strip.active {
+  background: rgba(255, 159, 10, 0.18);
+  border-color: var(--amber-warn);
+}
+
+.loan-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.loan-left small {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 500;
+  color: var(--alloy-silver);
+}
+
+.btn-loan-toggle {
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 159, 10, 0.45);
+  background: #05080D;
+  color: var(--amber-warn);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.loan-mode-strip.active .btn-loan-toggle {
+  background: var(--amber-warn);
+  color: #05090D;
+}
+
+/* Botón de Agendar en Calendario (.ics) */
+.btn-cal-ics {
+  background: rgba(88, 232, 0, 0.12);
+  border: 1px solid rgba(88, 232, 0, 0.38);
+  color: var(--neon-lime);
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2.5px 7px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Tarjetas de Ranking (Grifos y Talleres) + Diagnóstico FI */
+.diag-alert-box {
+  background: rgba(255, 159, 10, 0.12);
+  border: 1px solid rgba(255, 159, 10, 0.4);
+  border-left: 3px solid var(--amber-warn);
+  border-radius: 10px;
+  padding: 9px 11px;
+  margin-bottom: 10px;
+  font-size: 10.5px;
+  color: var(--alloy-silver);
+  line-height: 1.4;
+}
+
+.diag-alert-box.ok {
+  background: rgba(88, 232, 0, 0.08);
+  border-color: rgba(88, 232, 0, 0.3);
+  border-left-color: var(--neon-lime);
+}
+
+.diag-alert-box strong {
+  display: block;
+  color: #FFFFFF;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.rank-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #070C14;
+  border: 1px solid var(--border-subtle);
+  border-radius: 9px;
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+.rank-medal {
+  font-family: var(--font-speed);
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(30, 136, 168, 0.2);
+  color: var(--caribbean-bright);
+}
+
+.rank-medal.top1 {
+  background: rgba(88, 232, 0, 0.18);
+  color: var(--neon-lime);
+  border: 1px solid rgba(88, 232, 0, 0.4);
+}
+
+/* Tarjetas Duales CAPEX vs OPEX */
+.capex-opex-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.co-card {
+  background: #070C14;
+  border: 1px solid var(--border-subtle);
+  border-radius: 11px;
+  padding: 9px 11px;
+}
+
+.co-card.capex {
+  border-top: 2.5px solid var(--caribbean-bright);
+}
+
+.co-card.opex {
+  border-top: 2.5px solid var(--neon-lime);
+}
+
+.co-tag {
+  display: block;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--alloy-muted);
+}
+
+.co-val {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 17px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 2px 0;
+}
+
+.co-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9.5px;
+  color: var(--alloy-silver);
+}

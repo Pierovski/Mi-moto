@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Mi Moto - Pulsar N160 FI",
   "short_name": "MiMoto",
-  "description": "Telemetría de consumo Premium, control financiero integral y bitácora mecánica para Bajaj Pulsar N160 FI.",
+  "description": "Telemetría de consumo Premium, control financiero CAPEX/OPEX y bitácora mecánica para Bajaj Pulsar N160 FI.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -22,6 +22,29 @@
       "sizes": "192x192 512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Abastecer Premium",
+      "short_name": "+ Grifo",
+      "description": "Registrar nueva carga de combustible",
+      "url": "./index.html?action=fuel",
+      "icons": [{ "src": "./icono.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Registrar Servicio",
+      "short_name": "+ Taller",
+      "description": "Registrar mantenimiento en bitácora",
+      "url": "./index.html?action=maint",
+      "icons": [{ "src": "./icono.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Registrar Lavado",
+      "short_name": "+ Lavado",
+      "description": "Registrar lavado y cuidado",
+      "url": "./index.html?action=spa",
+      "icons": [{ "src": "./icono.png", "sizes": "192x192" }]
     }
   ]
 }
