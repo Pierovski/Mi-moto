@@ -25,9 +25,10 @@ import {
 import {
   getLastServiceRecord,
   getLastFuelPriceRecord,
+  getRecentQuickPicks,
   getFuelPreviewBaseline,
   estimateMonthlyKmRate,
-  downloadCalendarReminder
+  openGoogleCalendarEvent
 } from './telemetry.js';
 import {
   uiConfig,
@@ -71,19 +72,20 @@ let selectedTireAction = 'edit';
 let selectedTireCompound = 'Touring / Calle';
 
 function applyBikeTheme(themeName = 'blue') {
-  appState.colorTheme = themeName;
-  document.body.setAttribute('data-theme', themeName);
+  const normalized = themeName === 'grey' ? 'white' : themeName;
+  appState.colorTheme = normalized;
+  document.body.setAttribute('data-theme', normalized);
   const editionMap = {
     blue: 'CARIBBEAN BLUE EDITION',
     red: 'RACING RED EDITION',
     black: 'BROOKLYN BLACK EDITION',
-    grey: 'PEWTER GREY EDITION'
+    white: 'PEARL METALLIC WHITE EDITION'
   };
   const badge = document.getElementById('onboarding-edition-badge');
-  if (badge) badge.textContent = editionMap[themeName] || editionMap.blue;
+  if (badge) badge.textContent = editionMap[normalized] || editionMap.blue;
 
   document.querySelectorAll('.theme-pill').forEach((btn) => {
-    btn.classList.toggle('selected', btn.getAttribute('data-theme') === themeName);
+    btn.classList.toggle('selected', btn.getAttribute('data-theme') === normalized);
   });
 }
 
@@ -109,6 +111,28 @@ function updateHeaderCloudIndicator(status = 'idle') {
   } else {
     pill.classList.add('ok');
     text.textContent = 'Nube OK';
+  }
+}
+
+function renderQuickPicksUI() {
+  const picks = getRecentQuickPicks();
+  const fuelBox = document.getElementById('fuel-quick-picks');
+  const workBox = document.getElementById('workshop-quick-picks');
+
+  if (fuelBox) {
+    fuelBox.innerHTML =
+      `<span class="quick-pick-label">Rápido:</span>` +
+      picks.stations
+        .map((st) => `<button type="button" class="quick-pick-pill" data-pick-fuel="${escapeHTML(st)}">⛽ ${escapeHTML(st)}</button>`)
+        .join('');
+  }
+
+  if (workBox) {
+    workBox.innerHTML =
+      `<span class="quick-pick-label">Rápido:</span>` +
+      picks.workshops
+        .map((w) => `<button type="button" class="quick-pick-pill" data-pick-workshop="${escapeHTML(w)}">🏪 ${escapeHTML(w)}</button>`)
+        .join('');
   }
 }
 
@@ -193,6 +217,7 @@ function openLogModal(preselectSrvId = null, editItem = null) {
   document.getElementById('log-modal-title').textContent = editItem ? 'Editar Mantenimiento' : 'Registrar Mantenimiento';
 
   const workshopInput = document.getElementById('log-workshop');
+  renderQuickPicksUI();
 
   if (editItem) {
     const parts = Number(editItem.partsCost ?? editItem.cost) || 0;
@@ -293,6 +318,8 @@ function updateFuelPreview(sourceId = null) {
 function openFuelModal(editItem = null) {
   editingFuelId = editItem ? editItem.id : null;
   document.getElementById('fuel-modal-title').textContent = editItem ? 'Editar Abastecimiento' : 'Nuevo Abastecimiento';
+
+  renderQuickPicksUI();
 
   const lastRec = getLastFuelPriceRecord(editingFuelId);
   selectedFullTank = editItem ? editItem.fullTank !== false : true;
@@ -450,7 +477,6 @@ function openTireModal(pos) {
 
 // ================= DELEGACIÓN Y EVENTOS PRINCIPALES =================
 function setupEventListeners() {
-  // Listener global para el botón físico/gesto "Atrás" de Android (History API)
   window.addEventListener('popstate', () => {
     const modalPriority = [
       'modal-confirm',
@@ -476,7 +502,6 @@ function setupEventListeners() {
     }
   });
 
-  // Listener de estado de sincronización en nube para el indicador dinámico en cabecera
   window.addEventListener('cloud-sync-status', (ev) => {
     updateHeaderCloudIndicator(ev.detail);
   });
@@ -495,23 +520,57 @@ function setupEventListeners() {
       return;
     }
 
+    // Píldoras de Autocompletado Rápido (Grifos y Talleres)
+    const pickFuelBtn = e.target.closest('[data-pick-fuel]');
+    if (pickFuelBtn) {
+      const val = pickFuelBtn.getAttribute('data-pick-fuel');
+      const inp = document.getElementById('fuel-notes');
+      if (inp) {
+        inp.value = val;
+        triggerHaptic(10);
+      }
+      return;
+    }
+
+    const pickWorkBtn = e.target.closest('[data-pick-workshop]');
+    if (pickWorkBtn) {
+      const val = pickWorkBtn.getAttribute('data-pick-workshop');
+      const inp = document.getElementById('log-workshop');
+      if (inp) {
+        inp.value = val;
+        if (val.toLowerCase().includes('casa')) {
+          document.getElementById('log-labor-cost').value = '0';
+          syncMaintTotalCost();
+        }
+        triggerHaptic(10);
+      }
+      return;
+    }
+
+    // Agendar Mantenimiento directo en Google Calendar
     const calMaintBtn = e.target.closest('[data-cal-maint]');
     if (calMaintBtn) {
       const title = calMaintBtn.getAttribute('data-cal-maint');
       const targetKm = Number(calMaintBtn.getAttribute('data-cal-targetkm')) || appState.currentKm;
+      const daysLeftAttr = calMaintBtn.getAttribute('data-cal-daysleft');
       const kmLeft = Math.max(0, targetKm - appState.currentKm);
       const dailyRate = Math.max(10, estimateMonthlyKmRate() / 30);
-      const daysUntil = Math.min(60, Math.max(1, Math.round(kmLeft / dailyRate)));
+
+      let daysUntil = Math.min(60, Math.max(1, Math.round(kmLeft / dailyRate)));
+      if (daysLeftAttr !== '' && !isNaN(Number(daysLeftAttr))) {
+        daysUntil = Math.max(1, Math.min(daysUntil, Number(daysLeftAttr)));
+      }
+
       const targetDate = new Date();
       targetDate.setDate(targetDate.getDate() + daysUntil);
       const isoDate = targetDate.toISOString().slice(0, 10);
 
-      downloadCalendarReminder({
+      openGoogleCalendarEvent({
         title: `${title} (${targetKm.toLocaleString('es-PE')} km)`,
         description: `Mantenimiento preventivo programado para tu Bajaj Pulsar N160 FI a los ${targetKm.toLocaleString('es-PE')} km (Odómetro actual: ${appState.currentKm.toLocaleString('es-PE')} km).`,
         dateStr: isoDate
       });
-      showToast(`📅 Recordatorio .ics descargado (${isoDate})`);
+      showToast(`📅 Abriendo Google Calendar (${isoDate})...`);
       return;
     }
 
@@ -720,6 +779,23 @@ function setupEventListeners() {
   setupDrawer('btn-toggle-spa-logs', 'drawer-spa-logs', 'spa-saved-arrow');
   setupDrawer('btn-toggle-expense-logs', 'drawer-expense-logs', 'expense-saved-arrow');
 
+  // Buscadores Instantáneos en Bitácoras (Taller y Grifo)
+  const maintSearchInp = document.getElementById('maint-search-input');
+  if (maintSearchInp) {
+    maintSearchInp.addEventListener('input', (e) => {
+      uiConfig.maintSearchQuery = e.target.value;
+      renderLogs();
+    });
+  }
+
+  const fuelSearchInp = document.getElementById('fuel-search-input');
+  if (fuelSearchInp) {
+    fuelSearchInp.addEventListener('input', (e) => {
+      uiConfig.fuelSearchQuery = e.target.value;
+      renderFuelSection();
+    });
+  }
+
   // Botón de Modo Préstamo
   const loanToggleBtn = document.getElementById('btn-toggle-loan-mode');
   if (loanToggleBtn) {
@@ -890,7 +966,7 @@ function setupEventListeners() {
     });
   });
 
-  // Modal Odómetro
+  // Modal Odómetro (Con soporte limpio para corregir hacia abajo con alerta)
   const inputNewKm = document.getElementById('input-new-km');
   const closeKm = () => closeModalById('modal-km');
 
@@ -908,24 +984,34 @@ function setupEventListeners() {
 
     const applyNewKm = (newKm) => {
       appState.currentKm = newKm;
+      if (appState.tripBaseKm > newKm) {
+        appState.tripBaseKm = newKm;
+      }
+      if (appState.initialKm > newKm) {
+        appState.initialKm = newKm;
+      }
+      recalculateServiceKmFromLogs();
+      recalculateWashFromLogs();
       saveState();
       renderAllMain();
-      closeKm();
       triggerHaptic(12);
-      showToast(`Odómetro: ${newKm.toLocaleString('es-PE')} km`);
+      showToast(`Odómetro actualizado: ${newKm.toLocaleString('es-PE')} km`);
     };
 
     if (val < appState.currentKm) {
-      closeKm();
+      // Cierra modal-km sin llamar a history.back() para que no cierre el modal de confirmación
+      closeModalById('modal-km', true);
       openCustomConfirm({
-        title: '¿Reducir Odómetro?',
-        message: `Estás ingresando ${val.toLocaleString('es-PE')} km, que es menor a tu kilometraje actual (${appState.currentKm.toLocaleString('es-PE')} km). ¿Deseas corregirlo de todos modos?`,
-        confirmText: 'Sí, Corregir',
+        title: '¿Corregir Odómetro hacia abajo?',
+        message: `Estás ingresando ${val.toLocaleString('es-PE')} km, que es menor a tu odómetro actual (${appState.currentKm.toLocaleString('es-PE')} km). ¿Confirmas que deseas regresar el kilometraje?`,
+        confirmText: 'Sí, Regresar Km',
         isDanger: true,
         icon: '⚠️',
+        reuseHistoryState: true,
         onConfirm: () => applyNewKm(val)
       });
     } else {
+      closeKm();
       applyNewKm(val);
     }
   });
@@ -1333,7 +1419,7 @@ function setupEventListeners() {
     showToast(editingModId ? 'Accesorio actualizado' : 'Accesorio agregado a tu Garaje');
   });
 
-  // Modal Guantera Digital + Calendario .ICS
+  // Modal Guantera Digital (Con enlace directo a Google Calendar)
   const closeDocs = () => closeModalById('modal-docs');
 
   document.getElementById('btn-open-docs-modal').addEventListener('click', () => {
@@ -1355,12 +1441,12 @@ function setupEventListeners() {
       return;
     }
     const plate = document.getElementById('doc-plate').value.trim().toUpperCase() || 'N160';
-    downloadCalendarReminder({
+    openGoogleCalendarEvent({
       title: `Renovar SOAT (${plate})`,
       description: `Vencimiento del SOAT de tu Bajaj Pulsar N160 FI (${plate}). Aseguradora: ${document.getElementById('doc-insurance').value || 'Vigilar'}.`,
       dateStr: exp
     });
-    showToast('📅 Recordatorio de SOAT (.ics) descargado');
+    showToast('📅 Abriendo Google Calendar...');
   });
 
   document.getElementById('btn-cal-license').addEventListener('click', () => {
@@ -1369,12 +1455,12 @@ function setupEventListeners() {
       showToast('⚠️ Primero selecciona la fecha de vencimiento de tu Brevete');
       return;
     }
-    downloadCalendarReminder({
+    openGoogleCalendarEvent({
       title: 'Revalidar Brevete B-IIc',
       description: 'Fecha de vencimiento de tu licencia de conducir categoría B-IIc.',
       dateStr: exp
     });
-    showToast('📅 Recordatorio de Brevete (.ics) descargado');
+    showToast('📅 Abriendo Google Calendar...');
   });
 
   document.getElementById('btn-close-docs-x').addEventListener('click', closeDocs);
@@ -1395,7 +1481,7 @@ function setupEventListeners() {
     showToast('Guantera Digital actualizada');
   });
 
-  // Selector de Color de la Moto (en Bienvenida y en Ajustes)
+  // Selector de Color de la Moto (Azul, Roja, Negra y Blanca)
   document.querySelectorAll('.theme-pill').forEach((pill) => {
     pill.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1500,13 +1586,14 @@ function setupEventListeners() {
         showToast('⚠️ Aún no tienes respaldo guardado en esta cuenta');
         return;
       }
-      closeBackup();
+      closeModalById('modal-backup', true);
       openCustomConfirm({
         title: 'Restaurar Mi Moto',
         message: `Se encontró tu respaldo privado con ${Number(cloudData.currentKm).toLocaleString('es-PE')} km. ¿Deseas cargarlo en este teléfono?`,
         confirmText: 'Sí, Restaurar',
         isDanger: false,
         icon: '☁️',
+        reuseHistoryState: true,
         onConfirm: () => {
           replaceFullState(cloudData);
           applyBikeTheme(appState.colorTheme || 'blue');

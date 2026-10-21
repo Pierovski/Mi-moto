@@ -2,6 +2,7 @@ import { TANK_CAPACITY_GAL, MAINT_RULES, TECHNICAL_GUIDES, DEFAULT_TIRES } from 
 import { appState, escapeHTML, playN160IgnitionSound } from './state.js';
 import {
   isWithinPeriod,
+  getDaysElapsed,
   getMonthsElapsed,
   getLastServiceRecord,
   computeMaintMemoryMap,
@@ -22,29 +23,31 @@ export const uiConfig = {
   activePeriod: 'month',
   activeModFilter: 'all',
   activeMaintFilter: 'all',
+  maintSearchQuery: '',
+  fuelSearchQuery: '',
   routeMultiplier: 1,
   routeTerrainFactor: 1
 };
 
-// ================= GESTOR NATIVO DE MODALES (BOTÓN ATRÁS DE ANDROID) =================
-export function openModalById(modalId) {
+// ================= GESTOR NATIVO DE MODALES (CON SOPORTE PARA TRANSICIÓN LIMPIA) =================
+export function openModalById(modalId, pushHistory = true) {
   const el = document.getElementById(modalId);
   if (!el) return;
   const wasHidden = el.classList.contains('hidden');
   el.classList.remove('hidden');
-  if (wasHidden) {
+  if (wasHidden && pushHistory) {
     history.pushState({ modalOpen: modalId }, '');
   }
 }
 
-export function closeModalById(modalId, fromPopState = false) {
+export function closeModalById(modalId, skipHistoryBack = false) {
   const el = document.getElementById(modalId);
   if (!el || el.classList.contains('hidden')) return;
   el.classList.add('hidden');
   if (modalId === 'modal-confirm') {
     confirmCallback = null;
   }
-  if (!fromPopState && history.state && history.state.modalOpen) {
+  if (!skipHistoryBack && history.state && history.state.modalOpen) {
     history.back();
   }
 }
@@ -65,7 +68,16 @@ export function showToast(message) {
   }, 2600);
 }
 
-export function openCustomConfirm({ title, message, confirmText = 'Confirmar', isDanger = false, icon = '⚡', onConfirm }) {
+// Permite abrir el modal de confirmación encima o reemplazando a otro modal sin que history.back() lo cierre
+export function openCustomConfirm({
+  title,
+  message,
+  confirmText = 'Confirmar',
+  isDanger = false,
+  icon = '⚡',
+  reuseHistoryState = false,
+  onConfirm
+}) {
   document.getElementById('confirm-title').textContent = title;
   document.getElementById('confirm-message').textContent = message;
   document.getElementById('confirm-icon-badge').textContent = icon;
@@ -75,7 +87,7 @@ export function openCustomConfirm({ title, message, confirmText = 'Confirmar', i
   okBtn.className = isDanger ? 'btn-danger-solid' : 'btn-neon';
 
   confirmCallback = onConfirm;
-  openModalById('modal-confirm');
+  openModalById('modal-confirm', !reuseHistoryState);
 }
 
 export function closeCustomConfirm() {
@@ -173,6 +185,8 @@ export function checkDocsStatusUI() {
   const plateBadge = document.getElementById('header-plate-badge');
   const alertDot = document.getElementById('docs-alert-dot');
   const summaryEl = document.getElementById('docs-status-summary');
+  const garageDocsSummary = document.getElementById('garage-docs-summary');
+  const garageDocsWidget = document.getElementById('docs-garage-widget');
 
   const docs = appState.docs || {};
   if (docs.plate && docs.plate.trim() !== '') {
@@ -183,8 +197,17 @@ export function checkDocsStatusUI() {
   }
 
   const status = evaluateDocsStatus();
-  alertDot.classList.toggle('hidden', !status.hasAlert);
+  if (alertDot) alertDot.classList.toggle('hidden', !status.hasAlert);
   if (summaryEl) summaryEl.innerHTML = `<span>${status.summaryHtml}</span>`;
+  if (garageDocsSummary) {
+    const platePrefix = docs.plate ? `<strong>Placa ${escapeHTML(docs.plate.toUpperCase())}</strong> • ` : '';
+    garageDocsSummary.innerHTML = `${platePrefix}${status.summaryHtml}`;
+  }
+  if (garageDocsWidget) {
+    garageDocsWidget.classList.remove('docs-alert', 'docs-danger');
+    if (status.hasDanger) garageDocsWidget.classList.add('docs-danger');
+    else if (status.hasAlert) garageDocsWidget.classList.add('docs-alert');
+  }
   return status;
 }
 
@@ -245,6 +268,7 @@ export function renderSparkline(points) {
   `;
 }
 
+// Semáforo Ordenado por Urgencia + Calculadora de Días Restantes (Aceite/Tiempo) + Barra 0% Limpia
 export function renderMaintenanceCards() {
   const grid = document.getElementById('maint-alerts-grid');
   grid.innerHTML = '';
@@ -252,7 +276,9 @@ export function renderMaintenanceCards() {
   let overdueCount = 0;
   let warnCount = 0;
 
-  MAINT_RULES.forEach((rule) => {
+  const evaluatedCards = [];
+
+  MAINT_RULES.forEach((rule, originalIdx) => {
     if (rule.onlyFirstTime && appState.lastServiceKm.breakin_500 !== null) return;
 
     const baseKm = appState.lastServiceKm[rule.id] ?? (appState.initialKm || 0);
@@ -261,17 +287,25 @@ export function renderMaintenanceCards() {
     const kmRestantes = nextTargetKm - appState.currentKm;
     const kmRatio = kmRecorridos / rule.intervalKm;
 
-    const lastDateStr = appState.lastServiceDate?.[rule.id] || '';
-    const monthsElapsed = lastDateStr ? getMonthsElapsed(lastDateStr) : 0;
-    const timeRatio = rule.intervalMonths && lastDateStr ? monthsElapsed / rule.intervalMonths : 0;
+    const lastDateStr = appState.lastServiceDate?.[rule.id] || appState.firstUseDate || '';
+    let daysLeft = null;
+    let timeRatio = 0;
+
+    if (rule.intervalMonths && lastDateStr) {
+      const totalAllowedDays = Math.round(rule.intervalMonths * 30.44);
+      const elapsedDays = getDaysElapsed(lastDateStr);
+      daysLeft = totalAllowedDays - elapsedDays;
+      timeRatio = elapsedDays / totalAllowedDays;
+    }
 
     const effectiveRatio = Math.max(kmRatio, timeRatio);
-    const pct = Math.min(100, Math.round(effectiveRatio * 100));
+    const pct = kmRecorridos === 0 && timeRatio < 0.03 ? 0 : Math.min(100, Math.round(effectiveRatio * 100));
 
     let statusClass = 'status-ok';
     let statusText = 'AL DÍA';
     let barColor = 'var(--neon-lime)';
     let showCalBtn = false;
+    let urgencyWeight = 0;
 
     if (effectiveRatio >= 1) {
       statusClass = 'status-danger';
@@ -279,51 +313,83 @@ export function renderMaintenanceCards() {
       barColor = 'var(--red-danger)';
       overdueCount++;
       showCalBtn = true;
+      urgencyWeight = 2;
     } else if (effectiveRatio >= 0.85) {
       statusClass = 'status-warn';
       statusText = 'PRÓXIMO';
       barColor = 'var(--amber-warn)';
       warnCount++;
       showCalBtn = true;
+      urgencyWeight = 1;
+    }
+
+    let timeTextAddon = '';
+    if (daysLeft !== null) {
+      if (daysLeft < 0) {
+        timeTextAddon = ` • Vencido hace ${Math.abs(daysLeft)}d`;
+      } else {
+        timeTextAddon = ` • o ${daysLeft}d`;
+      }
     }
 
     const footerRightText =
       kmRestantes >= 0
-        ? `Faltan ${kmRestantes.toLocaleString('es-PE')} km`
-        : `Pasado ${Math.abs(kmRestantes).toLocaleString('es-PE')} km`;
+        ? `Faltan ${kmRestantes.toLocaleString('es-PE')} km${timeTextAddon}`
+        : `Pasado ${Math.abs(kmRestantes).toLocaleString('es-PE')} km${timeTextAddon}`;
 
     const prevRec = getLastServiceRecord(rule.id);
     const lastPriceHint = prevRec ? ` • Último: S/ ${Number(prevRec.cost).toFixed(0)}` : '';
 
     const calBtnHtml = showCalBtn
-      ? `<button type="button" class="btn-cal-ics" data-cal-maint="${escapeHTML(rule.title)}" data-cal-targetkm="${nextTargetKm}">📅 Agendar</button>`
+      ? `<button type="button" class="btn-cal-ics" data-cal-maint="${escapeHTML(rule.title)}" data-cal-targetkm="${nextTargetKm}" data-cal-daysleft="${daysLeft !== null ? daysLeft : ''}">📅 Agendar</button>`
       : '';
 
+    const fillStyle =
+      pct <= 0
+        ? 'width: 0%; opacity: 0; background: transparent;'
+        : `width: ${pct}%; background: ${barColor};`;
+
+    evaluatedCards.push({
+      urgencyWeight,
+      effectiveRatio,
+      originalIdx,
+      html: `
+        <div class="maint-top">
+          <div>
+            <div class="title-with-info">
+              <span class="maint-title">${rule.title}</span>
+              <button type="button" class="btn-info-dot" data-info-key="${rule.infoKey}">ⓘ</button>
+            </div>
+            <div class="maint-sub">${rule.subtitle}${lastPriceHint}</div>
+          </div>
+          <div class="maint-top-right">
+            ${calBtnHtml}
+            <button class="btn-quick-done" data-quick-srv="${rule.id}">✓ Hecho</button>
+            <span class="status-pill ${statusClass}">${statusText}</span>
+          </div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="${fillStyle}"></div>
+        </div>
+        <div class="maint-footer">
+          <span>Base: ${baseKm.toLocaleString('es-PE')} km • Meta: <strong>${nextTargetKm.toLocaleString('es-PE')} km</strong></span>
+          <strong>${footerRightText}</strong>
+        </div>
+      `
+    });
+  });
+
+  // Ordenar: Primero VENCIDOS (2), luego PRÓXIMOS (1), luego mayor porcentaje de desgaste
+  evaluatedCards.sort((a, b) => {
+    if (b.urgencyWeight !== a.urgencyWeight) return b.urgencyWeight - a.urgencyWeight;
+    if (Math.abs(b.effectiveRatio - a.effectiveRatio) > 0.01) return b.effectiveRatio - a.effectiveRatio;
+    return a.originalIdx - b.originalIdx;
+  });
+
+  evaluatedCards.forEach((item) => {
     const card = document.createElement('div');
     card.className = 'maint-card';
-    card.innerHTML = `
-      <div class="maint-top">
-        <div>
-          <div class="title-with-info">
-            <span class="maint-title">${rule.title}</span>
-            <button type="button" class="btn-info-dot" data-info-key="${rule.infoKey}">ⓘ</button>
-          </div>
-          <div class="maint-sub">${rule.subtitle}${lastPriceHint}</div>
-        </div>
-        <div class="maint-top-right">
-          ${calBtnHtml}
-          <button class="btn-quick-done" data-quick-srv="${rule.id}">✓ Hecho</button>
-          <span class="status-pill ${statusClass}">${statusText}</span>
-        </div>
-      </div>
-      <div class="progress-track">
-        <div class="progress-fill" style="width: ${pct}%; background: ${barColor};"></div>
-      </div>
-      <div class="maint-footer">
-        <span>Base: ${baseKm.toLocaleString('es-PE')} km • Meta: <strong>${nextTargetKm.toLocaleString('es-PE')} km</strong></span>
-        <strong>${footerRightText}</strong>
-      </div>
-    `;
+    card.innerHTML = item.html;
     grid.appendChild(card);
   });
 
@@ -360,7 +426,6 @@ export function renderLogs() {
   document.getElementById('maint-month-total').textContent = `S/ ${monthMaint.toFixed(2)}`;
   document.getElementById('maint-year-total').textContent = `S/ ${yearMaint.toFixed(2)}`;
 
-  // Renderizar Ranking de Talleres
   const wRank = computeWorkshopRanking();
   const wCountBadge = document.getElementById('workshop-count-badge');
   const wSummary = document.getElementById('workshop-diy-summary');
@@ -399,13 +464,21 @@ export function renderLogs() {
     }
   }
 
-  const filtered =
-    uiConfig.activeMaintFilter === 'all'
-      ? appState.logs
-      : appState.logs.filter((l) => l.typeId === uiConfig.activeMaintFilter || (uiConfig.activeMaintFilter === 'oil_change' && l.typeId === 'breakin_500'));
+  const q = (uiConfig.maintSearchQuery || '').trim().toLowerCase();
+
+  const filtered = appState.logs.filter((l) => {
+    const catMatch =
+      uiConfig.activeMaintFilter === 'all' ||
+      l.typeId === uiConfig.activeMaintFilter ||
+      (uiConfig.activeMaintFilter === 'oil_change' && l.typeId === 'breakin_500');
+    if (!catMatch) return false;
+    if (!q) return true;
+    const haystack = `${l.title || ''} ${l.workshop || ''} ${l.notes || ''} ${l.date || ''} ${l.km || ''} ${l.cost || ''}`.toLowerCase();
+    return haystack.includes(q);
+  });
 
   if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty-logs">Sin servicios registrados en esta vista.</div>`;
+    container.innerHTML = `<div class="empty-logs">Sin servicios que coincidan con tu búsqueda o filtro.</div>`;
     return;
   }
 
@@ -461,7 +534,6 @@ export function renderLogs() {
 export function renderFuelSection() {
   document.getElementById('fuel-count-badge').textContent = appState.fuelLogs.length;
 
-  // Estado Visual del Modo Préstamo
   const loanBanner = document.getElementById('loan-mode-banner');
   const loanTitle = document.getElementById('loan-mode-title');
   const loanDesc = document.getElementById('loan-mode-desc');
@@ -504,7 +576,7 @@ export function renderFuelSection() {
     .reduce((s, f) => s + (Number(f.cost) || 0), 0);
   const budgetLimit = Math.max(10, Number(appState.monthlyFuelBudget) || 150);
   const budgetRatio = monthFuelSpent / budgetLimit;
-  const budgetPct = Math.min(100, Math.round(budgetRatio * 100));
+  const budgetPct = monthFuelSpent <= 0 ? 0 : Math.min(100, Math.round(budgetRatio * 100));
 
   document.getElementById('budget-limit-label').textContent = `S/ ${budgetLimit.toFixed(0)}`;
   document.getElementById('budget-pct-text').textContent = `${Math.round(budgetRatio * 100)}%`;
@@ -512,6 +584,7 @@ export function renderFuelSection() {
   const budgetFill = document.getElementById('budget-progress-fill');
   const budgetStatus = document.getElementById('budget-status-text');
   budgetFill.style.width = `${budgetPct}%`;
+  budgetFill.style.opacity = budgetPct === 0 ? '0' : '1';
 
   if (budgetRatio >= 1) {
     budgetFill.style.background = 'var(--red-danger)';
@@ -542,7 +615,6 @@ export function renderFuelSection() {
     trendSub.textContent = lastRec ? `Último galón: S/ ${Number(lastRec.priceGal).toFixed(2)}` : 'Grifo + Taller + Lavado + Otros';
   }
 
-  // Banner de Diagnóstico Preventivo FI
   const diagBanner = document.getElementById('fi-diagnostic-banner');
   if (diagBanner) {
     if (tele.diagnosticAlert) {
@@ -557,7 +629,6 @@ export function renderFuelSection() {
     }
   }
 
-  // Detector del Grifo Más Barato y Rentable
   const stCount = document.getElementById('station-count-badge');
   const stSub = document.getElementById('best-station-sub');
   const stContainer = document.getElementById('station-rank-container');
@@ -571,13 +642,13 @@ export function renderFuelSection() {
           ? `🏆 Más rentable: <strong style="color:var(--neon-lime)">${escapeHTML(top.name)}</strong> (S/ ${top.realCostPerKm.toFixed(2)}/km • ${top.realKmPerGal.toFixed(1)} km/gal)`
           : `🏆 Mejor precio galón: <strong style="color:var(--caribbean-bright)">${escapeHTML(top.name)}</strong> (S/ ${top.avgPrice.toFixed(2)}/gal)`;
     } else {
-      stSub.textContent = 'Escribe el nombre del grifo al abastecer (ej. Primax, Repsol)';
+      stSub.textContent = 'Elige o escribe el nombre del grifo al abastecer (ej. Primax, Repsol)';
     }
   }
   if (stContainer) {
     stContainer.innerHTML = '';
     if (tele.stationRanking.length === 0) {
-      stContainer.innerHTML = `<div class="empty-logs">Pon el nombre de la estación en el campo "Grifo" de tus cargas para comparar cuál rinde más.</div>`;
+      stContainer.innerHTML = `<div class="empty-logs">Selecciona el nombre de la estación en el campo "Grifo" de tus cargas para comparar cuál rinde más.</div>`;
     } else {
       tele.stationRanking.forEach((st, idx) => {
         const div = document.createElement('div');
@@ -653,12 +724,19 @@ export function renderFuelSection() {
   const container = document.getElementById('fuel-logs-container');
   container.innerHTML = '';
 
-  if (appState.fuelLogs.length === 0) {
-    container.innerHTML = `<div class="empty-logs">Sin cargas de combustible registradas.</div>`;
+  const fq = (uiConfig.fuelSearchQuery || '').trim().toLowerCase();
+  const visibleFuel = appState.fuelLogs.filter((f) => {
+    if (!fq) return true;
+    const hay = `${f.notes || ''} ${f.date || ''} ${f.km || ''} ${f.cost || ''} ${f.priceGal || ''}`.toLowerCase();
+    return hay.includes(fq);
+  });
+
+  if (visibleFuel.length === 0) {
+    container.innerHTML = `<div class="empty-logs">Sin cargas de combustible que coincidan con la vista.</div>`;
     return;
   }
 
-  const sortedDesc = [...appState.fuelLogs].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
+  const sortedDesc = [...visibleFuel].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
 
   sortedDesc.forEach((f) => {
     const tInfo = tele.enrichedMap[f.id];
@@ -942,7 +1020,6 @@ export function renderRouteAndTCO() {
 
   const fin = computeMasterFinancials();
 
-  // Tarjetas Superiores CAPEX vs OPEX
   const capexDisp = document.getElementById('capex-total-display');
   const capexSub = document.getElementById('capex-bike-sub');
   const opexDisp = document.getElementById('opex-total-display');

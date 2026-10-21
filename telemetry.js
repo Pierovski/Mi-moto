@@ -15,13 +15,17 @@ export function isWithinPeriod(dateStr, period) {
   return true;
 }
 
-export function getMonthsElapsed(dateStr) {
+export function getDaysElapsed(dateStr) {
   if (!dateStr) return 0;
   const [y, m, d] = dateStr.split('-').map(Number);
   const past = new Date(y, m - 1, d);
   const now = new Date();
-  const diffDays = (now - past) / 86400000;
-  return Math.max(0, diffDays / 30.44);
+  const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.max(0, Math.floor((todayZero - past) / 86400000));
+}
+
+export function getMonthsElapsed(dateStr) {
+  return getDaysElapsed(dateStr) / 30.44;
 }
 
 export function getLastServiceRecord(typeId, excludeId = null) {
@@ -54,6 +58,42 @@ export function getLastFuelPriceRecord(excludeId = null) {
     .filter((f) => Number(f.priceGal) > 0 && String(f.id) !== String(excludeId))
     .sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
   return withPrice.length > 0 ? withPrice[0] : null;
+}
+
+// Extrae los últimos 3 grifos y los últimos 3 talleres usados para las píldoras de autocompletado
+export function getRecentQuickPicks() {
+  const stations = [];
+  const workshops = [];
+
+  const sortedFuelDesc = [...appState.fuelLogs].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
+  for (const f of sortedFuelDesc) {
+    const raw = String(f.notes || '').trim();
+    if (!raw) continue;
+    const clean = raw.split(/[-•,/]/)[0].trim();
+    if (clean && !stations.some((s) => s.toLowerCase() === clean.toLowerCase())) {
+      stations.push(clean);
+      if (stations.length >= 3) break;
+    }
+  }
+
+  const sortedLogsDesc = [...appState.logs].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
+  for (const l of sortedLogsDesc) {
+    const raw = String(l.workshop || '').trim();
+    if (!raw) continue;
+    if (!workshops.some((w) => w.toLowerCase() === raw.toLowerCase())) {
+      workshops.push(raw);
+      if (workshops.length >= 3) break;
+    }
+  }
+
+  if (!workshops.some((w) => w.toLowerCase().includes('casa'))) {
+    workshops.push('En casa');
+  }
+
+  return {
+    stations: stations.length > 0 ? stations : ['Primax', 'Repsol', 'Petroperú'],
+    workshops: workshops.slice(0, 4)
+  };
 }
 
 export function parseDotCode(dotStr) {
@@ -151,7 +191,6 @@ export function getFuelPreviewBaseline(excludeId = null) {
   };
 }
 
-// Motor de Telemetría + Diagnóstico Preventivo + Detector de Grifo Más Rentable
 export function computeFuelTelemetry() {
   const sortedAsc = [...appState.fuelLogs].sort((a, b) => Number(a.km) - Number(b.km) || a.id - b.id);
   const enrichedMap = {};
@@ -216,7 +255,6 @@ export function computeFuelTelemetry() {
       }
     }
 
-    // Si el registro fue en Modo Préstamo, se aísla de la telemetría personal
     if (isLoan) {
       enrichedMap[curr.id] = {
         isBase: false,
@@ -292,7 +330,6 @@ export function computeFuelTelemetry() {
   const avgKmPerGal = totalGallonsUsed > 0 ? totalDeltaKm / totalGallonsUsed : 140;
   const avgCostPerKm = totalDeltaKm > 0 ? totalCostUsed / totalDeltaKm : 0.12;
 
-  // Diagnóstico Preventivo de Inyección FI
   let diagnosticAlert = null;
   if (validIntervals >= 2 && lastIntervalData) {
     const dropRatio = (avgKmPerGal - lastIntervalData.kmPerGal) / avgKmPerGal;
@@ -313,7 +350,6 @@ export function computeFuelTelemetry() {
     }
   }
 
-  // Detector de Grifos más Baratos y Rentables
   const stationRanking = Object.values(stationMap)
     .map((st) => {
       const avgPrice = st.priceCount > 0 ? st.priceSum / st.priceCount : 0;
@@ -347,7 +383,6 @@ export function computeFuelTelemetry() {
   };
 }
 
-// Ranking de Talleres y Ahorro "Hecho en Casa"
 export function computeWorkshopRanking() {
   const map = {};
   let diyCount = 0;
@@ -441,7 +476,6 @@ export function evaluateDocsStatus() {
   };
 }
 
-// Finanzas Maestras con Separación CAPEX (Patrimonio) vs OPEX (Operativo)
 export function computeMasterFinancials() {
   const allFuel = appState.fuelLogs.reduce((s, f) => s + (Number(f.cost) || 0), 0);
   const allMaint = appState.logs.reduce((s, l) => s + (Number(l.cost) || 0), 0);
@@ -449,7 +483,6 @@ export function computeMasterFinancials() {
   const allLabor = appState.logs.reduce((s, l) => s + (Number(l.laborCost) || 0), 0);
   const allSpa = (appState.washLogs || []).reduce((s, w) => s + (Number(w.cost) || 0), 0);
 
-  // Llantas son consumibles de desgaste (OPEX), Accesorios/Mods + Moto son Patrimonio (CAPEX)
   const frontCost = Number(appState.tires.front.cost) || 0;
   const rearCost = Number(appState.tires.rear.cost) || 0;
   const histTireCost = (appState.tires.history || []).reduce((s, h) => s + (Number(h.cost) || 0), 0);
@@ -465,7 +498,6 @@ export function computeMasterFinancials() {
   const extraDocsAndOther = (appState.otherExpenses || []).reduce((s, e) => s + (Number(e.cost) || 0), 0);
   const allAdmin = soatCost + extraDocsAndOther;
 
-  // OPEX Total = Combustible + Taller + Lavados + Documentos/Peajes + Llantas
   const opCostTotal = allFuel + allMaint + allSpa + allAdmin + allTires;
   const grandTotalInvested = opCostTotal + capexTotal;
 
@@ -523,40 +555,27 @@ export function computeMasterFinancials() {
   };
 }
 
-// Generador nativo de recordatorios .ICS para Google Calendar / Apple Calendar
-export function downloadCalendarReminder({ title, description, dateStr }) {
+// Abre directamente Google Calendar con el evento pre-cargado (Sin descargar archivos .ics)
+export function openGoogleCalendarEvent({ title, description, dateStr }) {
   let targetDate = dateStr;
   if (!targetDate) {
     const d = new Date();
     d.setDate(d.getDate() + 7);
     targetDate = d.toISOString().slice(0, 10);
   }
-  const cleanDate = targetDate.replace(/-/g, '');
-  const icsLines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//MiMoto Pulsar N160 FI//ES',
-    'BEGIN:VEVENT',
-    `DTSTART;VALUE=DATE:${cleanDate}`,
-    `DTEND;VALUE=DATE:${cleanDate}`,
-    `SUMMARY:🏍️ Mi Moto N160: ${title}`,
-    `DESCRIPTION:${String(description || '').replace(/\n/g, '\\n')}`,
-    'BEGIN:VALARM',
-    'TRIGGER:-PT9H',
-    'ACTION:DISPLAY',
-    'DESCRIPTION:Recordatorio Mi Moto N160 FI',
-    'END:VALARM',
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].join('\r\n');
 
-  const blob = new Blob([icsLines], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Recordatorio_N160_${cleanDate}.ics`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  const [y, m, day] = targetDate.split('-').map(Number);
+  const startObj = new Date(Date.UTC(y, m - 1, day));
+  const endObj = new Date(Date.UTC(y, m - 1, day + 1));
+
+  const fmt = (dt) => dt.toISOString().slice(0, 10).replace(/-/g, '');
+  const datesParam = `${fmt(startObj)}/${fmt(endObj)}`;
+
+  const gcalUrl =
+    `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+    `&text=${encodeURIComponent(`🏍️ Mi Moto N160: ${title}`)}` +
+    `&dates=${datesParam}` +
+    `&details=${encodeURIComponent(description || 'Recordatorio generado desde Mi Moto - Pulsar N160 FI')}`;
+
+  window.open(gcalUrl, '_blank', 'noopener,noreferrer');
 }

@@ -35,7 +35,7 @@
       </div>
 
       <div class="brand-emblem-wrap">
-        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA V2.0</span>
+        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA V2.5</span>
         <h1 class="pulsar-script-logo">pulsar</h1>
         <span class="n160-fi-sub">N160 FI • DUAL CHANNEL ABS</span>
       </div>
@@ -66,9 +66,9 @@
               <span class="swatch-circle" style="background: #222934;"></span>
               <span>Negra</span>
             </button>
-            <button type="button" class="theme-pill" data-theme="grey" data-edition="PEWTER GREY EDITION">
-              <span class="swatch-circle" style="background: #64748B;"></span>
-              <span>Gris</span>
+            <button type="button" class="theme-pill" data-theme="white" data-edition="PEARL METALLIC WHITE EDITION">
+              <span class="swatch-circle" style="background: #F8FAFC; border: 1px solid #94A3B8;"></span>
+              <span>Blanca</span>
             </button>
           </div>
 
@@ -102,7 +102,7 @@
   <!-- ================= PANTALLA 2: PANEL PRINCIPAL ================= -->
   <section id="main-screen" class="screen hidden">
     
-    <!-- Cabecera con Indicador de Nube Dinámico -->
+    <!-- Cabecera Limpia (Solo Estado de Nube y Ajustes) -->
     <header class="app-header">
       <div class="header-left">
         <div class="mini-logo-wrap" id="header-logo-btn" title="Cambiar icono">
@@ -120,17 +120,13 @@
       </div>
       <div class="header-actions">
         <!-- Indicador de Nube Dinámico -->
-        <button type="button" id="cloud-live-indicator" class="cloud-live-pill" title="Estado de sincronización en la nube">
+        <button type="button" id="cloud-live-indicator" class="cloud-live-pill" title="Cuenta y sincronización en la nube">
           <span class="cloud-live-dot" id="cloud-live-dot"></span>
           <span id="cloud-live-text">Local</span>
         </button>
-        <!-- Guantera Digital (SOAT + Brevete) -->
-        <button id="btn-open-docs-modal" class="btn-icon-sleek" title="Guantera Digital (SOAT y Brevete)">
-          <span id="docs-alert-dot" class="notif-dot hidden"></span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2"/><path d="M15 12h2"/><path d="M7 16h10"/></svg>
-        </button>
         <!-- Configuración y Respaldo Unificados -->
-        <button id="btn-open-backup-modal" class="btn-icon-sleek" title="Ajustes, Portada y Copia de Seguridad">
+        <button id="btn-open-backup-modal" class="btn-icon-sleek" title="Ajustes, Tema, Cuenta y Respaldo">
+          <span id="docs-alert-dot" class="notif-dot hidden"></span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
@@ -199,7 +195,7 @@
     <!-- ================= PESTAÑA 1: TALLER ================= -->
     <div id="tab-maint" class="tab-content">
       <div class="section-header-row">
-        <span class="section-title-sleek">SEMÁFORO DE MANTENIMIENTOS</span>
+        <span class="section-title-sleek">SEMÁFORO DE MANTENIMIENTOS (POR URGENCIA)</span>
         <button id="btn-open-log-modal-top" class="btn-action-sleek">+ Registrar Servicio</button>
       </div>
 
@@ -221,7 +217,7 @@
         </div>
       </div>
 
-      <!-- Resumen Financiero Compacto + Bitácora Desplegable con Filtro -->
+      <!-- Resumen Financiero Compacto + Bitácora Desplegable con Buscador y Filtro -->
       <div class="progressive-drawer-card" style="margin-top: 10px;">
         <div class="drawer-summary-row">
           <div class="fin-mini-pair">
@@ -233,6 +229,7 @@
           </button>
         </div>
         <div id="drawer-maint-logs" class="drawer-body hidden">
+          <input type="search" id="maint-search-input" class="log-search-input" placeholder="🔍 Buscar por repuesto, taller, fecha o monto...">
           <div class="mod-filter-bar" id="maint-log-filters" style="margin-bottom: 8px;">
             <button type="button" class="mod-filter-pill active" data-maintfilter="all">Todos</button>
             <button type="button" class="mod-filter-pill" data-maintfilter="oil_change">Aceite</button>
@@ -358,7 +355,7 @@
         </div>
       </div>
 
-      <!-- Cajón Desplegable del Historial de Cargas -->
+      <!-- Cajón Desplegable del Historial de Cargas con Buscador -->
       <div class="progressive-drawer-card" style="margin-top: 10px;">
         <div class="drawer-summary-row">
           <span class="section-title-sleek">HISTORIAL DE TANQUEADAS</span>
@@ -367,14 +364,30 @@
           </button>
         </div>
         <div id="drawer-fuel-logs" class="drawer-body hidden">
+          <input type="search" id="fuel-search-input" class="log-search-input" placeholder="🔍 Buscar por grifo, fecha, km o monto...">
           <div id="fuel-logs-container" class="compact-scroll-list"></div>
         </div>
       </div>
     </div>
 
-    <!-- ================= PESTAÑA 3: GARAJE (LAVADO UNIFICADO, LLANTAS Y MODS) ================= -->
+    <!-- ================= PESTAÑA 3: GARAJE (GUANTERA, LAVADO, LLANTAS Y MODS) ================= -->
     <div id="tab-garage" class="tab-content hidden">
       
+      <!-- Tarjeta de Guantera Digital (Reubicada desde la Cabecera para mayor orden) -->
+      <div class="maint-card docs-garage-card" id="docs-garage-widget">
+        <div class="maint-top">
+          <div>
+            <span class="section-title-sleek">GUANTERA DIGITAL (SOAT & BREVETE)</span>
+            <div class="maint-sub" id="garage-docs-summary" style="margin-top: 4px;">
+              🪪 Registra tu Placa, SOAT y Brevete para activar las alertas automáticas.
+            </div>
+          </div>
+          <div class="maint-top-right">
+            <button type="button" id="btn-open-docs-modal" class="btn-action-sleek">🪪 Ver / Editar</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Tarjeta de Lavado y Cuidado -->
       <div class="maint-card" id="spa-widget-card" style="margin-bottom: 11px;">
         <div class="maint-top">
@@ -487,7 +500,6 @@
       <!-- SUB-VISTA 4A: PANEL FINANCIERO MAESTRO (CAPEX vs OPEX) + GASTOS EXTRA -->
       <div id="sub-route-fin" class="route-panel">
         
-        <!-- Tarjetas Separadas: Patrimonio Físico (CAPEX) vs Gasto Operativo (OPEX) -->
         <div class="capex-opex-grid">
           <div class="co-card capex">
             <span class="co-tag">🏛️ PATRIMONIO (CAPEX)</span>
@@ -513,7 +525,6 @@
             <strong class="fin-val" id="master-grand-total">S/ 0.00</strong>
           </div>
 
-          <!-- Barra de Proporción de Gastos Operativos -->
           <div class="expense-split-bar" id="expense-split-bar">
             <div class="split-seg seg-fuel" id="seg-fuel" style="width: 25%"></div>
             <div class="split-seg seg-maint" id="seg-maint" style="width: 25%"></div>
@@ -561,7 +572,6 @@
           </div>
         </div>
 
-        <!-- Registro de Otros Gastos (Cochera, Peajes, Parches, Trámites) -->
         <div class="progressive-drawer-card">
           <div class="drawer-summary-row">
             <div>
@@ -850,7 +860,7 @@
         <h3 class="modal-pulsar-title">Actualizar Odómetro</h3>
         <button id="btn-close-km-x" class="btn-close-x">✕</button>
       </div>
-      <p>Ingresa el kilometraje actual que marca tu Pulsar N160:</p>
+      <p>Ingresa el kilometraje actual que marca tu Pulsar N160 (si ingresas un valor menor, te pedirá confirmación para corregirlo):</p>
       <input type="number" id="input-new-km" placeholder="Ej: 520" min="0">
       <div class="modal-actions">
         <button id="btn-cancel-km" class="btn-secondary">Cancelar</button>
@@ -937,7 +947,7 @@
     </div>
   </div>
 
-  <!-- MODAL REGISTRAR / EDITAR MANTENIMIENTO (CON TALLER + REPUESTOS + MANO DE OBRA) -->
+  <!-- MODAL REGISTRAR / EDITAR MANTENIMIENTO (CON PÍLDORAS DE TALLER RÁPIDAS) -->
   <div id="modal-log" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -992,6 +1002,8 @@
         <div><label class="modal-label">Taller / Mecánico:</label><input type="text" id="log-workshop" placeholder="Ej: Crosland / En casa"></div>
       </div>
 
+      <div id="workshop-quick-picks" class="quick-picks-row"></div>
+
       <div id="maint-memory-banner" class="memory-pill-bar">
         <span>💡 Sin registro previo de este servicio en tu historial.</span>
       </div>
@@ -1006,7 +1018,7 @@
     </div>
   </div>
 
-  <!-- MODAL REGISTRAR / EDITAR COMBUSTIBLE (EXCLUSIVO PREMIUM) -->
+  <!-- MODAL REGISTRAR / EDITAR COMBUSTIBLE (CON PÍLDORAS DE GRIFO RÁPIDAS) -->
   <div id="modal-fuel" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1039,6 +1051,8 @@
         <div><label class="modal-label">Grifo / Estación:</label><input type="text" id="fuel-notes" placeholder="Ej: Primax / Repsol"></div>
       </div>
 
+      <div id="fuel-quick-picks" class="quick-picks-row"></div>
+
       <div id="live-fuel-preview" class="live-calc-sleek">
         <span>Ingresa el kilometraje actual y el monto para calcular el rendimiento del tramo.</span>
       </div>
@@ -1050,7 +1064,7 @@
     </div>
   </div>
 
-  <!-- MODAL REGISTRAR / EDITAR OTRO GASTO (PEAJES, COCHERA, PARCHES, TRÁMITES) -->
+  <!-- MODAL REGISTRAR / EDITAR OTRO GASTO -->
   <div id="modal-expense" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1110,9 +1124,9 @@
           <span class="swatch-circle" style="background: #222934;"></span>
           <span>Negra</span>
         </button>
-        <button type="button" class="theme-pill" data-theme="grey" data-edition="PEWTER GREY EDITION">
-          <span class="swatch-circle" style="background: #64748B;"></span>
-          <span>Gris</span>
+        <button type="button" class="theme-pill" data-theme="white" data-edition="PEARL METALLIC WHITE EDITION">
+          <span class="swatch-circle" style="background: #F8FAFC; border: 1px solid #94A3B8;"></span>
+          <span>Blanca</span>
         </button>
       </div>
 
@@ -1121,7 +1135,6 @@
         <span>🔒 Inicia sesión o crea tu cuenta para respaldar tu moto en tu bóveda privada.</span>
       </div>
 
-      <!-- Vista cuando NO ha iniciado sesión -->
       <div id="auth-logged-out-box">
         <div class="form-row-2" style="margin-bottom: 8px;">
           <div>
@@ -1139,7 +1152,6 @@
         </div>
       </div>
 
-      <!-- Vista cuando SÍ tiene sesión activa -->
       <div id="auth-logged-in-box" class="hidden">
         <div class="backup-actions" style="margin-bottom: 8px;">
           <button type="button" id="btn-cloud-push" class="btn-neon">☁️ Subir Mi Moto</button>
@@ -1199,7 +1211,7 @@
     </div>
   </div>
 
-  <!-- MODAL GUANTERA DIGITAL (SOAT + COSTO + BREVETE + CALENDARIO .ICS) -->
+  <!-- MODAL GUANTERA DIGITAL (CON ENLACE DIRECTO A GOOGLE CALENDAR) -->
   <div id="modal-docs" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1209,7 +1221,7 @@
         </div>
         <button id="btn-close-docs-x" class="btn-close-x">✕</button>
       </div>
-      <p>Evalúa la vigencia de tu SOAT y Brevete, y agenda recordatorios directos en el calendario de tu celular:</p>
+      <p>Evalúa la vigencia de tu SOAT y Brevete, y agenda recordatorios directos en tu Google Calendar:</p>
       <div class="form-row-3">
         <div><label class="modal-label">Placa:</label><input type="text" id="doc-plate" placeholder="1234-AB" style="text-transform: uppercase;"></div>
         <div><label class="modal-label">Aseguradora:</label><input type="text" id="doc-insurance" placeholder="Interseguro"></div>
@@ -1226,8 +1238,8 @@
         </div>
       </div>
       <div class="backup-actions" style="margin-top: 8px;">
-        <button type="button" id="btn-cal-soat" class="btn-cal-ics">📅 Agendar SOAT (.ics)</button>
-        <button type="button" id="btn-cal-license" class="btn-cal-ics">📅 Agendar Brevete (.ics)</button>
+        <button type="button" id="btn-cal-soat" class="btn-cal-ics">📅 Agendar SOAT en Google Calendar</button>
+        <button type="button" id="btn-cal-license" class="btn-cal-ics">📅 Agendar Brevete en Google Calendar</button>
       </div>
       <label class="modal-label">Serie de Chasis (VIN) / Número de Motor (Opcional):</label>
       <input type="text" id="doc-vin" placeholder="Para compras de repuestos o controles">
