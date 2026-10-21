@@ -1,6 +1,5 @@
+import { getCurrentUser, pushStateToCloud } from './firebase.js';
 import { STORAGE_KEY, CURRENT_SCHEMA_VERSION, DEFAULT_TIRES } from './constants.js';
-import { scheduleAutoCloudSync } from './firebase.js';
-
 
 // Instancia única global de AudioContext (Evita saturar el límite de hardware móvil)
 let sharedAudioCtx = null;
@@ -264,7 +263,7 @@ export function migrateAndNormalizeState(raw) {
     ...base,
     ...raw,
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    colorTheme: raw.colorTheme || 'blue',
+    colorTheme: raw.colorTheme === 'grey' ? 'white' : (raw.colorTheme || 'blue'),
     bikePurchasePrice: Math.max(0, Number(raw.bikePurchasePrice) || 0),
     loanModeActive: Boolean(raw.loanModeActive),
     initialKm: Math.max(0, inferredInitKm),
@@ -321,17 +320,29 @@ export function loadState() {
   }
 }
 
+let autoSyncTimer = null;
+
 export function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-    scheduleAutoCloudSync(appState, (status) => {
-      window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: status }));
-    });
-    return true;
   } catch (e) {
-    console.error('Error al guardar en localStorage (posible límite de cuota):', e);
-    alert('⚠️ Memoria llena: La imagen es muy pesada o alcanzaste el límite del navegador. Exporta tu respaldo JSON.');
-    return false;
+    console.error('Error guardando estado local:', e);
+  }
+
+  // Auto-guardado silencioso en la nube (Debounce de 2.5 segundos)
+  if (getCurrentUser() && navigator.onLine) {
+    if (autoSyncTimer) clearTimeout(autoSyncTimer);
+    window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'syncing' }));
+
+    autoSyncTimer = setTimeout(async () => {
+      try {
+        await pushStateToCloud(appState);
+        window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'ok' }));
+      } catch (err) {
+        console.warn('Auto-sync postergado:', err);
+        window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'error' }));
+      }
+    }, 2500);
   }
 }
 

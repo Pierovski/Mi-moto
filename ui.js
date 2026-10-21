@@ -23,6 +23,7 @@ export const uiConfig = {
   activePeriod: 'month',
   activeModFilter: 'all',
   activeMaintFilter: 'all',
+  activeFinPeriod: 'all',
   maintSearchQuery: '',
   fuelSearchQuery: '',
   routeMultiplier: 1,
@@ -1018,7 +1019,12 @@ export function renderRouteAndTCO() {
   document.getElementById('route-needed-gal').textContent = `${neededGal.toFixed(2)} gal`;
   document.getElementById('route-est-cost').textContent = `S/ ${estCost.toFixed(2)}`;
 
-  const fin = computeMasterFinancials();
+    const fin = computeMasterFinancials(uiConfig.activeFinPeriod || 'all');
+  const opexTagEl = document.querySelector('.co-card.opex .co-tag');
+  if (opexTagEl) {
+    const tagMap = { all: '🔥 OPERATIVO (OPEX TOTAL)', month: '🔥 OPERATIVO (ESTE MES)', year: '🔥 OPERATIVO (ESTE AÑO)' };
+    opexTagEl.textContent = tagMap[uiConfig.activeFinPeriod] || tagMap.all;
+  }
 
   const capexDisp = document.getElementById('capex-total-display');
   const capexSub = document.getElementById('capex-bike-sub');

@@ -28,7 +28,8 @@ import {
   getRecentQuickPicks,
   getFuelPreviewBaseline,
   estimateMonthlyKmRate,
-  openGoogleCalendarEvent
+  openGoogleCalendarEvent,
+  exportFinancialsToCSV
 } from './telemetry.js';
 import {
   uiConfig,
@@ -938,14 +939,34 @@ function setupEventListeners() {
     showToast('Checklist reiniciado');
   });
 
-  document.querySelectorAll('.period-btn').forEach((btn) => {
+  // Selector de Periodo exclusivo de la Pestaña Grifo
+  document.querySelectorAll('.period-btn[data-period]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.period-btn').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('.period-btn[data-period]').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       uiConfig.activePeriod = btn.getAttribute('data-period');
       renderFuelSection();
     });
   });
+
+  // Filtro por Periodo en Pestaña Finanzas + Exportar Excel CSV
+  document.querySelectorAll('#fin-period-picker .period-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#fin-period-picker .period-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      uiConfig.activeFinPeriod = btn.getAttribute('data-finperiod') || 'all';
+      renderRouteAndTCO();
+    });
+  });
+
+  const btnExportCsv = document.getElementById('btn-export-fin-csv');
+  if (btnExportCsv) {
+    btnExportCsv.addEventListener('click', () => {
+      exportFinancialsToCSV(uiConfig.activeFinPeriod || 'all');
+      triggerHaptic(15);
+      showToast('📊 Reporte Excel (.csv) descargado');
+    });
+  }
 
   document.getElementById('route-km-input').addEventListener('input', renderRouteAndTCO);
   document.querySelectorAll('#route-trip-picker .route-pill').forEach((pill) => {

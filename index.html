@@ -499,7 +499,17 @@
 
       <!-- SUB-VISTA 4A: PANEL FINANCIERO MAESTRO (CAPEX vs OPEX) + GASTOS EXTRA -->
       <div id="sub-route-fin" class="route-panel">
-        
+                <!-- Barra de Periodo Financiero + Exportar a Excel CSV -->
+        <div class="section-header-row" style="margin-bottom: 8px; gap: 6px;">
+          <div class="period-selector" id="fin-period-picker" style="margin-bottom: 0; flex: 1;">
+            <button type="button" class="period-btn active" data-finperiod="all">Histórico</button>
+            <button type="button" class="period-btn" data-finperiod="month">Este Mes</button>
+            <button type="button" class="period-btn" data-finperiod="year">Este Año</button>
+          </div>
+          <button type="button" id="btn-export-fin-csv" class="btn-action-sleek" title="Descargar reporte en Excel (.csv)">
+            📊 Excel CSV
+          </button>
+        </div>
         <div class="capex-opex-grid">
           <div class="co-card capex">
             <span class="co-tag">🏛️ PATRIMONIO (CAPEX)</span>

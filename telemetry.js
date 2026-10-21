@@ -476,52 +476,87 @@ export function evaluateDocsStatus() {
   };
 }
 
-export function computeMasterFinancials() {
-  const allFuel = appState.fuelLogs.reduce((s, f) => s + (Number(f.cost) || 0), 0);
-  const allMaint = appState.logs.reduce((s, l) => s + (Number(l.cost) || 0), 0);
-  const allParts = appState.logs.reduce((s, l) => s + (Number(l.partsCost ?? l.cost) || 0), 0);
-  const allLabor = appState.logs.reduce((s, l) => s + (Number(l.laborCost) || 0), 0);
-  const allSpa = (appState.washLogs || []).reduce((s, w) => s + (Number(w.cost) || 0), 0);
+export function computeMasterFinancials(period = 'all') {
+  const filterFn = (dateStr) => (period === 'all' ? true : isWithinPeriod(dateStr, period));
 
-  const frontCost = Number(appState.tires.front.cost) || 0;
-  const rearCost = Number(appState.tires.rear.cost) || 0;
-  const histTireCost = (appState.tires.history || []).reduce((s, h) => s + (Number(h.cost) || 0), 0);
+  const fuelList = appState.fuelLogs.filter((f) => filterFn(f.date));
+  const maintList = appState.logs.filter((l) => filterFn(l.date));
+  const spaList = (appState.washLogs || []).filter((w) => filterFn(w.date));
+  const otherList = (appState.otherExpenses || []).filter((e) => filterFn(e.date));
+
+  const allFuel = fuelList.reduce((s, f) => s + (Number(f.cost) || 0), 0);
+  const allMaint = maintList.reduce((s, l) => s + (Number(l.cost) || 0), 0);
+  const allParts = maintList.reduce((s, l) => s + (Number(l.partsCost ?? l.cost) || 0), 0);
+  const allLabor = maintList.reduce((s, l) => s + (Number(l.laborCost) || 0), 0);
+  const allSpa = spaList.reduce((s, w) => s + (Number(w.cost) || 0), 0);
+
+  const frontCost = period === 'all' || filterFn(appState.tires.front.date) ? (Number(appState.tires.front.cost) || 0) : 0;
+  const rearCost = period === 'all' || filterFn(appState.tires.rear.date) ? (Number(appState.tires.rear.cost) || 0) : 0;
+  const histTireCost =
+    period === 'all'
+      ? (appState.tires.history || []).reduce((s, h) => s + (Number(h.cost) || 0), 0)
+      : 0;
   const allTires = frontCost + rearCost + histTireCost;
 
+  // El Patrimonio Físico (CAPEX) siempre muestra el valor total de tu activo
   const modsCost = (appState.accessories || []).reduce((s, m) => s + (Number(m.cost) || 0), 0);
   const bikePrice = Number(appState.bikePurchasePrice) || 0;
   const capexTotal = bikePrice + modsCost;
 
-  const allGarage = allTires + modsCost;
+  const modsInPeriod = (appState.accessories || [])
+    .filter((m) => filterFn(m.date))
+    .reduce((s, m) => s + (Number(m.cost) || 0), 0);
+  const allGarage = allTires + (period === 'all' ? modsCost : modsInPeriod);
 
-  const soatCost = Number(appState.docs?.soatCost) || 0;
-  const extraDocsAndOther = (appState.otherExpenses || []).reduce((s, e) => s + (Number(e.cost) || 0), 0);
+  const soatCost =
+    period === 'all' || filterFn(appState.docs?.soatExp)
+      ? (Number(appState.docs?.soatCost) || 0)
+      : 0;
+  const extraDocsAndOther = otherList.reduce((s, e) => s + (Number(e.cost) || 0), 0);
   const allAdmin = soatCost + extraDocsAndOther;
 
   const opCostTotal = allFuel + allMaint + allSpa + allAdmin + allTires;
   const grandTotalInvested = opCostTotal + capexTotal;
 
-  const trackedKm = Math.max(0, Number(appState.currentKm) - (Number(appState.initialKm) || 0));
+  let trackedKm = Math.max(0, Number(appState.currentKm) - (Number(appState.initialKm) || 0));
+  if (period !== 'all') {
+    const kms = [
+      ...fuelList.map((f) => Number(f.km)),
+      ...maintList.map((l) => Number(l.km)),
+      ...spaList.map((w) => Number(w.km)),
+      ...otherList.map((e) => Number(e.km))
+    ].filter((k) => !isNaN(k) && k > 0);
+    trackedKm = kms.length >= 2 ? Math.max(...kms) - Math.min(...kms) : 0;
+  }
+
   const realOpCostPerKm = trackedKm > 0 ? opCostTotal / trackedKm : 0;
 
-  const allDates = [
-    appState.firstUseDate,
-    ...appState.fuelLogs.map((f) => f.date),
-    ...appState.logs.map((l) => l.date),
-    ...(appState.washLogs || []).map((w) => w.date),
-    ...(appState.otherExpenses || []).map((e) => e.date)
-  ]
-    .filter(Boolean)
-    .sort();
-
   let activeDays = 1;
-  if (allDates.length > 0) {
-    const [y, m, d] = allDates[0].split('-').map(Number);
-    const firstDate = new Date(y, m - 1, d);
-    const now = new Date();
-    const diffDays = Math.floor((now - firstDate) / 86400000) + 1;
-    activeDays = Math.max(1, diffDays);
+  const now = new Date();
+  if (period === 'month') {
+    activeDays = Math.max(1, now.getDate());
+  } else if (period === 'year') {
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    activeDays = Math.max(1, Math.floor((now - startOfYear) / 86400000) + 1);
+  } else {
+    const allDates = [
+      appState.firstUseDate,
+      ...appState.fuelLogs.map((f) => f.date),
+      ...appState.logs.map((l) => l.date),
+      ...(appState.washLogs || []).map((w) => w.date),
+      ...(appState.otherExpenses || []).map((e) => e.date)
+    ]
+      .filter(Boolean)
+      .sort();
+
+    if (allDates.length > 0) {
+      const [y, m, d] = allDates[0].split('-').map(Number);
+      const firstDate = new Date(y, m - 1, d);
+      const diffDays = Math.floor((now - firstDate) / 86400000) + 1;
+      activeDays = Math.max(1, diffDays);
+    }
   }
+
   const dailyOpCost = opCostTotal / activeDays;
 
   const safeOpDiv = Math.max(1, allFuel + allMaint + allSpa + allGarage + allAdmin);
@@ -534,6 +569,7 @@ export function computeMasterFinancials() {
   };
 
   return {
+    period,
     bikePrice,
     modsCost,
     capexTotal,
@@ -578,4 +614,121 @@ export function openGoogleCalendarEvent({ title, description, dateStr }) {
     `&details=${encodeURIComponent(description || 'Recordatorio generado desde Mi Moto - Pulsar N160 FI')}`;
 
   window.open(gcalUrl, '_blank', 'noopener,noreferrer');
+}
+// Genera y descarga un reporte Excel (.csv) con todos los gastos e inversiones según el periodo activo
+export function exportFinancialsToCSV(period = 'all') {
+  const filterFn = (dateStr) => (period === 'all' ? true : isWithinPeriod(dateStr, period));
+  const rows = [
+    ['Fecha', 'TipoContable', 'Categoria', 'Concepto_Detalle', 'Lugar_Taller_Grifo', 'Odometro_Km', 'Repuestos_Soles', 'ManoObra_Soles', 'Total_Soles']
+  ];
+
+  if (period === 'all' && Number(appState.bikePurchasePrice) > 0) {
+    rows.push([
+      appState.firstUseDate || '',
+      'CAPEX',
+      'Compra Unidad',
+      'Bajaj Pulsar N160 FI',
+      'Tienda Oficial',
+      appState.initialKm || 0,
+      Number(appState.bikePurchasePrice).toFixed(2),
+      '0.00',
+      Number(appState.bikePurchasePrice).toFixed(2)
+    ]);
+  }
+
+  (appState.accessories || []).filter((m) => filterFn(m.date)).forEach((m) => {
+    const c = Number(m.cost) || 0;
+    rows.push([
+      m.date || '',
+      'CAPEX',
+      `Accesorio (${m.category || 'Mod'})`,
+      `${m.name || ''} ${m.brand ? '- ' + m.brand : ''}`.trim(),
+      m.notes || '',
+      m.km || 0,
+      c.toFixed(2),
+      '0.00',
+      c.toFixed(2)
+    ]);
+  });
+
+  appState.fuelLogs.filter((f) => filterFn(f.date)).forEach((f) => {
+    const c = Number(f.cost) || 0;
+    rows.push([
+      f.date || '',
+      'OPEX',
+      'Combustible Premium',
+      `${Number(f.gallons || 0).toFixed(2)} gal (S/ ${Number(f.priceGal || 0).toFixed(2)}/gal)${f.isLoan ? ' [Préstamo]' : ''}`,
+      f.notes || 'Grifo',
+      f.km || 0,
+      c.toFixed(2),
+      '0.00',
+      c.toFixed(2)
+    ]);
+  });
+
+  appState.logs.filter((l) => filterFn(l.date)).forEach((l) => {
+    const parts = Number(l.partsCost ?? l.cost) || 0;
+    const labor = Number(l.laborCost) || 0;
+    const total = Number(l.cost) || 0;
+    rows.push([
+      l.date || '',
+      'OPEX',
+      'Mantenimiento / Taller',
+      `${l.title || ''}${l.notes ? ' (' + l.notes + ')' : ''}`,
+      l.workshop || (labor === 0 ? 'En casa' : 'Taller'),
+      l.km || 0,
+      parts.toFixed(2),
+      labor.toFixed(2),
+      total.toFixed(2)
+    ]);
+  });
+
+  (appState.washLogs || []).filter((w) => filterFn(w.date)).forEach((w) => {
+    const c = Number(w.cost) || 0;
+    rows.push([
+      w.date || '',
+      'OPEX',
+      'Lavado y Cuidado',
+      w.type || 'Lavado',
+      w.notes || '',
+      w.km || 0,
+      '0.00',
+      c.toFixed(2),
+      c.toFixed(2)
+    ]);
+  });
+
+  (appState.otherExpenses || []).filter((e) => filterFn(e.date)).forEach((e) => {
+    const c = Number(e.cost) || 0;
+    rows.push([
+      e.date || '',
+      'OPEX',
+      e.category || 'Otros Gastos',
+      e.title || '',
+      'Ruta / Trámite',
+      e.km || 0,
+      c.toFixed(2),
+      '0.00',
+      c.toFixed(2)
+    ]);
+  });
+
+  const escapeCsvCell = (val) => {
+    const str = String(val ?? '').replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  // Usamos punto y coma (;) y BOM UTF-8 (\uFEFF) para que Excel en español separe las columnas automáticamente
+  const csvContent = '\uFEFF' + rows.map((r) => r.map(escapeCsvCell).join(';')).join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const periodSuffix = period === 'month' ? 'MesActual' : period === 'year' ? 'AnioActual' : 'HistoricoTotal';
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `MiMoto_N160_Finanzas_${periodSuffix}_${appState.currentKm}km.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
