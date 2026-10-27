@@ -152,6 +152,90 @@ export const TECHNICAL_GUIDES = {
     title: 'Lavado, Radiador y Retenes (Cada 400 km)',
     how: 'Lava siempre con los discos de freno y motor fríos usando shampoo neutro. Nunca apuntes chorro a alta presión directo al radiador de aceite ni a los retenes de las barras de 37 mm. Seca con microfibra y lubrica cadena.',
     why: 'El barro y el polvo acumulados en los tubos de la suspensión lijan los retenes provocando fugas, y el agua a presión dobla las aletas del radiador.'
+  },
+  obd_ecu_guide: {
+    category: 'TELEMETRÍA EN VIVO OBD2 (KONNWEI KW901)',
+    title: 'Cockpit Dedicado ECU Bajaj N160 FI',
+    how: 'Conecta el cable de 6 pines bajo el asiento y enchufa tu KONNWEI KW901. Enciende el botón del escáner, abre contacto en la moto y toca "⚡ Conectar". Toca "⛶ Modo Timón" para usar toda la pantalla sin distracciones.',
+    why: 'Extrae en tiempo real los 14 parámetros internos del microcontrolador Bosch/Bajaj (RPM, Velocidad, Marcha, Temperatura, Voltaje, TPS, Carga, MAP, IAT, Chispa, Sonda Lambda y Códigos DTC) manteniendo la pantalla siempre encendida.'
+  },
+  obd_speed_info: {
+    category: 'TELEMETRÍA DE VELOCIDAD (PID 010D)',
+    title: 'Velocidad Real de la ECU vs. Tablero',
+    how: 'Muestra los km/h exactos que calcula la computadora a partir del sensor del anillo fónico ABS de la rueda, registrando además tu velocidad pico de la ruta.',
+    why: 'Los tableros de fábrica suelen marcar entre 5% y 7% de velocidad extra por norma internacional. La lectura OBD2 te entrega la velocidad física real sin ese margen de error.'
+  },
+  obd_gear_info: {
+    category: 'TRANSMISIÓN DE 5 VELOCIDADES',
+    title: 'Indicador de Marcha y Guardián de Cambio',
+    how: 'Calcula instantáneamente en qué cambio vas (N, 1, 2, 3, 4 o 5) cruzando las RPM del cigüeñal con la velocidad real y la relación de piñón/catalina original (14T / 45T).',
+    why: 'Te protege durante el asentamiento (<1,000 km) avisándote con vibración y destello rojo si superas las 5,000 RPM, y evita llevar el motor ahogado o sobrerrevolucionado en ruta.'
+  },
+  obd_rpm_info: {
+    category: 'GIRO DEL CIGÜEÑAL (PID 010C)',
+    title: 'Tacómetro Digital de Precisión (RPM)',
+    how: 'Lee directamente del sensor inductivo CKP los giros exactos por minuto del motor monocilíndrico 164.82 cc. Ralentí normal en caliente: 1,350 a 1,450 RPM.',
+    why: 'El torque máximo de tu N160 se entrega a las 6,750 RPM (14.65 Nm) y la potencia máxima a las 8,750 RPM (15.78 HP). Pasar de 8,800 RPM no da más empuje y desgasta el tren alternativo.'
+  },
+  obd_temp_info: {
+    category: 'TERMOMETRÍA DEL MOTOR (PID 0105)',
+    title: 'Temperatura Exacta de Motor y Aceite (°C)',
+    how: 'Menos de 45 °C: Motor frío (no acelerar fuerte). Entre 65 °C y 95 °C: Rango térmico óptimo de trabajo. Más de 105 °C: Alerta de sobrecalentamiento.',
+    why: 'El tablero original de la N160 no tiene medidor de temperatura en grados, solo un icono que prende cuando ya está hirviendo. Con este dato sabes el segundo exacto en que el aceite 20W-50 ya lubricó toda la culata.'
+  },
+  obd_volt_info: {
+    category: 'SISTEMA DE CARGA 12V (COMANDO ATRV)',
+    title: 'Voltaje de Batería (4Ah) y Estator Trifásico',
+    how: 'Motor apagado (contacto): debe marcar >12.4V. Motor encendido acelerando (>2,500 RPM): debe mantenerse estable entre 13.6V y 14.4V.',
+    why: 'Si con el motor en marcha ves menos de 12.8V, el estator o regulador no están cargando y te quedarás botado. Si supera los 14.8V, el regulador está sobrecargando y puede inflar tu batería o dañar la ECU.'
+  },
+  obd_tps_info: {
+    category: 'CUERPO DE ACELERACIÓN FI (PID 0111)',
+    title: 'Porcentaje de Apertura de Mariposa (TPS)',
+    how: 'Mide de 0% a 100% cuánto estás abriendo el puño del acelerador y cuánto aire dejas entrar al cuerpo de inyección.',
+    why: 'Manejar entre 15% y 45% de TPS mantiene a la ECU en "Lazo Cerrado" (modo económico), logrando rendimientos cercanos a 145-155 km/galón de Gasolina Premium.'
+  },
+  obd_load_info: {
+    category: 'ESFUERZO VOLUMÉTRICO (PID 0104)',
+    title: 'Carga Calculada del Motor (%)',
+    how: 'Indica del 0% al 100% cuánto torque o esfuerzo real se le está exigiendo al cilindro respecto a su capacidad máxima en ese régimen de RPM.',
+    why: 'Si ves la Carga al 90% pero las RPM son bajas (ej. subiendo una cuesta en 4ta o 5ta marcha), estás forzando la biela y provocando cascabeleo; debes bajar un cambio de inmediato.'
+  },
+  obd_map_info: {
+    category: 'SENSOR BAROMÉTRICO Y VACÍO (PID 010B)',
+    title: 'Presión de Admisión (kPa) y Altímetro (msnm)',
+    how: 'A nivel del mar con contacto puesto marca ~101 kPa (0 msnm). Al subir hacia la sierra la presión cae (~75 kPa a 2,500 msnm) y la app calcula tu altitud.',
+    why: 'La ECU usa este sensor para saber cuánto oxígeno hay en el aire y recortar gasolina en altura para que la moto no se ahogue al subir de la costa a la sierra.'
+  },
+  obd_iat_info: {
+    category: 'DENSIDAD DE OXÍGENO (PID 010F)',
+    title: 'Temperatura de Aire de Admisión - IAT (°C)',
+    how: 'Mide la temperatura exacta del aire que está entrando dentro de la caja del filtro de aire bajo el asiento.',
+    why: 'El aire más fresco es más denso en oxígeno y produce una explosión más potente. En tráfico pesado al mediodía verás subir este valor.'
+  },
+  obd_timing_info: {
+    category: 'ENCENDIDO DIGITAL DTS-i (PID 010E)',
+    title: 'Avance de Chispa de Doble Bujía (Grados °)',
+    how: 'Muestra cuántos grados antes de que el pistón llegue arriba (PMS) saltan las chispas en las dos bujías Champion RG6HCC. En ralentí ronda 8°-12° y acelerando sube a 28°-35°.',
+    why: 'Confirma que el mapa de encendido digital está adelantando la chispa correctamente a altas RPM. Si usas gasolina de bajo octanaje, la ECU retrasa el avance y pierdes potencia.'
+  },
+  obd_o2_info: {
+    category: 'COMBUSTIÓN Y SONDA LAMBDA (PID 0114)',
+    title: 'Sensor de Oxígeno (V) y Ajuste de Mezcla (STFT %)',
+    how: 'En motor caliente oscila rápido entre 0.1V (mezcla pobre) y 0.9V (mezcla rica). El ajuste STFT ideal debe estar entre -8% y +8%.',
+    why: 'Si el ajuste STFT supera +12% constantemente, te avisa de forma temprana que el inyector está sucio o hay una entrada de aire pirata antes de que siquiera prenda el Check Engine.'
+  },
+  obd_runtime_info: {
+    category: 'CRONÓMETRO INTERNO ECU (PID 011F)',
+    title: 'Tiempo Continuo de Motor Encendido (MM:SS)',
+    how: 'Cuenta el tiempo exacto desde el último arranque del motor sin haberse apagado.',
+    why: 'Útil para controlar que cumpliste al menos 60-90 segundos de calentamiento lubricando la culata antes de salir a rodar en las mañanas, y medir tramos continuos de viaje.'
+  },
+  obd_dtc_info: {
+    category: 'AUTODIAGNÓSTICO OBD2 (MODOS 03 Y 04)',
+    title: 'Escáner y Borrador de Códigos de Falla (DTC)',
+    how: 'Toca "🔍 Escanear Fallas" para consultar la memoria de errores de la ECU. Si reparaste un sensor y quedó la luz amarilla encendida, toca "🧹 Borrar Check Engine".',
+    why: 'Te ahorra pagar entre S/ 40 y S/ 60 por escaneo electrónico en talleres externos y traduce cada código (ej. P0131, P0562) al componente exacto de tu Pulsar N160.'
   }
 };
 

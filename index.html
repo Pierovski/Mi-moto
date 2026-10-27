@@ -168,7 +168,7 @@
       </button>
     </div>
 
-    <!-- Barra de Navegación Inferior Fija (Zona del Pulgar) -->
+        <!-- Barra de Navegación Inferior Fija (Zona del Pulgar) -->
     <nav class="tabs-nav-5" aria-label="Navegación Principal">
       <button class="tab-btn active" data-tab="tab-maint">
         <span class="nav-ico">🔧</span>
@@ -189,6 +189,10 @@
       <button class="tab-btn" data-tab="tab-specs">
         <span class="nav-ico">🔩</span>
         <span>Ficha</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-ecu" id="nav-btn-ecu">
+        <span class="nav-ico">⚡</span>
+        <span>ECU</span>
       </button>
     </nav>
 
@@ -857,6 +861,195 @@
           <div class="spec-row"><span>Frenos</span><strong>Del. 300mm ABS / Tras. 230mm</strong></div>
           <div class="spec-row"><span>Llantas Tubeless</span><strong>Del. 100/80-17 • Tras. 130/70-17</strong></div>
           <div class="spec-row"><span>Peso / Faro</span><strong>154 kg / Proyector Bi-LED DRL</strong></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================= PESTAÑA 6: PANTALLA EXCLUSIVA DE TELEMETRÍA ECU OBD2 ================= -->
+    <div id="tab-ecu" class="tab-content hidden">
+      <div id="obd-cockpit-card" class="progressive-drawer-card obd-live-card">
+        <!-- Barra Superior de Control ECU -->
+        <div class="drawer-summary-row" style="margin-bottom: 10px;">
+          <div class="title-with-info">
+            <span class="section-title-sleek">⚡ COCKPIT ECU N160</span>
+            <button type="button" class="btn-info-dot" data-info-key="obd_ecu_guide">ⓘ</button>
+            <span id="obd-live-status" class="status-pill status-ok">OFFLINE</span>
+          </div>
+          <div class="obd-btn-group">
+            <button type="button" id="btn-obd-ride-mode" class="btn-drawer-toggle" title="Ocultar cabeceras para usar en el soporte del timón">⛶ Timón</button>
+            <button type="button" id="btn-obd-sim" class="btn-drawer-toggle" title="Simular los 14 sensores en vivo">Demo</button>
+            <button type="button" id="btn-obd-connect" class="btn-action-sleek">⚡ Conectar</button>
+          </div>
+        </div>
+
+        <div id="obd-live-panel">
+          <!-- NIVEL 1: LECTURA GIGANTE (VELOCIDAD REAL, MARCHA ENGRANADA Y TACÓMETRO) -->
+          <div class="obd-hero-grid">
+            <div class="obd-hero-speed-box">
+              <div class="obd-box-head">
+                <span class="obd-hero-tag">VELOCIDAD</span>
+                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_speed_info">ⓘ</button>
+              </div>
+              <div class="obd-hero-speed-val">
+                <strong id="obd-speed-val">0</strong>
+                <small>km/h</small>
+              </div>
+              <span class="obd-hero-sub">Máx: <strong id="obd-peak-speed">0</strong> km/h</span>
+            </div>
+
+            <div class="obd-hero-gear-box" id="obd-gear-box">
+              <div class="obd-box-head center">
+                <span class="obd-hero-tag">MARCHA</span>
+                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_gear_info">ⓘ</button>
+              </div>
+              <strong id="obd-gear-val" class="obd-gear-number">N</strong>
+              <span id="obd-breakin-guard" class="obd-guard-pill">ÓPTIMO</span>
+            </div>
+
+            <div class="obd-hero-rpm-box">
+              <div class="obd-box-head">
+                <span class="obd-hero-tag">TACÓMETRO</span>
+                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_rpm_info">ⓘ</button>
+              </div>
+              <div class="obd-hero-rpm-val">
+                <strong id="obd-rpm-val">0</strong>
+                <small>RPM</small>
+              </div>
+              <span class="obd-hero-sub">Pico: <strong id="obd-peak-rpm">0</strong> RPM</span>
+            </div>
+          </div>
+
+          <!-- BARRA DE RPM CON SEGMENTOS Y SHIFT-LIGHT -->
+          <div class="obd-rpm-bar-wrap">
+            <div class="progress-track obd-rpm-track">
+              <div id="obd-rpm-bar" class="progress-fill obd-rpm-fill" style="width: 0%;"></div>
+            </div>
+            <div class="obd-rpm-scale">
+              <span>0</span>
+              <span>2k</span>
+              <span>4k</span>
+              <span class="rpm-scale-warn">5k (Asent.)</span>
+              <span>7k</span>
+              <span class="rpm-scale-danger">8.5k Redline</span>
+              <span>10k</span>
+            </div>
+          </div>
+
+          <!-- NIVEL 2: 3 TARJETAS MEDIANAS (SIGNOS VITALES CRÍTICOS CON SU ICONO ⓘ) -->
+          <div class="obd-vitals-grid-3">
+            <div class="obd-vital-card">
+              <div class="obd-box-head">
+                <span class="tele-label">🌡️ TEMP. MOTOR</span>
+                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_temp_info">ⓘ</button>
+              </div>
+              <strong class="obd-vital-val carib" id="obd-temp-val">-- <small>°C</small></strong>
+              <span class="tele-sub" id="obd-temp-status">Sensor térmico FI</span>
+            </div>
+
+            <div class="obd-vital-card">
+              <div class="obd-box-head">
+                <span class="tele-label">🔋 BATERÍA 4Ah</span>
+                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_volt_info">ⓘ</button>
+              </div>
+              <strong class="obd-vital-val neon" id="obd-volt-val">-- <small>V</small></strong>
+              <span class="tele-sub" id="obd-volt-status">Rango 12.4V - 14.4V</span>
+            </div>
+
+            <div class="obd-vital-card">
+              <div class="obd-box-head">
+                <span class="tele-label">🚀 ACELERADOR</span>
+                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_tps_info">ⓘ</button>
+              </div>
+              <strong class="obd-vital-val" id="obd-tps-val">0 <small>%</small></strong>
+              <span class="tele-sub" id="obd-load-status">Mariposa TPS</span>
+            </div>
+          </div>
+
+          <!-- NIVEL 3: MICRO-GRILLA COMPACTA (6 SENSORES SECUNDARIOS CON SU ICONO ⓘ INDIVIDUAL) -->
+          <div class="obd-micro-section-title">TELEMETRÍA SECUNDARIA FI & COMBUSTIÓN DTS-i (TOCA ⓘ PARA DETALLES)</div>
+          <div class="obd-micro-grid-6">
+            <div class="obd-micro-cell">
+              <div class="obd-box-head">
+                <span class="micro-lbl">CARGA MOTOR</span>
+                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_load_info">ⓘ</button>
+              </div>
+              <strong id="obd-micro-load">0%</strong>
+              <small>Esfuerzo cilindro</small>
+            </div>
+
+            <div class="obd-micro-cell">
+              <div class="obd-box-head">
+                <span class="micro-lbl">PRESIÓN MAP</span>
+                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_map_info">ⓘ</button>
+              </div>
+              <strong id="obd-micro-map">-- kPa</strong>
+              <small id="obd-micro-alt">Alt: ~0 msnm</small>
+            </div>
+
+            <div class="obd-micro-cell">
+              <div class="obd-box-head">
+                <span class="micro-lbl">TEMP. ADM (IAT)</span>
+                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_iat_info">ⓘ</button>
+              </div>
+              <strong id="obd-micro-iat">-- °C</strong>
+              <small>Aire Caja Filtro</small>
+            </div>
+
+            <div class="obd-micro-cell">
+              <div class="obd-box-head">
+                <span class="micro-lbl">AVANCE CHISPA</span>
+                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_timing_info">ⓘ</button>
+              </div>
+              <strong id="obd-micro-timing">0.0°</strong>
+              <small>Doble Bujía DTS-i</small>
+            </div>
+
+            <div class="obd-micro-cell">
+              <div class="obd-box-head">
+                <span class="micro-lbl">SONDA LAMBDA</span>
+                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_o2_info">ⓘ</button>
+              </div>
+              <strong id="obd-micro-o2">0.45 V</strong>
+              <small id="obd-micro-stft">Mezcla: 0.0%</small>
+            </div>
+
+            <div class="obd-micro-cell">
+              <div class="obd-box-head">
+                <span class="micro-lbl">TIEMPO RUTA</span>
+                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_runtime_info">ⓘ</button>
+              </div>
+              <strong id="obd-micro-runtime">00:00</strong>
+              <small id="obd-micro-dist">Ruta: +0.00 km</small>
+            </div>
+          </div>
+
+          <!-- BARRA DE KILOMETRAJE RECORRIDO EN RUTA EN VIVO + BOTÓN DE INYECCIÓN AUTOMÁTICA AL ODÓMETRO -->
+          <div class="obd-trip-sync-bar">
+            <div>
+              <span class="micro-lbl">DISTANCIA MEDIDA POR ECU EN ESTA SESIÓN</span>
+              <strong id="obd-session-km-txt" style="font-size: 12px; color: var(--caribbean-bright);">+0.00 km recorridos</strong>
+            </div>
+            <button type="button" id="btn-obd-sync-km" class="btn-quick-done">🏁 Sumar al Odómetro</button>
+          </div>
+
+          <!-- NIVEL 4: ESCÁNER DE CÓDIGOS DE FALLA (CHECK ENGINE DTC MODO 03 / 04 CON ICONO ⓘ) -->
+          <div class="obd-dtc-strip">
+            <div class="obd-dtc-top">
+              <div>
+                <div class="title-with-info">
+                  <span class="micro-lbl">DIAGNÓSTICO CHECK ENGINE (DTC BAJAJ)</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_dtc_info">ⓘ</button>
+                </div>
+                <div id="obd-dtc-summary" class="obd-dtc-status-txt">✅ 0 Códigos de falla detectados en la ECU</div>
+              </div>
+              <div class="obd-btn-group">
+                <button type="button" id="btn-obd-scan-dtc" class="btn-quick-done">🔍 Escanear</button>
+                <button type="button" id="btn-obd-clear-dtc" class="btn-del-log hidden">🧹 Borrar</button>
+              </div>
+            </div>
+            <div id="obd-dtc-list" class="obd-dtc-list hidden"></div>
+          </div>
         </div>
       </div>
     </div>

@@ -531,7 +531,7 @@ input:focus { border-color: var(--caribbean-bright); }
 /* ================= DOCK DE 5 MÓDULOS Y SUB-PESTAÑAS ================= */
 .tabs-nav-5 {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 4px;
   background: var(--bg-engine);
   padding: 4px;
@@ -1314,4 +1314,324 @@ body {
 
 .docs-garage-card.docs-danger {
   border-left-color: var(--red-danger);
+}
+
+/* ================= BLOQUE V3.0: TELEMETRÍA COMPLETA EN UNA SOLA PANTALLA ================= */
+.obd-live-card {
+  margin-bottom: 11px;
+  border-left: 3px solid var(--caribbean-bright);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.obd-live-card.obd-active {
+  border-left-color: var(--neon-lime);
+  box-shadow: 0 8px 26px rgba(88, 232, 0, 0.14);
+}
+
+.obd-live-card.obd-shift-alert {
+  border-color: var(--red-danger) !important;
+  box-shadow: 0 0 22px rgba(255, 69, 58, 0.55) !important;
+}
+
+.obd-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* NIVEL 1: LECTURA GIGANTE (VELOCIDAD, MARCHA Y RPM) */
+.obd-hero-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.75fr 1.25fr;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.obd-hero-speed-box,
+.obd-hero-gear-box,
+.obd-hero-rpm-box {
+  background: linear-gradient(160deg, #070D16 0%, #0D1826 100%);
+  border: 1px solid rgba(73, 191, 230, 0.24);
+  border-radius: 11px;
+  padding: 8px 9px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.obd-hero-gear-box {
+  align-items: center;
+  text-align: center;
+  border-color: rgba(88, 232, 0, 0.35);
+  background: radial-gradient(circle at 50% 35%, rgba(88, 232, 0, 0.14) 0%, #070C14 85%);
+}
+
+.obd-hero-tag {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: var(--alloy-muted);
+}
+
+.obd-hero-speed-val,
+.obd-hero-rpm-val {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin: 2px 0;
+}
+
+#obd-speed-val {
+  font-family: var(--font-speed);
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 0.95;
+  color: #FFFFFF;
+  font-variant-numeric: tabular-nums;
+}
+
+#obd-rpm-val {
+  font-family: var(--font-speed);
+  font-size: 29px;
+  font-weight: 900;
+  line-height: 0.95;
+  color: var(--neon-lime);
+  font-variant-numeric: tabular-nums;
+}
+
+.obd-hero-speed-val small,
+.obd-hero-rpm-val small {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--caribbean-bright);
+}
+
+.obd-gear-number {
+  font-family: var(--font-speed);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 0.95;
+  color: var(--neon-lime);
+  margin: 2px 0;
+}
+
+.obd-guard-pill {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  background: rgba(88, 232, 0, 0.15);
+  color: var(--neon-lime);
+  white-space: nowrap;
+}
+
+.obd-hero-sub {
+  font-size: 9px;
+  color: var(--alloy-silver);
+}
+
+/* BARRA DE TACÓMETRO Y ESCALA */
+.obd-rpm-bar-wrap {
+  margin-bottom: 9px;
+}
+
+.obd-rpm-track {
+  height: 9px;
+  margin: 0 0 3px;
+  background: #04070B;
+  border: 1px solid rgba(73, 191, 230, 0.22);
+}
+
+.obd-rpm-fill {
+  background: linear-gradient(90deg, var(--caribbean-bright) 0%, var(--neon-lime) 70%, var(--amber-warn) 90%, var(--red-danger) 100%);
+  transition: width 0.14s linear;
+}
+
+.obd-rpm-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--alloy-muted);
+}
+
+.rpm-scale-warn { color: var(--amber-warn); }
+.rpm-scale-danger { color: var(--red-danger); }
+
+/* NIVEL 2: 3 TARJETAS MEDIANAS (SIGNOS VITALES) */
+.obd-vitals-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 9px;
+}
+
+.obd-vital-card {
+  background: #070C14;
+  border: 1px solid var(--border-subtle);
+  border-top: 2px solid var(--caribbean-primary);
+  border-radius: 10px;
+  padding: 7px 8px;
+}
+
+.obd-vital-val {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 18px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 2px 0 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.obd-vital-val small {
+  font-size: 10px;
+  color: var(--alloy-silver);
+}
+
+/* NIVEL 3: MICRO-GRILLA SECUNDARIA (6 CELDAS PEQUEÑAS) */
+.obd-micro-section-title {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  color: var(--caribbean-bright);
+  margin-bottom: 5px;
+}
+
+.obd-micro-grid-6 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-bottom: 9px;
+}
+
+.obd-micro-cell {
+  background: #05080D;
+  border: 1px solid rgba(210, 218, 228, 0.12);
+  border-radius: 8px;
+  padding: 5px 7px;
+}
+
+.micro-lbl {
+  display: block;
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--alloy-muted);
+}
+
+.obd-micro-cell strong {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 1px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.obd-micro-cell small {
+  display: block;
+  font-size: 8px;
+  color: var(--alloy-silver);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* NIVEL 4: ESCÁNER DE FALLAS DTC (CHECK ENGINE) */
+.obd-dtc-strip {
+  background: #05090F;
+  border: 1px solid var(--border-subtle);
+  border-radius: 9px;
+  padding: 7px 9px;
+}
+
+.obd-dtc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.obd-dtc-status-txt {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--neon-lime);
+  margin-top: 1px;
+}
+
+.obd-dtc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 69, 58, 0.25);
+}
+
+.obd-dtc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 69, 58, 0.1);
+  border: 1px solid rgba(255, 69, 58, 0.35);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+
+.obd-dtc-code {
+  font-family: var(--font-speed);
+  font-weight: 900;
+  color: var(--red-danger);
+  margin-right: 6px;
+}
+
+/* Cabeceras internas con icono ⓘ en cada métrica de telemetría */
+.obd-box-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.obd-box-head.center {
+  justify-content: center;
+  gap: 5px;
+}
+
+.obd-mini-info {
+  width: 17px !important;
+  height: 17px !important;
+  font-size: 9.5px !important;
+}
+
+.obd-micro-info {
+  width: 15px !important;
+  height: 15px !important;
+  font-size: 8.5px !important;
+}
+
+.obd-trip-sync-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(30, 136, 168, 0.12);
+  border: 1px solid rgba(73, 191, 230, 0.28);
+  border-radius: 9px;
+  padding: 7px 10px;
+  margin-bottom: 9px;
+}
+
+/* Modo Timón Pantalla Completa: Oculta cabecera, foto y odómetro superior para dejar 100% el Cockpit ECU */
+body.ecu-ride-mode .app-header,
+body.ecu-ride-mode #main-bike-banner,
+body.ecu-ride-mode #cockpit-cluster {
+  display: none !important;
+}
+
+body.ecu-ride-mode .screen {
+  padding-top: 8px;
 }

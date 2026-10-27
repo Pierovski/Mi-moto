@@ -48,8 +48,18 @@ import {
   renderLogs,
   renderFuelSection,
   renderRouteAndTCO,
+  renderObdLiveUI,
   renderAllMain
 } from './ui.js';
+import {
+  liveEcuData,
+  connectKonnweiBle,
+  scanEcuDtcCodes,
+  clearEcuDtcCodes,
+  startSimulatorMode,
+  stopEcuTelemetry,
+  resetSessionDistance
+} from './obd.js';
 
 let editingLogId = null;
 let selectedServiceType = 'breakin_500';
@@ -138,6 +148,11 @@ function renderQuickPicksUI() {
 }
 
 function switchMainTab(tabId) {
+  if (tabId !== 'tab-ecu') {
+    document.body.classList.remove('ecu-ride-mode');
+    const rideBtn = document.getElementById('btn-obd-ride-mode');
+    if (rideBtn) rideBtn.textContent = '⛶ Timón';
+  }
   document.querySelectorAll('.tab-btn').forEach((b) => {
     b.classList.toggle('active', b.getAttribute('data-tab') === tabId);
   });
@@ -510,6 +525,103 @@ function setupEventListeners() {
   const cloudHeaderPill = document.getElementById('cloud-live-indicator');
   if (cloudHeaderPill) {
     cloudHeaderPill.addEventListener('click', () => openModalById('modal-backup'));
+  }
+
+  // Eventos de Telemetría OBD2 en Vivo (Konnwei KW901 BLE + Simulador Demo)
+  const btnObdConnect = document.getElementById('btn-obd-connect');
+  if (btnObdConnect) {
+    btnObdConnect.addEventListener('click', async () => {
+      if (liveEcuData.connected && liveEcuData.mode === 'ble') {
+        stopEcuTelemetry(renderObdLiveUI);
+        showToast('🔌 Telemetría ECU desconectada');
+        return;
+      }
+      try {
+        await connectKonnweiBle(renderObdLiveUI, (msg) => showToast(msg));
+        triggerHaptic(20);
+      } catch (err) {
+        stopEcuTelemetry(renderObdLiveUI);
+        showToast(`⚠️ ${err.message || 'No se pudo conectar al escáner'}`);
+      }
+    });
+  }
+
+    const btnObdSim = document.getElementById('btn-obd-sim');
+  if (btnObdSim) {
+    btnObdSim.addEventListener('click', () => {
+      if (liveEcuData.connected && liveEcuData.mode === 'sim') {
+        stopEcuTelemetry(renderObdLiveUI);
+        showToast('⏹ Modo Demo detenido');
+      } else {
+        startSimulatorMode(renderObdLiveUI, (msg) => showToast(msg));
+        triggerHaptic(15);
+      }
+    });
+  }
+
+  const btnScanDtc = document.getElementById('btn-obd-scan-dtc');
+  if (btnScanDtc) {
+    btnScanDtc.addEventListener('click', () => {
+      scanEcuDtcCodes(renderObdLiveUI, (msg) => showToast(msg));
+    });
+  }
+
+  const btnClearDtc = document.getElementById('btn-obd-clear-dtc');
+  if (btnClearDtc) {
+    btnClearDtc.addEventListener('click', () => {
+      openCustomConfirm({
+        title: '¿Borrar Check Engine (DTC)?',
+        message: 'Se enviará el comando Modo 04 a la ECU de tu Pulsar N160 para limpiar los códigos de error almacenados y apagar el testigo.',
+        confirmText: 'Sí, Borrar Fallas',
+        isDanger: true,
+        icon: '🧹',
+        onConfirm: () => {
+          clearEcuDtcCodes(renderObdLiveUI, (msg) => showToast(msg));
+        }
+      });
+    });
+  }
+
+  // Botón Modo Timón (Pantalla Completa dedicada sin cabecera ni distracciones)
+  const btnRideMode = document.getElementById('btn-obd-ride-mode');
+  if (btnRideMode) {
+    btnRideMode.addEventListener('click', () => {
+      const isRide = document.body.classList.toggle('ecu-ride-mode');
+      btnRideMode.textContent = isRide ? '↙ Salir Timón' : '⛶ Timón';
+      triggerHaptic(12);
+      showToast(isRide ? '🏍️ Modo Timón Activo (100% Pantalla)' : 'Vista estándar restaurada');
+    });
+  }
+
+  // Botón para inyectar los kilómetros reales medidos por la ECU directo al Odómetro Total de la App
+  const btnSyncSessionKm = document.getElementById('btn-obd-sync-km');
+  if (btnSyncSessionKm) {
+    btnSyncSessionKm.addEventListener('click', () => {
+      const addKm = Math.round(Number(liveEcuData.sessionKm) || 0);
+      if (addKm < 1) {
+        showToast('⚠️ Rueda al menos 1 km en la sesión para sumar al odómetro');
+        return;
+      }
+      const targetKm = appState.currentKm + addKm;
+      openCustomConfirm({
+        title: 'Inyectar Km de Ruta ECU',
+        message: `La ECU registró +${Number(liveEcuData.sessionKm).toFixed(2)} km en este trayecto. ¿Deseas sumar ${addKm} km a tu Odómetro Total (${appState.currentKm.toLocaleString('es-PE')} → ${targetKm.toLocaleString('es-PE')} km)?`,
+        confirmText: `Sumar +${addKm} km`,
+        isDanger: false,
+        icon: '🏁',
+        onConfirm: () => {
+          appState.currentKm = targetKm;
+          resetSessionDistance();
+          recalculateServiceKmFromLogs();
+          recalculateWashFromLogs();
+          saveState();
+          renderAllMain();
+          renderObdLiveUI(liveEcuData);
+          triggerHaptic(20);
+          showToast(`✅ Odómetro actualizado a ${targetKm.toLocaleString('es-PE')} km`);
+        }
+      });
+    });
   }
 
   document.body.addEventListener('click', (e) => {

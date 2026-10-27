@@ -1,4 +1,5 @@
 import { TANK_CAPACITY_GAL, MAINT_RULES, TECHNICAL_GUIDES, DEFAULT_TIRES } from './constants.js';
+import { BAJAJ_DTC_DICTIONARY } from './obd.js';
 import { appState, escapeHTML, playN160IgnitionSound } from './state.js';
 import {
   isWithinPeriod,
@@ -1127,4 +1128,171 @@ export function renderAllMain(triggerSweep = false) {
   renderLogs();
   renderFuelSection();
   renderRouteAndTCO();
+}
+
+export function renderObdLiveUI(data) {
+  const card = document.getElementById('obd-cockpit-card');
+  const panel = document.getElementById('obd-live-panel');
+  const statusPill = document.getElementById('obd-live-status');
+  const btnConnect = document.getElementById('btn-obd-connect');
+  const btnSim = document.getElementById('btn-obd-sim');
+
+  if (!card || !panel) return;
+
+  if (!data || !data.connected) {
+    card.classList.remove('obd-active', 'obd-shift-alert');
+    statusPill.textContent = 'OFFLINE';
+    statusPill.className = 'status-pill status-ok';
+    if (btnConnect) btnConnect.textContent = '⚡ Conectar';
+    if (btnSim) btnSim.textContent = 'Demo';
+    document.getElementById('obd-speed-val').textContent = '0';
+    document.getElementById('obd-gear-val').textContent = 'N';
+    document.getElementById('obd-rpm-val').textContent = '0';
+    document.getElementById('obd-rpm-bar').style.width = '0%';
+    return;
+  }
+
+  card.classList.add('obd-active');
+  panel.classList.remove('hidden');
+
+  if (data.mode === 'sim') {
+    statusPill.textContent = 'DEMO COMPLETO';
+    statusPill.className = 'status-pill status-warn';
+    if (btnSim) btnSim.textContent = '⏹ Salir Demo';
+    if (btnConnect) btnConnect.textContent = '⚡ Conectar';
+  } else {
+    statusPill.textContent = 'ECU EN LÍNEA';
+    statusPill.className = 'status-pill status-ok';
+    if (btnConnect) btnConnect.textContent = '⏹ Desconectar';
+    if (btnSim) btnSim.textContent = 'Demo';
+  }
+
+  // NIVEL 1: Velocidad Gigante, Marcha y RPM
+  const rpm = Number(data.rpm) || 0;
+  const peakRpm = Number(data.peakRpm) || 0;
+  const spd = Number(data.speedKmh) || 0;
+  const peakSpd = Number(data.peakSpeed) || 0;
+  const gear = data.gear || 'N';
+
+  document.getElementById('obd-speed-val').textContent = spd;
+  document.getElementById('obd-peak-speed').textContent = peakSpd;
+  document.getElementById('obd-gear-val').textContent = gear;
+  document.getElementById('obd-rpm-val').textContent = rpm.toLocaleString('es-PE');
+  document.getElementById('obd-peak-rpm').textContent = peakRpm.toLocaleString('es-PE');
+
+  const rpmPct = Math.min(100, Math.round((rpm / 10000) * 100));
+  const rpmBar = document.getElementById('obd-rpm-bar');
+  rpmBar.style.width = `${rpmPct}%`;
+
+  const isBreakin1k = appState.currentKm < 1000;
+  const isBreakin2k = appState.currentKm >= 1000 && appState.currentKm < 2000;
+  const shiftLimit = isBreakin1k ? 5000 : (isBreakin2k ? 6500 : 8500);
+
+  const guardPill = document.getElementById('obd-breakin-guard');
+  if (rpm >= shiftLimit) {
+    card.classList.add('obd-shift-alert');
+    guardPill.textContent = '¡SUBIR MARCHA!';
+    guardPill.style.background = 'rgba(255, 69, 58, 0.25)';
+    guardPill.style.color = 'var(--red-danger)';
+  } else if (rpm >= shiftLimit * 0.85) {
+    card.classList.remove('obd-shift-alert');
+    guardPill.textContent = 'ZONA ALTA';
+    guardPill.style.background = 'rgba(255, 159, 10, 0.2)';
+    guardPill.style.color = 'var(--amber-warn)';
+  } else {
+    card.classList.remove('obd-shift-alert');
+    guardPill.textContent = isBreakin1k ? 'CUIDANDO <5k' : 'ÓPTIMO';
+    guardPill.style.background = 'rgba(88, 232, 0, 0.15)';
+    guardPill.style.color = 'var(--neon-lime)';
+  }
+
+  // NIVEL 2: Signos Vitales (Temp, Batería, TPS)
+  const tempC = Number(data.tempC) || 0;
+  const tempEl = document.getElementById('obd-temp-val');
+  const tempSub = document.getElementById('obd-temp-status');
+  tempEl.innerHTML = `${tempC} <small>°C</small>`;
+
+  if (tempC < 45) {
+    tempSub.textContent = '❄️ Frío (Calentar)';
+    tempEl.style.color = 'var(--caribbean-bright)';
+  } else if (tempC <= 95) {
+    tempSub.textContent = '✅ Operativa normal';
+    tempEl.style.color = 'var(--neon-lime)';
+  } else {
+    tempSub.textContent = '🔥 Alerta térmica';
+    tempEl.style.color = 'var(--red-danger)';
+  }
+
+  const volt = Number(data.voltage) || 0;
+  const voltEl = document.getElementById('obd-volt-val');
+  const voltSub = document.getElementById('obd-volt-status');
+  voltEl.innerHTML = `${volt > 0 ? volt.toFixed(1) : '--'} <small>V</small>`;
+
+  if (volt === 0) {
+    voltSub.textContent = 'Leyendo pin 16...';
+  } else if (volt < 12.2) {
+    voltEl.style.color = 'var(--red-danger)';
+    voltSub.textContent = '⚠️ Batería baja';
+  } else if (volt >= 13.5 && volt <= 14.6) {
+    voltEl.style.color = 'var(--neon-lime)';
+    voltSub.textContent = '⚡ Estator OK';
+  } else {
+    voltEl.style.color = 'var(--caribbean-bright)';
+    voltSub.textContent = 'Reposo 12V OK';
+  }
+
+  const tps = Number(data.tpsPct) || 0;
+  const loadPct = Number(data.engineLoadPct) || 0;
+  document.getElementById('obd-tps-val').innerHTML = `${tps} <small>%</small>`;
+  document.getElementById('obd-load-status').textContent = `Esfuerzo: ${loadPct}%`;
+
+  // NIVEL 3: Micro-Grilla de 6 Sensores Secundarios
+  document.getElementById('obd-micro-load').textContent = `${loadPct}%`;
+  document.getElementById('obd-micro-map').textContent = `${data.mapKpa || '--'} kPa`;
+  document.getElementById('obd-micro-alt').textContent = `Alt: ~${(data.estimatedAltM || 0).toLocaleString('es-PE')} msnm`;
+  document.getElementById('obd-micro-iat').textContent = `${data.iatC || '--'} °C`;
+  document.getElementById('obd-micro-timing').textContent = `${data.timingAdvDeg || 0}°`;
+  document.getElementById('obd-micro-o2').textContent = `${Number(data.o2Volt || 0).toFixed(2)} V`;
+
+  const stft = Number(data.stftPct) || 0;
+  const stftSign = stft > 0 ? '+' : '';
+  document.getElementById('obd-micro-stft').textContent = `Mezcla: ${stftSign}${stft.toFixed(1)}%`;
+
+  const totalSec = Math.floor(Number(data.runTimeSec) || 0);
+  const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
+  const secs = String(totalSec % 60).padStart(2, '0');
+  document.getElementById('obd-micro-runtime').textContent = `${mins}:${secs}`;
+  const sessKm = Number(data.sessionKm) || 0;
+  const distSmall = document.getElementById('obd-micro-dist');
+  const sessTxt = document.getElementById('obd-session-km-txt');
+  if (distSmall) distSmall.textContent = `Ruta: +${sessKm.toFixed(2)} km`;
+  if (sessTxt) sessTxt.textContent = `+${sessKm.toFixed(2)} km recorridos en sesión`;
+
+  // NIVEL 4: Diagnóstico Check Engine (DTC)
+  const dtcSummary = document.getElementById('obd-dtc-summary');
+  const dtcListEl = document.getElementById('obd-dtc-list');
+  const btnClearDtc = document.getElementById('btn-obd-clear-dtc');
+  const codes = Array.isArray(data.dtcCodes) ? data.dtcCodes : [];
+
+  if (codes.length === 0) {
+    dtcSummary.textContent = data.lastDtcScan
+      ? `✅ 0 Fallas en ECU (Escaneado ${data.lastDtcScan})`
+      : '✅ 0 Códigos de falla detectados en la ECU';
+    dtcSummary.style.color = 'var(--neon-lime)';
+    dtcListEl.classList.add('hidden');
+    dtcListEl.innerHTML = '';
+    if (btnClearDtc) btnClearDtc.classList.add('hidden');
+  } else {
+    dtcSummary.textContent = `⚠️ ${codes.length} Falla(s) activa(s) en Check Engine`;
+    dtcSummary.style.color = 'var(--red-danger)';
+    dtcListEl.classList.remove('hidden');
+    if (btnClearDtc) btnClearDtc.classList.remove('hidden');
+
+    dtcListEl.innerHTML = codes
+      .map((code) => {
+        const desc = BAJAJ_DTC_DICTIONARY[code] || 'Código de falla registrado en módulo de inyección Bosch/Bajaj';
+        return `<div class="obd-dtc-item"><span class="obd-dtc-code">${escapeHTML(code)}</span><span style="color:#FFFFFF;flex:1;">${escapeHTML(desc)}</span></div>`;
+      })
+      .join('');
+  }
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-moto-n160-cache-v12';
+const CACHE_NAME = 'mi-moto-n160-cache-v15';
 
 const CORE_ASSETS = [
   './',
@@ -8,6 +8,7 @@ const CORE_ASSETS = [
   './firebase.js',
   './state.js',
   './telemetry.js',
+  './obd.js',
   './ui.js',
   './app.js',
   './manifest.json',
