@@ -1316,11 +1316,12 @@ body {
   border-left-color: var(--red-danger);
 }
 
-/* ================= BLOQUE V3.0: TELEMETRÍA COMPLETA EN UNA SOLA PANTALLA ================= */
+/* ================= BLOQUE V4.0: COCKPIT MACHINE OUTDOORS + ROTACIÓN HORIZONTAL + HEADER SIN DESBORDE ================= */
 .obd-live-card {
   margin-bottom: 11px;
   border-left: 3px solid var(--caribbean-bright);
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  overflow: hidden;
 }
 
 .obd-live-card.obd-active {
@@ -1333,27 +1334,60 @@ body {
   box-shadow: 0 0 22px rgba(255, 69, 58, 0.55) !important;
 }
 
+/* Cabecera en 2 Filas para que NUNCA se desborde el botón Conectar */
+.obd-header-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(210, 218, 228, 0.09);
+}
+
+.obd-header-top-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.obd-header-actions-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  width: 100%;
+}
+
+.obd-header-actions-bar button {
+  width: 100%;
+  padding: 6px 4px;
+  font-size: 10px;
+  text-align: center;
+  justify-content: center;
+  display: inline-flex;
+  align-items: center;
+}
+
 .obd-btn-group {
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
-/* NIVEL 1: LECTURA GIGANTE (VELOCIDAD, MARCHA Y RPM) */
-.obd-hero-grid {
+/* NIVEL 1: RELOJES CIRCULARES ESTILO MACHINE OUTDOORS */
+.obd-machine-dials-grid {
   display: grid;
-  grid-template-columns: 1.15fr 0.75fr 1.25fr;
-  gap: 7px;
-  margin-bottom: 8px;
+  grid-template-columns: 1.2fr 0.72fr 1.2fr;
+  gap: 6px;
+  margin-bottom: 9px;
 }
 
-.obd-hero-speed-box,
-.obd-hero-gear-box,
-.obd-hero-rpm-box {
-  background: linear-gradient(160deg, #070D16 0%, #0D1826 100%);
-  border: 1px solid rgba(73, 191, 230, 0.24);
-  border-radius: 11px;
-  padding: 8px 9px;
+.obd-dial-card,
+.obd-hero-gear-box {
+  background: linear-gradient(165deg, #070C14 0%, #0C1522 100%);
+  border: 1px solid rgba(73, 191, 230, 0.22);
+  border-radius: 12px;
+  padding: 7px 8px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1363,27 +1397,46 @@ body {
   align-items: center;
   text-align: center;
   border-color: rgba(88, 232, 0, 0.35);
-  background: radial-gradient(circle at 50% 35%, rgba(88, 232, 0, 0.14) 0%, #070C14 85%);
+  background: radial-gradient(circle at 50% 40%, rgba(88, 232, 0, 0.14) 0%, #070C14 85%);
 }
 
-.obd-hero-tag {
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  color: var(--alloy-muted);
-}
-
-.obd-hero-speed-val,
-.obd-hero-rpm-val {
+.obd-svg-dial-wrap {
+  position: relative;
+  width: 100%;
+  height: 82px;
   display: flex;
-  align-items: baseline;
-  gap: 3px;
+  align-items: center;
+  justify-content: center;
   margin: 2px 0;
 }
 
+.obd-dial-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 118px;
+  overflow: visible;
+}
+
+#obd-rpm-arc,
+#obd-speed-arc {
+  transition: stroke-dashoffset 0.18s linear, stroke 0.18s ease;
+}
+
+.obd-dial-center-txt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 12px;
+  pointer-events: none;
+}
+
+#obd-rpm-val,
 #obd-speed-val {
   font-family: var(--font-speed);
-  font-size: 34px;
+  font-size: 24px;
   font-weight: 900;
   line-height: 0.95;
   color: #FFFFFF;
@@ -1391,24 +1444,37 @@ body {
 }
 
 #obd-rpm-val {
-  font-family: var(--font-speed);
-  font-size: 29px;
-  font-weight: 900;
-  line-height: 0.95;
   color: var(--neon-lime);
-  font-variant-numeric: tabular-nums;
 }
 
-.obd-hero-speed-val small,
-.obd-hero-rpm-val small {
-  font-size: 10px;
+.obd-dial-center-txt small {
+  font-size: 8.5px;
   font-weight: 800;
-  color: var(--caribbean-bright);
+  color: var(--alloy-muted);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.obd-dial-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8px;
+  color: var(--alloy-silver);
+  border-top: 1px solid rgba(210, 218, 228, 0.07);
+  padding-top: 3px;
+}
+
+.obd-hero-tag {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--alloy-muted);
 }
 
 .obd-gear-number {
   font-family: var(--font-speed);
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 900;
   line-height: 0.95;
   color: var(--neon-lime);
@@ -1416,52 +1482,22 @@ body {
 }
 
 .obd-guard-pill {
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 800;
-  padding: 1.5px 6px;
+  padding: 2px 5px;
   border-radius: 4px;
   background: rgba(88, 232, 0, 0.15);
   color: var(--neon-lime);
   white-space: nowrap;
 }
 
-.obd-hero-sub {
-  font-size: 9px;
-  color: var(--alloy-silver);
-}
-
-/* BARRA DE TACÓMETRO Y ESCALA */
-.obd-rpm-bar-wrap {
-  margin-bottom: 9px;
-}
-
-.obd-rpm-track {
-  height: 9px;
-  margin: 0 0 3px;
-  background: #04070B;
-  border: 1px solid rgba(73, 191, 230, 0.22);
-}
-
-.obd-rpm-fill {
-  background: linear-gradient(90deg, var(--caribbean-bright) 0%, var(--neon-lime) 70%, var(--amber-warn) 90%, var(--red-danger) 100%);
-  transition: width 0.14s linear;
-}
-
-.obd-rpm-scale {
-  display: flex;
-  justify-content: space-between;
-  font-size: 8px;
-  font-weight: 700;
-  color: var(--alloy-muted);
-}
-
 .rpm-scale-warn { color: var(--amber-warn); }
-.rpm-scale-danger { color: var(--red-danger); }
+.rpm-scale-danger { color: var(--red-danger); font-weight: 700; }
 
-/* NIVEL 2: 3 TARJETAS MEDIANAS (SIGNOS VITALES) */
-.obd-vitals-grid-3 {
+/* NIVEL 2: 4 TARJETAS DE SIGNOS VITALES CON MINI-BARRAS "C-H / L-H" */
+.obd-vitals-grid-4 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
   margin-bottom: 9px;
 }
@@ -1469,9 +1505,8 @@ body {
 .obd-vital-card {
   background: #070C14;
   border: 1px solid var(--border-subtle);
-  border-top: 2px solid var(--caribbean-primary);
   border-radius: 10px;
-  padding: 7px 8px;
+  padding: 7px 9px;
 }
 
 .obd-vital-val {
@@ -1480,7 +1515,7 @@ body {
   font-size: 18px;
   font-weight: 800;
   color: #FFFFFF;
-  margin: 2px 0 1px;
+  margin: 2px 0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1489,11 +1524,39 @@ body {
   color: var(--alloy-silver);
 }
 
+.machine-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 3px 0 4px;
+}
+
+.machine-bar-row small {
+  font-size: 7.5px;
+  font-weight: 800;
+  color: var(--alloy-muted);
+}
+
+.machine-bar-track {
+  flex: 1;
+  height: 4px;
+  background: #121D2B;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.machine-bar-fill {
+  height: 100%;
+  background: var(--neon-lime);
+  border-radius: 99px;
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
 /* NIVEL 3: MICRO-GRILLA SECUNDARIA (6 CELDAS PEQUEÑAS) */
 .obd-micro-section-title {
-  font-size: 8.5px;
+  font-size: 8px;
   font-weight: 800;
-  letter-spacing: 0.7px;
+  letter-spacing: 0.6px;
   color: var(--caribbean-bright);
   margin-bottom: 5px;
 }
@@ -1539,7 +1602,34 @@ body {
   text-overflow: ellipsis;
 }
 
-/* NIVEL 4: ESCÁNER DE FALLAS DTC (CHECK ENGINE) */
+/* NIVEL 4: BARRA INFERIOR ESTILO MACHINE OUTDOORS (TANQUE, RANGO, ODÓMETRO) */
+.obd-machine-footer-strip {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1.1fr auto;
+  align-items: center;
+  gap: 6px;
+  background: #060B12;
+  border: 1px solid rgba(73, 191, 230, 0.22);
+  border-radius: 9px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+}
+
+.obd-footer-stat strong {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 12px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.obd-footer-stat small {
+  display: block;
+  font-size: 7.5px;
+  color: var(--alloy-silver);
+}
+
+/* NIVEL 5: ESCÁNER DE FALLAS DTC (CHECK ENGINE) */
 .obd-dtc-strip {
   background: #05090F;
   border: 1px solid var(--border-subtle);
@@ -1588,7 +1678,6 @@ body {
   margin-right: 6px;
 }
 
-/* Cabeceras internas con icono ⓘ en cada métrica de telemetría */
 .obd-box-head {
   display: flex;
   justify-content: space-between;
@@ -1603,29 +1692,18 @@ body {
 }
 
 .obd-mini-info {
-  width: 17px !important;
-  height: 17px !important;
-  font-size: 9.5px !important;
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 9px !important;
 }
 
 .obd-micro-info {
-  width: 15px !important;
-  height: 15px !important;
-  font-size: 8.5px !important;
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 8px !important;
 }
 
-.obd-trip-sync-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(30, 136, 168, 0.12);
-  border: 1px solid rgba(73, 191, 230, 0.28);
-  border-radius: 9px;
-  padding: 7px 10px;
-  margin-bottom: 9px;
-}
-
-/* Modo Timón Pantalla Completa: Oculta cabecera, foto y odómetro superior para dejar 100% el Cockpit ECU */
+/* MODO TIMÓN Y ROTACIÓN HORIZONTAL WIDESCREEN (SOLO EN PESTAÑA ECU) */
 body.ecu-ride-mode .app-header,
 body.ecu-ride-mode #main-bike-banner,
 body.ecu-ride-mode #cockpit-cluster {
@@ -1633,5 +1711,375 @@ body.ecu-ride-mode #cockpit-cluster {
 }
 
 body.ecu-ride-mode .screen {
-  padding-top: 8px;
+  padding-top: 6px;
+}
+
+@media (orientation: landscape) {
+  body.ecu-tab-active .app-header,
+  body.ecu-tab-active #main-bike-banner,
+  body.ecu-tab-active #cockpit-cluster {
+    display: none !important;
+  }
+
+  body.ecu-tab-active .screen {
+    max-width: 960px !important;
+    padding: 6px 12px 64px !important;
+  }
+
+  body.ecu-tab-active .tabs-nav-5 {
+    max-width: 960px !important;
+    padding: 3px 10px !important;
+  }
+
+  body.ecu-tab-active .obd-vitals-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  body.ecu-tab-active .obd-micro-grid-6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ================= BLOQUE V5.0: MAPA TÁCTICO, RADAR DE ALCANCE Y PERFIL DE ELEVACIÓN (MACHINE OUTDOORS) ================= */
+.obd-view-switcher {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  background: #04070B;
+  padding: 3.5px;
+  border-radius: 9px;
+  border: 1px solid rgba(73, 191, 230, 0.2);
+  margin-top: 2px;
+}
+
+.obd-view-btn {
+  padding: 6px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--alloy-muted);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.obd-view-btn.active {
+  background: linear-gradient(135deg, var(--caribbean-primary), var(--caribbean-deep));
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(30, 136, 168, 0.35);
+}
+
+.map-preset-pills {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  margin-bottom: 8px;
+  padding-bottom: 2px;
+}
+
+.machine-map-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Lienzo Cartográfico Topográfico Oscuro */
+.machine-map-canvas-box {
+  position: relative;
+  width: 100%;
+  height: 270px;
+  background: radial-gradient(circle at 55% 60%, #0E1F1C 0%, #071118 60%, #04080D 100%);
+  border: 1px solid rgba(88, 232, 0, 0.28);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.85);
+}
+
+/* Barra Superior de Destino Despejada (Fuera del lienzo para no tapar jamás la ruta) */
+.map-dest-top-bar {
+  display: grid;
+  grid-template-columns: 1.35fr auto;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(145deg, #070D17 0%, #0C1726 100%);
+  border: 1px solid rgba(73, 191, 230, 0.28);
+  border-left: 3px solid var(--neon-lime);
+  border-radius: 11px;
+  padding: 8px 10px;
+}
+
+.map-dest-top-metrics {
+  display: flex;
+  gap: 6px;
+}
+
+.map-metric-pill {
+  background: #04080E;
+  border: 1px solid rgba(210, 218, 228, 0.12);
+  border-radius: 7px;
+  padding: 4px 8px;
+  text-align: center;
+  min-width: 62px;
+}
+
+.map-metric-pill strong {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 13px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.map-metric-pill span {
+  display: block;
+  font-size: 7px;
+  font-weight: 800;
+  color: var(--alloy-muted);
+}
+
+.map-dest-top-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(210, 218, 228, 0.08);
+}
+
+.map-dest-name {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-top: 1px;
+  line-height: 1.2;
+}
+
+.map-dest-sub {
+  display: block;
+  font-size: 8px;
+  color: var(--alloy-muted);
+  margin-bottom: 5px;
+}
+
+.map-dest-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  border-top: 1px solid rgba(210, 218, 228, 0.08);
+  padding-top: 4px;
+}
+
+.map-dest-metrics strong {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.map-dest-metrics span {
+  font-size: 7px;
+  font-weight: 800;
+  color: var(--alloy-muted);
+}
+
+.card-btn {
+  flex: 1;
+  background: rgba(30, 136, 168, 0.18);
+  border: 1px solid rgba(73, 191, 230, 0.35);
+  color: #FFFFFF;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 4px 4px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.card-btn.gps.active {
+  background: rgba(88, 232, 0, 0.22);
+  border-color: var(--neon-lime);
+  color: var(--neon-lime);
+}
+
+/* Controles Flotantes Derecha (Brújula, Zoom, Google Maps) */
+.map-floating-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 10;
+}
+
+.map-compass-btn,
+.map-ctrl-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(7, 12, 20, 0.9);
+  border: 1px solid rgba(210, 218, 228, 0.22);
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.map-compass-btn strong {
+  font-size: 8.5px;
+  line-height: 1;
+}
+
+/* Escala Gráfica Inferior Izquierda */
+.map-scale-bar {
+  position: absolute;
+  bottom: 7px;
+  left: 10px;
+  width: 96px;
+  z-index: 10;
+}
+
+.scale-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 7px;
+  font-weight: 700;
+  color: var(--alloy-silver);
+  margin-bottom: 2px;
+}
+
+.scale-line {
+  height: 3px;
+  border: 1px solid var(--alloy-silver);
+  border-top: none;
+}
+
+/* Columna Derecha de 4 Tarjetas (En Vertical se ve 2x2, en Horizontal se ve apilada a la derecha igual a la foto) */
+.machine-map-side-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.map-side-card {
+  background: #070C14;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 7px 9px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.map-side-speed-num {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.map-side-speed-num strong {
+  font-family: var(--font-speed);
+  font-size: 24px;
+  font-weight: 900;
+  color: #FFFFFF;
+  line-height: 0.95;
+}
+
+.map-side-speed-num small {
+  font-size: 9px;
+  color: var(--alloy-silver);
+}
+
+.map-side-val {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 16px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 2px 0;
+}
+
+.map-side-val.neon { color: var(--neon-lime); }
+.map-side-val.carib { color: var(--caribbean-bright); }
+
+.map-side-sub {
+  display: block;
+  font-size: 8px;
+  color: var(--alloy-muted);
+}
+
+.map-elev-chart-box {
+  width: 100%;
+  height: 40px;
+  margin-top: 2px;
+}
+
+/* Barra Inferior de 4 Columnas Estilo Machine Outdoors */
+.machine-map-bottom-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: #060B12;
+  border: 1px solid rgba(73, 191, 230, 0.22);
+  border-radius: 10px;
+  padding: 8px 9px;
+}
+
+.map-bot-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.map-bot-col strong {
+  font-family: var(--font-speed);
+  font-size: 13px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.map-bot-col small {
+  font-size: 8px;
+  color: var(--alloy-silver);
+}
+
+/* Cuando el teléfono está en Horizontal (Landscape), el Mapa queda a la izquierda y las 4 tarjetas a la derecha exactamente como la tablet de Machine Outdoors */
+@media (orientation: landscape) {
+  body.ecu-tab-active .machine-map-layout {
+    grid-template-columns: 2.15fr 1fr;
+    align-items: stretch;
+  }
+
+  body.ecu-tab-active .map-dest-top-bar {
+    grid-column: 1 / -1;
+    grid-template-columns: 1.4fr auto auto;
+  }
+
+  body.ecu-tab-active .map-dest-top-actions {
+    grid-column: auto;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  body.ecu-tab-active .machine-map-canvas-box {
+    height: 315px;
+  }
+
+  body.ecu-tab-active .machine-map-side-stack {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  body.ecu-tab-active .machine-map-bottom-bar {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }

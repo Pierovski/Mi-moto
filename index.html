@@ -866,38 +866,66 @@
     </div>
 
 
-    <!-- ================= PESTAÑA 6: PANTALLA EXCLUSIVA DE TELEMETRÍA ECU OBD2 ================= -->
+            <!-- ================= PESTAÑA 6: PANTALLA EXCLUSIVA DE TELEMETRÍA ECU + MAPA TÁCTICO MACHINE OUTDOORS ================= -->
     <div id="tab-ecu" class="tab-content hidden">
       <div id="obd-cockpit-card" class="progressive-drawer-card obd-live-card">
-        <!-- Barra Superior de Control ECU -->
-        <div class="drawer-summary-row" style="margin-bottom: 10px;">
-          <div class="title-with-info">
-            <span class="section-title-sleek">⚡ COCKPIT ECU N160</span>
-            <button type="button" class="btn-info-dot" data-info-key="obd_ecu_guide">ⓘ</button>
+        
+        <!-- CABECERA EN 2 FILAS LIMPIAS (NUNCA SE DESBORDA) -->
+        <div class="obd-header-stack">
+          <div class="obd-header-top-line">
+            <div class="title-with-info">
+              <span class="section-title-sleek">⚡ MACHINE OUTDOORS • N160 FI</span>
+              <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_ecu_guide">ⓘ</button>
+            </div>
             <span id="obd-live-status" class="status-pill status-ok">OFFLINE</span>
           </div>
-          <div class="obd-btn-group">
-            <button type="button" id="btn-obd-ride-mode" class="btn-drawer-toggle" title="Ocultar cabeceras para usar en el soporte del timón">⛶ Timón</button>
-            <button type="button" id="btn-obd-sim" class="btn-drawer-toggle" title="Simular los 14 sensores en vivo">Demo</button>
+
+          <div class="obd-header-actions-bar">
+            <button type="button" id="btn-obd-rotate" class="btn-drawer-toggle" title="Rotar pantalla Horizontal / Vertical">🔄 Horizontal</button>
+            <button type="button" id="btn-obd-ride-mode" class="btn-drawer-toggle" title="Pantalla completa sin cabeceras">⛶ Timón</button>
+            <button type="button" id="btn-obd-sim" class="btn-drawer-toggle" title="Probar relojes y mapa en vivo">Demo</button>
             <button type="button" id="btn-obd-connect" class="btn-action-sleek">⚡ Conectar</button>
+          </div>
+
+          <!-- SELECTOR DE VISTA MACHINE OUTDOORS: TABLERO GENERAL vs MAPA TÁCTICO & PERFIL DE ELEVACIÓN -->
+          <div class="obd-view-switcher">
+            <button type="button" class="obd-view-btn active" data-ecuview="dials">
+              🎛️ TABLERO GENERAL (RELOJES)
+            </button>
+            <button type="button" class="obd-view-btn" data-ecuview="map">
+              🗺️ MAPA & ELEVACIÓN (RUTA)
+            </button>
           </div>
         </div>
 
+        <!-- VISTA A: TABLERO DE RELOJES Y 14 SENSORES -->
         <div id="obd-live-panel">
-          <!-- NIVEL 1: LECTURA GIGANTE (VELOCIDAD REAL, MARCHA ENGRANADA Y TACÓMETRO) -->
-          <div class="obd-hero-grid">
-            <div class="obd-hero-speed-box">
+          <!-- NIVEL 1: RELOJES CIRCULARES ESTILO "MACHINE OUTDOORS" (RPM + MARCHA CENTRAL + VELOCIDAD) -->
+          <div class="obd-machine-dials-grid">
+            
+            <!-- Reloj Circular Izquierdo: TACÓMETRO RPM -->
+            <div class="obd-dial-card">
               <div class="obd-box-head">
-                <span class="obd-hero-tag">VELOCIDAD</span>
-                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_speed_info">ⓘ</button>
+                <span class="obd-hero-tag">TACÓMETRO ECU</span>
+                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_rpm_info">ⓘ</button>
               </div>
-              <div class="obd-hero-speed-val">
-                <strong id="obd-speed-val">0</strong>
-                <small>km/h</small>
+              <div class="obd-svg-dial-wrap">
+                <svg viewBox="0 0 120 100" class="obd-dial-svg">
+                  <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="#142234" stroke-width="8" stroke-linecap="round"/>
+                  <path id="obd-rpm-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--neon-lime)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+                </svg>
+                <div class="obd-dial-center-txt">
+                  <strong id="obd-rpm-val">0</strong>
+                  <small>RPM</small>
+                </div>
               </div>
-              <span class="obd-hero-sub">Máx: <strong id="obd-peak-speed">0</strong> km/h</span>
+              <div class="obd-dial-foot">
+                <span>Pico: <strong id="obd-peak-rpm">0</strong></span>
+                <span class="rpm-scale-danger">Redline 8.5k</span>
+              </div>
             </div>
 
+            <!-- Columna Central: INDICADOR DE MARCHA + GUARDIÁN ASENTAMIENTO -->
             <div class="obd-hero-gear-box" id="obd-gear-box">
               <div class="obd-box-head center">
                 <span class="obd-hero-tag">MARCHA</span>
@@ -905,54 +933,62 @@
               </div>
               <strong id="obd-gear-val" class="obd-gear-number">N</strong>
               <span id="obd-breakin-guard" class="obd-guard-pill">ÓPTIMO</span>
+              <div class="obd-progress-mini" style="width:100%;margin-top:4px;">
+                <div id="obd-rpm-bar" style="height:4px;width:0%;background:var(--neon-lime);border-radius:99px;"></div>
+              </div>
             </div>
 
-            <div class="obd-hero-rpm-box">
+            <!-- Reloj Circular Derecho: VELOCÍMETRO ECU -->
+            <div class="obd-dial-card">
               <div class="obd-box-head">
-                <span class="obd-hero-tag">TACÓMETRO</span>
-                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_rpm_info">ⓘ</button>
+                <span class="obd-hero-tag">VELOCIDAD</span>
+                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_speed_info">ⓘ</button>
               </div>
-              <div class="obd-hero-rpm-val">
-                <strong id="obd-rpm-val">0</strong>
-                <small>RPM</small>
+              <div class="obd-svg-dial-wrap">
+                <svg viewBox="0 0 120 100" class="obd-dial-svg">
+                  <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="#142234" stroke-width="8" stroke-linecap="round"/>
+                  <path id="obd-speed-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--caribbean-bright)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+                </svg>
+                <div class="obd-dial-center-txt">
+                  <strong id="obd-speed-val">0</strong>
+                  <small>km/h</small>
+                </div>
               </div>
-              <span class="obd-hero-sub">Pico: <strong id="obd-peak-rpm">0</strong> RPM</span>
+              <div class="obd-dial-foot">
+                <span>Máx: <strong id="obd-peak-speed">0</strong> km/h</span>
+                <span>ABS 010D</span>
+              </div>
             </div>
+
           </div>
 
-          <!-- BARRA DE RPM CON SEGMENTOS Y SHIFT-LIGHT -->
-          <div class="obd-rpm-bar-wrap">
-            <div class="progress-track obd-rpm-track">
-              <div id="obd-rpm-bar" class="progress-fill obd-rpm-fill" style="width: 0%;"></div>
-            </div>
-            <div class="obd-rpm-scale">
-              <span>0</span>
-              <span>2k</span>
-              <span>4k</span>
-              <span class="rpm-scale-warn">5k (Asent.)</span>
-              <span>7k</span>
-              <span class="rpm-scale-danger">8.5k Redline</span>
-              <span>10k</span>
-            </div>
-          </div>
-
-          <!-- NIVEL 2: 3 TARJETAS MEDIANAS (SIGNOS VITALES CRÍTICOS CON SU ICONO ⓘ) -->
-          <div class="obd-vitals-grid-3">
+          <!-- NIVEL 2: 4 TARJETAS DE SIGNOS VITALES CON MINI-BARRAS "C - H / L - H" -->
+          <div class="obd-vitals-grid-4">
             <div class="obd-vital-card">
               <div class="obd-box-head">
                 <span class="tele-label">🌡️ TEMP. MOTOR</span>
                 <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_temp_info">ⓘ</button>
               </div>
               <strong class="obd-vital-val carib" id="obd-temp-val">-- <small>°C</small></strong>
+              <div class="machine-bar-row">
+                <small>C</small>
+                <div class="machine-bar-track"><div id="obd-bar-temp" class="machine-bar-fill" style="width:0%"></div></div>
+                <small>H</small>
+              </div>
               <span class="tele-sub" id="obd-temp-status">Sensor térmico FI</span>
             </div>
 
             <div class="obd-vital-card">
               <div class="obd-box-head">
-                <span class="tele-label">🔋 BATERÍA 4Ah</span>
+                <span class="tele-label">🔋 VOLTAJE 4Ah</span>
                 <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_volt_info">ⓘ</button>
               </div>
               <strong class="obd-vital-val neon" id="obd-volt-val">-- <small>V</small></strong>
+              <div class="machine-bar-row">
+                <small>L</small>
+                <div class="machine-bar-track"><div id="obd-bar-volt" class="machine-bar-fill" style="width:0%"></div></div>
+                <small>H</small>
+              </div>
               <span class="tele-sub" id="obd-volt-status">Rango 12.4V - 14.4V</span>
             </div>
 
@@ -962,12 +998,31 @@
                 <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_tps_info">ⓘ</button>
               </div>
               <strong class="obd-vital-val" id="obd-tps-val">0 <small>%</small></strong>
+              <div class="machine-bar-row">
+                <small>0</small>
+                <div class="machine-bar-track"><div id="obd-bar-tps" class="machine-bar-fill" style="width:0%"></div></div>
+                <small>100</small>
+              </div>
               <span class="tele-sub" id="obd-load-status">Mariposa TPS</span>
+            </div>
+
+            <div class="obd-vital-card">
+              <div class="obd-box-head">
+                <span class="tele-label">⛽ ECON. INSTANT.</span>
+                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_econ_info">ⓘ</button>
+              </div>
+              <strong class="obd-vital-val neon" id="obd-inst-econ">-- <small>km/L</small></strong>
+              <div class="machine-bar-row">
+                <small>0</small>
+                <div class="machine-bar-track"><div id="obd-bar-econ" class="machine-bar-fill" style="width:0%"></div></div>
+                <small>50</small>
+              </div>
+              <span class="tele-sub" id="obd-inst-gal-sub">-- km/gal Premium</span>
             </div>
           </div>
 
-          <!-- NIVEL 3: MICRO-GRILLA COMPACTA (6 SENSORES SECUNDARIOS CON SU ICONO ⓘ INDIVIDUAL) -->
-          <div class="obd-micro-section-title">TELEMETRÍA SECUNDARIA FI & COMBUSTIÓN DTS-i (TOCA ⓘ PARA DETALLES)</div>
+          <!-- NIVEL 3: MICRO-GRILLA COMPACTA DE 6 SENSORES SECUNDARIOS -->
+          <div class="obd-micro-section-title">TELEMETRÍA SECUNDARIA FI & COMBUSTIÓN DTS-i (TOCA ⓘ PARA EXPLICACIÓN)</div>
           <div class="obd-micro-grid-6">
             <div class="obd-micro-cell">
               <div class="obd-box-head">
@@ -975,7 +1030,7 @@
                 <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_load_info">ⓘ</button>
               </div>
               <strong id="obd-micro-load">0%</strong>
-              <small>Esfuerzo cilindro</small>
+              <small>Esfuerzo (0104)</small>
             </div>
 
             <div class="obd-micro-cell">
@@ -1007,16 +1062,16 @@
 
             <div class="obd-micro-cell">
               <div class="obd-box-head">
-                <span class="micro-lbl">SONDA LAMBDA</span>
+                <span class="micro-lbl">MEZCLA / O2</span>
                 <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_o2_info">ⓘ</button>
               </div>
               <strong id="obd-micro-o2">0.45 V</strong>
-              <small id="obd-micro-stft">Mezcla: 0.0%</small>
+              <small id="obd-micro-stft">STFT: 0.0%</small>
             </div>
 
             <div class="obd-micro-cell">
               <div class="obd-box-head">
-                <span class="micro-lbl">TIEMPO RUTA</span>
+                <span class="micro-lbl">HORA MOTOR</span>
                 <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_runtime_info">ⓘ</button>
               </div>
               <strong id="obd-micro-runtime">00:00</strong>
@@ -1024,16 +1079,29 @@
             </div>
           </div>
 
-          <!-- BARRA DE KILOMETRAJE RECORRIDO EN RUTA EN VIVO + BOTÓN DE INYECCIÓN AUTOMÁTICA AL ODÓMETRO -->
-          <div class="obd-trip-sync-bar">
-            <div>
-              <span class="micro-lbl">DISTANCIA MEDIDA POR ECU EN ESTA SESIÓN</span>
-              <strong id="obd-session-km-txt" style="font-size: 12px; color: var(--caribbean-bright);">+0.00 km recorridos</strong>
+          <!-- NIVEL 4: BARRA INFERIOR ESTILO MACHINE OUTDOORS -->
+          <div class="obd-machine-footer-strip">
+            <div class="obd-footer-stat">
+              <span class="micro-lbl">⛽ TANQUE (14L)</span>
+              <strong id="obd-footer-fuel-pct">~85%</strong>
+              <div class="machine-bar-track" style="margin-top:3px;"><div id="obd-bar-tank" class="machine-bar-fill" style="width:85%"></div></div>
             </div>
-            <button type="button" id="btn-obd-sync-km" class="btn-quick-done">🏁 Sumar al Odómetro</button>
+            <div class="obd-footer-stat">
+              <span class="micro-lbl">🛣️ RANGO EST.</span>
+              <strong id="obd-footer-range">~440 km</strong>
+              <small>Autonomía rest.</small>
+            </div>
+            <div class="obd-footer-stat">
+              <span class="micro-lbl">⚙️ ODÓMETRO</span>
+              <strong id="obd-footer-odo">0 km</strong>
+              <small id="obd-session-km-txt">+0.00 km hoy</small>
+            </div>
+            <div class="obd-footer-action">
+              <button type="button" id="btn-obd-sync-km" class="btn-quick-done">🏁 +Km</button>
+            </div>
           </div>
 
-          <!-- NIVEL 4: ESCÁNER DE CÓDIGOS DE FALLA (CHECK ENGINE DTC MODO 03 / 04 CON ICONO ⓘ) -->
+          <!-- NIVEL 5: ESCÁNER DE CÓDIGOS DE FALLA (CHECK ENGINE DTC MODO 03 / 04) -->
           <div class="obd-dtc-strip">
             <div class="obd-dtc-top">
               <div>
@@ -1050,6 +1118,211 @@
             </div>
             <div id="obd-dtc-list" class="obd-dtc-list hidden"></div>
           </div>
+        </div>
+
+        <!-- ================= VISTA B: MAPA TÁCTICO, ALCANCE SEGURO & PERFIL DE ELEVACIÓN (ESTILO MACHINE OUTDOORS) ================= -->
+        <div id="obd-map-panel" class="hidden">
+          
+          <!-- Selector Rápido de Ruta / Destino Topográfico -->
+          <div class="map-preset-pills" id="map-route-presets">
+            <button type="button" class="mod-filter-pill active" data-routepreset="samne">⛰️ Puente Pala / Samne</button>
+            <button type="button" class="mod-filter-pill" data-routepreset="cachicadan">🏔️ Cachicadán (Sierra)</button>
+            <button type="button" class="mod-filter-pill" data-routepreset="huanchaco">🌊 Huanchaco (Costa)</button>
+            <button type="button" class="mod-filter-pill" data-routepreset="custom">📍 Mirador / Editar</button>
+          </div>
+
+          <!-- Grilla Principal Estilo Machine Outdoors: Mapa Radar a la Izquierda + Columna de 4 Tarjetas a la Derecha -->
+          <div class="machine-map-layout">
+            
+            <!-- BARRA COMPACTA DE DESTINO ARRIBA DEL MAPA (NO TAPA EL TRAZADO NI LA META) -->
+            <div class="map-dest-top-bar">
+              <div class="map-dest-top-left">
+                <div class="title-with-info">
+                  <span class="micro-lbl" style="color:var(--neon-lime);">🏁 DESTINO ACTIVO</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_radar_guide">ⓘ</button>
+                </div>
+                <strong id="map-dest-title" class="map-dest-name">Puente Pala / Samne</strong>
+                <small id="map-dest-region" class="map-dest-sub">Valle Santa Catalina • Ascenso Moderado</small>
+              </div>
+
+              <div class="map-dest-top-metrics">
+                <div class="map-metric-pill">
+                  <strong id="map-dest-dist">42.5 km</strong>
+                  <span>DISTANCIA</span>
+                </div>
+                <div class="map-metric-pill">
+                  <strong id="map-dest-time">55 min</strong>
+                  <span>TIEMPO</span>
+                </div>
+              </div>
+
+              <div class="map-dest-top-actions">
+                <button type="button" id="btn-open-route-cfg" class="card-btn">✏️ Ruta</button>
+                <button type="button" id="btn-toggle-gps" class="card-btn gps">🛰️ GPS Vivo</button>
+              </div>
+            </div>
+
+            <!-- LIENZO DE MAPA TOPOGRÁFICO OSCURO 100% DESPEJADO + ANILLO DE ALCANCE SEGURO -->
+            <div class="machine-map-canvas-box">
+
+              <!-- Controles Flotantes Derecha (Brújula N, Zoom +/-, Centrar) -->
+              <div class="map-floating-controls">
+                <div class="map-compass-btn" title="Norte Táctico"><span style="color:var(--red-danger);font-size:8px;">▲</span><strong>N</strong></div>
+                <button type="button" id="btn-map-zoom-in" class="map-ctrl-btn">+</button>
+                <button type="button" id="btn-map-zoom-out" class="map-ctrl-btn">−</button>
+                <button type="button" id="btn-map-open-gmaps" class="map-ctrl-btn" title="Abrir navegación en Google Maps">🧭</button>
+              </div>
+
+              <!-- Gráfico Vectorial Topográfico + Anillos de Alcance Seguro + Trazado + Icono de Moto en Vivo -->
+              <svg id="machine-radar-svg" viewBox="0 0 320 275" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                  <radialGradient id="safeRangeGrad" cx="50%" cy="85%" r="65%">
+                    <stop offset="0%" stop-color="#58E800" stop-opacity="0.22"/>
+                    <stop offset="70%" stop-color="#1E88A8" stop-opacity="0.09"/>
+                    <stop offset="100%" stop-color="#58E800" stop-opacity="0.0"/>
+                  </radialGradient>
+                  <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2.5" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                <!-- Curvas de Nivel Topográficas de Fondo -->
+                <g stroke="rgba(73, 191, 230, 0.08)" stroke-width="1" fill="none">
+                  <path d="M -20 40 Q 80 10, 180 55 T 340 30" />
+                  <path d="M -20 95 Q 110 65, 210 110 T 340 85" />
+                  <path d="M -20 150 Q 90 125, 195 165 T 340 140" />
+                  <path d="M -20 210 Q 120 185, 230 220 T 340 195" />
+                  <ellipse cx="220" cy="60" rx="65" ry="32" />
+                  <ellipse cx="220" cy="60" rx="38" ry="18" />
+                  <ellipse cx="65" cy="145" rx="52" ry="25" />
+                </g>
+
+                <!-- Grilla Cartográfica Sutil -->
+                <g stroke="rgba(210, 218, 228, 0.04)" stroke-width="0.8">
+                  <line x1="80" y1="0" x2="80" y2="275" />
+                  <line x1="160" y1="0" x2="160" y2="275" />
+                  <line x1="240" y1="0" x2="240" y2="275" />
+                  <line x1="0" y1="70" x2="320" y2="70" />
+                  <line x1="0" y1="140" x2="320" y2="140" />
+                  <line x1="0" y1="210" x2="320" y2="210" />
+                </g>
+
+                <!-- Círculos Concéntricos de Radar & Anillo Verde de ALCANCE SEGURO -->
+                <circle cx="140" cy="245" r="65" fill="none" stroke="rgba(88, 232, 0, 0.16)" stroke-width="1" stroke-dasharray="3 3" />
+                <circle id="map-safe-ring" cx="140" cy="245" r="135" fill="url(#safeRangeGrad)" stroke="#58E800" stroke-width="1.3" stroke-dasharray="5 4" />
+                <circle cx="140" cy="245" r="195" fill="none" stroke="rgba(73, 191, 230, 0.14)" stroke-width="1" stroke-dasharray="2 4" />
+
+                <!-- Etiquetas Cartográficas -->
+                <text x="208" y="132" fill="rgba(210,218,228,0.45)" font-size="7.5" font-style="italic" id="map- label-mid">Tramo de Ascenso FI</text>
+                <text x="215" y="232" fill="#58E800" font-size="8" font-weight="800" letter-spacing="0.6">ALCANCE</text>
+                <text x="215" y="242" fill="#58E800" font-size="8" font-weight="800" letter-spacing="0.6">SEGURO</text>
+
+                <!-- Trazado de la Carretera (Sombra + Línea Verde Neón) -->
+                <path id="map-route-shadow" d="M 140 245 C 132 215, 158 190, 146 160 C 134 130, 168 105, 155 72 C 148 52, 172 38, 178 24" fill="none" stroke="rgba(88, 232, 0, 0.25)" stroke-width="6" stroke-linecap="round" />
+                <path id="map-route-path" d="M 140 245 C 132 215, 158 190, 146 160 C 134 130, 168 105, 155 72 C 148 52, 172 38, 178 24" fill="none" stroke="#58E800" stroke-width="2.8" stroke-linecap="round" filter="url(#neonGlow)" />
+
+                <!-- Bandera de Meta en la Cima -->
+                <g id="map-dest-pin" transform="translate(178, 24)">
+                  <circle cx="0" cy="0" r="5" fill="#060A0F" stroke="#FFFFFF" stroke-width="1.5"/>
+                  <text x="-4" y="-7" font-size="11">🏁</text>
+                </g>
+
+                <!-- Puntero Azul de Posición Actual de la Moto (Se mueve con el progreso de ruta) -->
+                <g id="map-bike-marker" transform="translate(140, 245)">
+                  <circle cx="0" cy="0" r="11" fill="rgba(56, 189, 248, 0.25)" />
+                  <circle cx="0" cy="0" r="7" fill="#2563EB" stroke="#FFFFFF" stroke-width="1.5" />
+                  <polygon points="0,-4 3.5,3 0,1.5 -3.5,3" fill="#FFFFFF" />
+                </g>
+              </svg>
+
+              <!-- Escala Gráfica Inferior Izquierda (0 - 1 km - 2 km - 3 km) -->
+              <div class="map-scale-bar">
+                <div class="scale-ticks"><span>0</span><span>1 km</span><span>2 km</span><span>3 km</span></div>
+                <div class="scale-line"></div>
+              </div>
+            </div>
+
+            <!-- COLUMNA DERECHA DE 4 TARJETAS ESTILO MACHINE OUTDOORS -->
+            <div class="machine-map-side-stack">
+              
+              <!-- 1. Velocidad Actual con Arco Verde -->
+              <div class="map-side-card">
+                <span class="micro-lbl">VELOCIDAD ACTUAL</span>
+                <div class="map-side-speed-num">
+                  <strong id="map-live-speed">0</strong>
+                  <small>km/h</small>
+                </div>
+                <div class="machine-bar-track" style="height:5px;margin-top:4px;">
+                  <div id="map-live-speed-bar" class="machine-bar-fill" style="width:0%;"></div>
+                </div>
+              </div>
+
+              <!-- 2. Consumo Promedio -->
+              <div class="map-side-card">
+                <span class="micro-lbl">CONSUMO PROMEDIO</span>
+                <strong class="map-side-val" id="map-avg-kml">-- <small>km/L</small></strong>
+                <small id="map-avg-kmgal" class="map-side-sub">-- km/gal • Últimos tramos</small>
+              </div>
+
+              <!-- 3. Autonomía Segura -->
+              <div class="map-side-card">
+                <span class="micro-lbl">AUTONOMÍA SEGURA</span>
+                <strong class="map-side-val neon" id="map-safe-range">⛽ ~440 <small>km</small></strong>
+                <small class="map-side-sub">ALCANCE SEGURO</small>
+                <div class="machine-bar-track" style="margin:3px 0;">
+                  <div id="map-safe-bar" class="machine-bar-fill" style="width:85%;"></div>
+                </div>
+                <small id="map-safe-pct" class="map-side-sub">85% Tanque 14L</small>
+              </div>
+
+              <!-- 4. Perfil de Elevación Topográfica con Curva Verde -->
+              <div class="map-side-card">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">ELEVACIÓN</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_elev_guide">ⓘ</button>
+                </div>
+                <strong class="map-side-val carib" id="map-current-elev">34 <small>m</small></strong>
+                <div id="map-elevation-svg-wrap" class="map-elev-chart-box"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- BARRA INFERIOR DE 4 COLUMNAS ESTILO MACHINE OUTDOORS (RANGO, DISTANCIA/ETA, RUTA/TERRENO, POSICIÓN GPS) -->
+          <div class="machine-map-bottom-bar">
+            <div class="map-bot-col">
+              <span class="micro-lbl">RANGO ALCANZABLE ⛽</span>
+              <strong id="map-bot-range">~440 km</strong>
+              <div class="machine-bar-track" style="margin:3px 0;"><div id="map-bot-fuel-bar" class="machine-bar-fill" style="width:85%"></div></div>
+              <small id="map-bot-fuel-txt">85% Combustible actual</small>
+            </div>
+
+            <div class="map-bot-col">
+              <span class="micro-lbl">DISTANCIA A DESTINO</span>
+              <strong id="map-bot-dist">42.5 km</strong>
+              <small id="map-bot-eta">55 min • ETA --:--</small>
+              <small id="map-bot-needgal" style="color:var(--neon-lime);">Req: 0.33 gal (S/ 5.50)</small>
+            </div>
+
+            <div class="map-bot-col">
+              <span class="micro-lbl">RUTA & TOPOGRAFÍA</span>
+              <strong id="map-bot-routename" style="font-size:11px;">Puente Pala / Samne</strong>
+              <small id="map-bot-terrain">Terreno mixto (+10%)</small>
+              <small id="map-bot-diff" style="color:var(--caribbean-bright);">Media • Curvas</small>
+            </div>
+
+            <div class="map-bot-col">
+              <span class="micro-lbl">POSICIÓN GPS</span>
+              <strong id="map-bot-coords" style="font-size:10px;">8° 06' 42" S • 79° 01' O</strong>
+              <small id="map-bot-gps-status" style="color:var(--neon-lime);">GPS Listo 📶</small>
+              <small id="map-bot-peak-alt">Cima: 1,450 msnm</small>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1550,6 +1823,57 @@
       <div class="modal-actions">
         <button id="btn-cancel-mod" class="btn-secondary">Cancelar</button>
         <button id="btn-save-mod" class="btn-neon">Guardar Accesorio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIGURAR RUTA TÁCTICA Y ELEVACIÓN -->
+  <div id="modal-route-cfg" class="modal-backdrop hidden">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag">NAVEGACIÓN TÁCTICA & PERFIL DE ALTURA</span>
+          <h3 class="modal-pulsar-title">Configurar Destino y Ruta</h3>
+        </div>
+        <button id="btn-close-routecfg-x" class="btn-close-x">✕</button>
+      </div>
+
+      <div class="form-row-2">
+        <div>
+          <label class="modal-label">Nombre del Destino:</label>
+          <input type="text" id="cfg-route-name" placeholder="Ej: Puente Pala - Samne">
+        </div>
+        <div>
+          <label class="modal-label">Zona / Subtítulo:</label>
+          <input type="text" id="cfg-route-region" placeholder="Ej: Valle Santa Catalina">
+        </div>
+      </div>
+
+      <div class="form-row-3">
+        <div>
+          <label class="modal-label">Distancia (Km):</label>
+          <input type="number" id="cfg-route-km" placeholder="42.5" step="0.5" min="1">
+        </div>
+        <div>
+          <label class="modal-label">Tiempo Est. (Min):</label>
+          <input type="number" id="cfg-route-min" placeholder="55" min="5">
+        </div>
+        <div>
+          <label class="modal-label">Altitud Meta (msnm):</label>
+          <input type="number" id="cfg-route-alt" placeholder="1450" step="50" min="0">
+        </div>
+      </div>
+
+      <label class="modal-label">EXIGENCIA TOPOGRÁFICA (FACTOR INYECCIÓN FI):</label>
+      <div class="fuel-type-pills-3" id="cfg-route-terrain-picker">
+        <button type="button" class="compound-pill" data-rterr="1.0" data-rdiff="Baja • Plano">🛣️ Plano (1.0x)</button>
+        <button type="button" class="compound-pill selected" data-rterr="1.10" data-rdiff="Media • Ascenso">⛰️ Subida (+10%)</button>
+        <button type="button" class="compound-pill" data-rterr="1.18" data-rdiff="Alta • Sierra (>2,500m)">🏔️ Sierra (+18%)</button>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-cancel-routecfg" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-routecfg" class="btn-neon">Trazar Ruta en Mapa</button>
       </div>
     </div>
   </div>

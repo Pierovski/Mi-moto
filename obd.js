@@ -62,6 +62,8 @@ export const liveEcuData = {
   stftPct: 0.0,        // 0106: Ajuste corto plazo mezcla aire/gasolina (%)
   runTimeSec: 0,       // 011F: Segundos con motor encendido
   sessionKm: 0.0,      // Distancia integrada en tiempo real desde 010D (km)
+  instKmPerGal: 0.0,   // Economía instantánea estimada (km/gal)
+  instKmPerL: 0.0,     // Economía instantánea estimada (km/L)
   dtcCodes: [],        // 03: Lista de códigos de falla activos
   lastDtcScan: ''
 };
@@ -77,6 +79,28 @@ function integrateSessionDistance(speedKmh) {
     }
   }
   lastSpeedUpdateMs = now;
+}
+
+function updateInstantFuelEconomy() {
+  const spd = liveEcuData.speedKmh || 0;
+  const rpm = liveEcuData.rpm || 0;
+  const load = liveEcuData.engineLoadPct || 25;
+  const tps = liveEcuData.tpsPct || 10;
+
+  if (spd < 5 || rpm < 1100) {
+    liveEcuData.instKmPerGal = 0;
+    liveEcuData.instKmPerL = 0;
+    return;
+  }
+
+  // Modelo volumétrico para 164.82cc FI: a velocidad crucero y baja carga rinde ~155 km/gal; al exigir TPS/carga baja a ~95 km/gal
+  const loadFactor = 0.55 + (load / 100) * 0.65 + (tps / 100) * 0.35;
+  const rpmPenalty = rpm > 6500 ? 1 + ((rpm - 6500) / 4000) * 0.35 : 1.0;
+  const baseKmGal = 148 / (loadFactor * rpmPenalty);
+  const clampedKmGal = Math.max(65, Math.min(185, baseKmGal));
+
+  liveEcuData.instKmPerGal = Number(clampedKmGal.toFixed(1));
+  liveEcuData.instKmPerL = Number((clampedKmGal / 3.78541).toFixed(1));
 }
 
 // Estima la marcha engranada (1ra a 5ta) según la relación de caja de la Pulsar N160 FI (14T/45T)
@@ -154,6 +178,7 @@ function parseObdResponse(cmd, rawHex) {
       liveEcuData.rpm = rpmVal;
       if (rpmVal > liveEcuData.peakRpm) liveEcuData.peakRpm = rpmVal;
       liveEcuData.gear = calculateEstimatedGear(liveEcuData.rpm, liveEcuData.speedKmh);
+      updateInstantFuelEconomy();
       checkBreakinRpmAlert(rpmVal);
     }
     return;
@@ -168,6 +193,7 @@ function parseObdResponse(cmd, rawHex) {
       integrateSessionDistance(A);
       if (A > liveEcuData.peakSpeed) liveEcuData.peakSpeed = A;
       liveEcuData.gear = calculateEstimatedGear(liveEcuData.rpm, liveEcuData.speedKmh);
+      updateInstantFuelEconomy();
     }
     return;
   }
@@ -481,6 +507,7 @@ export async function startSimulatorMode(onUpdateCallback, onStatusCallback) {
     if (spdVal > liveEcuData.peakSpeed) liveEcuData.peakSpeed = spdVal;
 
     liveEcuData.gear = calculateEstimatedGear(rpmVal, spdVal);
+    updateInstantFuelEconomy();
     liveEcuData.tpsPct = Math.round(wave * 88);
     liveEcuData.engineLoadPct = Math.min(100, Math.round(18 + wave * 76));
     liveEcuData.tempC = Math.min(98, Math.round(76 + Math.sin(time * 0.12) * 14));

@@ -1,4 +1,4 @@
-import { TANK_CAPACITY_GAL, MAINT_RULES, TECHNICAL_GUIDES, DEFAULT_TIRES } from './constants.js';
+import { TANK_CAPACITY_GAL, MAINT_RULES, TECHNICAL_GUIDES, DEFAULT_TIRES, ROUTE_PRESETS } from './constants.js';
 import { BAJAJ_DTC_DICTIONARY } from './obd.js';
 import { appState, escapeHTML, playN160IgnitionSound } from './state.js';
 import {
@@ -28,7 +28,16 @@ export const uiConfig = {
   maintSearchQuery: '',
   fuelSearchQuery: '',
   routeMultiplier: 1,
-  routeTerrainFactor: 1
+  routeTerrainFactor: 1,
+  activeEcuSubView: 'dials',
+  activeRoutePresetId: 'samne',
+  customRoute: { ...ROUTE_PRESETS[0] },
+  mapZoomScale: 1.0,
+  gpsWatchId: null,
+  liveGpsLat: null,
+  liveGpsLon: null,
+  liveGpsAlt: null,
+  liveGpsSpeedKmh: null
 };
 
 // ================= GESTOR NATIVO DE MODALES (CON SOPORTE PARA TRANSICIÓN LIMPIA) =================
@@ -1130,7 +1139,189 @@ export function renderAllMain(triggerSweep = false) {
   renderRouteAndTCO();
 }
 
+
+export function formatDmsCoord(lat, lon) {
+  const toDms = (val, posChar, negChar) => {
+    const abs = Math.abs(Number(val) || 0);
+    const deg = Math.floor(abs);
+    const minFloat = (abs - deg) * 60;
+    const min = Math.floor(minFloat);
+    const sec = Math.round((minFloat - min) * 60);
+    return `${deg}° ${String(min).padStart(2, '0')}' ${String(sec).padStart(2, '0')}" ${val >= 0 ? posChar : negChar}`;
+  };
+  return `${toDms(lat, 'N', 'S')} • ${toDms(lon, 'E', 'O')}`;
+}
+
+export function renderElevationProfileSVG(elevArray, progressRatio = 0.25) {
+  const wrap = document.getElementById('map-elevation-svg-wrap');
+  if (!wrap || !Array.isArray(elevArray) || elevArray.length < 2) return;
+
+  const w = 155, h = 40, padX = 6, padY = 5;
+  const minE = Math.min(...elevArray);
+  const maxE = Math.max(...elevArray, minE + 100);
+  const span = Math.max(50, maxE - minE);
+
+  const pts = elevArray.map((val, idx) => {
+    const x = padX + (idx / (elevArray.length - 1)) * (w - padX * 2);
+    const y = h - padY - ((val - minE) / span) * (h - padY * 2);
+    return { x, y, val };
+  });
+
+  const polyStr = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const areaStr = `${pts[0].x.toFixed(1)},${h} ${polyStr} ${pts[pts.length - 1].x.toFixed(1)},${h}`;
+
+  const clampedProg = Math.max(0, Math.min(1, progressRatio));
+  const targetFloatIdx = clampedProg * (pts.length - 1);
+  const lowIdx = Math.floor(targetFloatIdx);
+  const highIdx = Math.min(pts.length - 1, Math.ceil(targetFloatIdx));
+  const frac = targetFloatIdx - lowIdx;
+
+  const dotX = pts[lowIdx].x + (pts[highIdx].x - pts[lowIdx].x) * frac;
+  const dotY = pts[lowIdx].y + (pts[highIdx].y - pts[lowIdx].y) * frac;
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="elevFillGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#58E800" stop-opacity="0.38"/>
+          <stop offset="100%" stop-color="#58E800" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      <polygon points="${areaStr}" fill="url(#elevFillGrad)" />
+      <polyline fill="none" stroke="#58E800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polyStr}" />
+      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4.5" fill="rgba(88,232,0,0.3)" />
+      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="2.8" fill="#FFFFFF" stroke="#58E800" stroke-width="1.5" />
+    </svg>
+  `;
+}
+
+export function renderTacticalMapUI(ecuData) {
+  const route = uiConfig.customRoute || ROUTE_PRESETS[0];
+  const tele = computeFuelTelemetry();
+
+  // Cálculo de combustible actual y alcance seguro
+  const fullCapacityKm = Math.round(tele.avgKmPerGal * TANK_CAPACITY_GAL);
+  const lastFuelSorted = [...appState.fuelLogs].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
+  const lastRefuelKm = lastFuelSorted.length > 0 ? Number(lastFuelSorted[0].km) : Number(appState.initialKm || 0);
+  const sessKm = Number(ecuData?.sessionKm) || 0;
+  const kmSinceRefuel = Math.max(0, (Number(appState.currentKm) + sessKm) - lastRefuelKm);
+  const remKm = Math.max(0, fullCapacityKm - Math.round(kmSinceRefuel));
+  const tankPct = Math.max(5, Math.min(100, Math.round((remKm / Math.max(1, fullCapacityKm)) * 100)));
+
+  // Progreso a lo largo de la ruta según distancia recorrida en la sesión (o animación suave en modo Demo)
+  let progressRatio = route.distKm > 0 ? Math.min(1, sessKm / route.distKm) : 0;
+  if (ecuData?.mode === 'sim') {
+    progressRatio = ( (Date.now() / 1000) % 25 ) / 25;
+  }
+
+  const remDistKm = Math.max(0, route.distKm * (1 - progressRatio));
+  const remMin = Math.max(1, Math.round(route.estMin * (1 - progressRatio)));
+
+  // Hora Estimada de Llegada (ETA)
+  const etaDate = new Date(Date.now() + remMin * 60000);
+  const etaStr = etaDate.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+  // Galones y Soles requeridos para llegar al destino considerando el factor topográfico
+  const effKmGal = tele.avgKmPerGal / (route.terrainFactor || 1.0);
+  const neededGal = effKmGal > 0 ? route.distKm / effKmGal : 0;
+  const neededSoles = route.distKm * tele.avgCostPerKm * (route.terrainFactor || 1.0);
+
+  // Tarjeta Flotante Superior Izquierda
+  const titleEl = document.getElementById('map-dest-title');
+  if (titleEl) {
+    titleEl.textContent = route.name;
+    document.getElementById('map-dest-region').textContent = route.region;
+    document.getElementById('map-dest-dist').textContent = `${remDistKm.toFixed(1)} km`;
+    document.getElementById('map-dest-time').textContent = `${remMin} min`;
+  }
+
+  // Actualizar Trazado SVG y mover el Puntero Azul de la Moto sobre la curva real
+  const pathEl = document.getElementById('map-route-path');
+  const shadowEl = document.getElementById('map-route-shadow');
+  const bikeMarker = document.getElementById('map-bike-marker');
+  const safeRing = document.getElementById('map-safe-ring');
+
+  if (pathEl && route.svgPath) {
+    if (pathEl.getAttribute('d') !== route.svgPath) {
+      pathEl.setAttribute('d', route.svgPath);
+      if (shadowEl) shadowEl.setAttribute('d', route.svgPath);
+    }
+    try {
+      const totalLen = pathEl.getTotalLength();
+      if (totalLen > 0 && bikeMarker) {
+        const pt = pathEl.getPointAtLength(totalLen * progressRatio);
+        bikeMarker.setAttribute('transform', `translate(${pt.x.toFixed(1)}, ${pt.y.toFixed(1)})`);
+      }
+    } catch (e) {}
+  }
+
+  // Radio del Anillo de Alcance Seguro proporcional al % de tanque
+  if (safeRing) {
+    const radiusPx = Math.round(55 + (tankPct / 100) * 115);
+    safeRing.setAttribute('r', String(radiusPx));
+    safeRing.setAttribute('stroke', remKm >= route.distKm * 2 ? '#58E800' : (remKm >= route.distKm ? '#FF9F0A' : '#FF453A'));
+  }
+
+  // Columna Derecha: Velocidad Actual (ECU o GPS), Consumo Promedio, Autonomía y Elevación
+  const liveSpd = Number(ecuData?.speedKmh) || Number(uiConfig.liveGpsSpeedKmh) || 0;
+  const spdEl = document.getElementById('map-live-speed');
+  const spdBar = document.getElementById('map-live-speed-bar');
+  if (spdEl) spdEl.textContent = Math.round(liveSpd);
+  if (spdBar) spdBar.style.width = `${Math.min(100, Math.round((liveSpd / 130) * 100))}%`;
+
+  const avgKmL = tele.avgKmPerGal / 3.78541;
+  const kmlEl = document.getElementById('map-avg-kml');
+  const kmgalEl = document.getElementById('map-avg-kmgal');
+  if (kmlEl) kmlEl.innerHTML = `${avgKmL.toFixed(1)} <small>km/L</small>`;
+  if (kmgalEl) kmgalEl.textContent = `${tele.avgKmPerGal.toFixed(1)} km/gal • Histórico FI`;
+
+  const safeRangeEl = document.getElementById('map-safe-range');
+  const safeBarEl = document.getElementById('map-safe-bar');
+  const safePctEl = document.getElementById('map-safe-pct');
+  if (safeRangeEl) safeRangeEl.innerHTML = `⛽ ~${remKm} <small>km</small>`;
+  if (safeBarEl) safeBarEl.style.width = `${tankPct}%`;
+  if (safePctEl) {
+    const canRoundTrip = remKm >= route.distKm * 2;
+    safePctEl.textContent = canRoundTrip ? `${tankPct}% • Alcanza Ida y Vuelta ✓` : `${tankPct}% • Abastecer en ruta`;
+  }
+
+  // Altitud Actual (Prioriza GPS real -> Sensor Barométrico MAP ECU -> Interpolación de ruta)
+  const interpAlt = Math.round(route.startAlt + (route.peakAlt - route.startAlt) * progressRatio);
+  const currentAlt =
+    uiConfig.liveGpsAlt !== null
+      ? Math.round(uiConfig.liveGpsAlt)
+      : (ecuData?.connected && ecuData?.estimatedAltM > 0 ? ecuData.estimatedAltM : interpAlt);
+
+  const elevEl = document.getElementById('map-current-elev');
+  if (elevEl) elevEl.innerHTML = `${currentAlt.toLocaleString('es-PE')} <small>m</small>`;
+
+  renderElevationProfileSVG(route.elevProfile || [34, 450, 950, 1450], progressRatio);
+
+  // Barra Inferior de 4 Columnas
+  const botRange = document.getElementById('map-bot-range');
+  if (botRange) {
+    botRange.textContent = `~${remKm} km`;
+    document.getElementById('map-bot-fuel-bar').style.width = `${tankPct}%`;
+    document.getElementById('map-bot-fuel-txt').textContent = `${tankPct}% Combustible actual`;
+    document.getElementById('map-bot-dist').textContent = `${remDistKm.toFixed(1)} km`;
+    document.getElementById('map-bot-eta').textContent = `${remMin} min • ETA ${etaStr}`;
+    document.getElementById('map-bot-needgal').textContent = `Req: ${neededGal.toFixed(2)} gal (S/ ${neededSoles.toFixed(2)})`;
+    document.getElementById('map-bot-routename').textContent = route.name;
+    const extraPct = Math.round(((route.terrainFactor || 1) - 1) * 100);
+    document.getElementById('map-bot-terrain').textContent = extraPct > 0 ? `Ascenso (+${extraPct}% FI)` : 'Costa / Plano (0%)';
+    document.getElementById('map-bot-diff').textContent = route.difficulty || 'Media';
+
+    const lat = uiConfig.liveGpsLat ?? route.lat ?? -8.1116;
+    const lon = uiConfig.liveGpsLon ?? route.lon ?? -79.0287;
+    document.getElementById('map-bot-coords').textContent = formatDmsCoord(lat, lon);
+    document.getElementById('map-bot-gps-status').textContent =
+      uiConfig.gpsWatchId !== null ? '🛰️ GPS Satelital Activo' : '📍 Modo Ruta Táctica';
+    document.getElementById('map-bot-peak-alt').textContent = `Cima: ${Number(route.peakAlt || 0).toLocaleString('es-PE')} msnm`;
+  }
+}
+
 export function renderObdLiveUI(data) {
+  renderTacticalMapUI(data);
   const card = document.getElementById('obd-cockpit-card');
   const panel = document.getElementById('obd-live-panel');
   const statusPill = document.getElementById('obd-live-status');
@@ -1138,6 +1329,29 @@ export function renderObdLiveUI(data) {
   const btnSim = document.getElementById('btn-obd-sim');
 
   if (!card || !panel) return;
+
+  // Actualizar siempre el pie de tanque y odómetro con la telemetría histórica de Mi Moto
+  const tele = computeFuelTelemetry();
+  const fullCapacityKm = Math.round(tele.avgKmPerGal * TANK_CAPACITY_GAL);
+  const lastFuelSorted = [...appState.fuelLogs].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
+  const lastRefuelKm = lastFuelSorted.length > 0 ? Number(lastFuelSorted[0].km) : Number(appState.initialKm || 0);
+  const sessKm = Number(data?.sessionKm) || 0;
+  const kmSinceRefuel = Math.max(0, (Number(appState.currentKm) + sessKm) - lastRefuelKm);
+  const remKm = Math.max(0, fullCapacityKm - Math.round(kmSinceRefuel));
+  const tankPct = Math.max(5, Math.min(100, Math.round((remKm / Math.max(1, fullCapacityKm)) * 100)));
+
+  const footerFuelPct = document.getElementById('obd-footer-fuel-pct');
+  const footerRange = document.getElementById('obd-footer-range');
+  const footerOdo = document.getElementById('obd-footer-odo');
+  const barTank = document.getElementById('obd-bar-tank');
+
+  if (footerFuelPct) footerFuelPct.textContent = `~${tankPct}%`;
+  if (footerRange) footerRange.textContent = `~${remKm} km`;
+  if (footerOdo) footerOdo.textContent = `${Math.round(Number(appState.currentKm) + sessKm).toLocaleString('es-PE')} km`;
+  if (barTank) {
+    barTank.style.width = `${tankPct}%`;
+    barTank.style.backgroundColor = tankPct <= 20 ? 'var(--red-danger)' : (tankPct <= 35 ? 'var(--amber-warn)' : 'var(--neon-lime)');
+  }
 
   if (!data || !data.connected) {
     card.classList.remove('obd-active', 'obd-shift-alert');
@@ -1149,25 +1363,28 @@ export function renderObdLiveUI(data) {
     document.getElementById('obd-gear-val').textContent = 'N';
     document.getElementById('obd-rpm-val').textContent = '0';
     document.getElementById('obd-rpm-bar').style.width = '0%';
+    const rpmArcOff = document.getElementById('obd-rpm-arc');
+    const spdArcOff = document.getElementById('obd-speed-arc');
+    if (rpmArcOff) rpmArcOff.setAttribute('stroke-dashoffset', '100');
+    if (spdArcOff) spdArcOff.setAttribute('stroke-dashoffset', '100');
     return;
   }
 
   card.classList.add('obd-active');
-  panel.classList.remove('hidden');
 
   if (data.mode === 'sim') {
-    statusPill.textContent = 'DEMO COMPLETO';
+    statusPill.textContent = 'DEMO ACTIVO';
     statusPill.className = 'status-pill status-warn';
     if (btnSim) btnSim.textContent = '⏹ Salir Demo';
     if (btnConnect) btnConnect.textContent = '⚡ Conectar';
   } else {
-    statusPill.textContent = 'ECU EN LÍNEA';
+    statusPill.textContent = 'CONECTADO';
     statusPill.className = 'status-pill status-ok';
-    if (btnConnect) btnConnect.textContent = '⏹ Desconectar';
+    if (btnConnect) btnConnect.textContent = '⏹ Cortar';
     if (btnSim) btnSim.textContent = 'Demo';
   }
 
-  // NIVEL 1: Velocidad Gigante, Marcha y RPM
+  // NIVEL 1: Relojes Circulares Machine Outdoors (RPM, Marcha, Velocidad)
   const rpm = Number(data.rpm) || 0;
   const peakRpm = Number(data.peakRpm) || 0;
   const spd = Number(data.speedKmh) || 0;
@@ -1181,8 +1398,15 @@ export function renderObdLiveUI(data) {
   document.getElementById('obd-peak-rpm').textContent = peakRpm.toLocaleString('es-PE');
 
   const rpmPct = Math.min(100, Math.round((rpm / 10000) * 100));
+  const spdPct = Math.min(100, Math.round((spd / 140) * 100));
+
+  const rpmArc = document.getElementById('obd-rpm-arc');
+  const spdArc = document.getElementById('obd-speed-arc');
+  if (rpmArc) rpmArc.setAttribute('stroke-dashoffset', String(100 - rpmPct));
+  if (spdArc) spdArc.setAttribute('stroke-dashoffset', String(100 - spdPct));
+
   const rpmBar = document.getElementById('obd-rpm-bar');
-  rpmBar.style.width = `${rpmPct}%`;
+  if (rpmBar) rpmBar.style.width = `${rpmPct}%`;
 
   const isBreakin1k = appState.currentKm < 1000;
   const isBreakin2k = appState.currentKm >= 1000 && appState.currentKm < 2000;
@@ -1194,57 +1418,94 @@ export function renderObdLiveUI(data) {
     guardPill.textContent = '¡SUBIR MARCHA!';
     guardPill.style.background = 'rgba(255, 69, 58, 0.25)';
     guardPill.style.color = 'var(--red-danger)';
+    if (rpmArc) rpmArc.setAttribute('stroke', 'var(--red-danger)');
   } else if (rpm >= shiftLimit * 0.85) {
     card.classList.remove('obd-shift-alert');
     guardPill.textContent = 'ZONA ALTA';
     guardPill.style.background = 'rgba(255, 159, 10, 0.2)';
     guardPill.style.color = 'var(--amber-warn)';
+    if (rpmArc) rpmArc.setAttribute('stroke', 'var(--amber-warn)');
   } else {
     card.classList.remove('obd-shift-alert');
     guardPill.textContent = isBreakin1k ? 'CUIDANDO <5k' : 'ÓPTIMO';
     guardPill.style.background = 'rgba(88, 232, 0, 0.15)';
     guardPill.style.color = 'var(--neon-lime)';
+    if (rpmArc) rpmArc.setAttribute('stroke', 'var(--neon-lime)');
   }
 
-  // NIVEL 2: Signos Vitales (Temp, Batería, TPS)
+  // NIVEL 2: 4 Tarjetas de Signos Vitales con Mini-Barras C-H / L-H
   const tempC = Number(data.tempC) || 0;
   const tempEl = document.getElementById('obd-temp-val');
   const tempSub = document.getElementById('obd-temp-status');
+  const barTemp = document.getElementById('obd-bar-temp');
   tempEl.innerHTML = `${tempC} <small>°C</small>`;
+
+  const tempPct = Math.max(5, Math.min(100, Math.round(((tempC - 20) / 95) * 100)));
+  if (barTemp) barTemp.style.width = `${tempPct}%`;
 
   if (tempC < 45) {
     tempSub.textContent = '❄️ Frío (Calentar)';
     tempEl.style.color = 'var(--caribbean-bright)';
+    if (barTemp) barTemp.style.backgroundColor = 'var(--caribbean-bright)';
   } else if (tempC <= 95) {
     tempSub.textContent = '✅ Operativa normal';
     tempEl.style.color = 'var(--neon-lime)';
+    if (barTemp) barTemp.style.backgroundColor = 'var(--neon-lime)';
   } else {
     tempSub.textContent = '🔥 Alerta térmica';
     tempEl.style.color = 'var(--red-danger)';
+    if (barTemp) barTemp.style.backgroundColor = 'var(--red-danger)';
   }
 
   const volt = Number(data.voltage) || 0;
   const voltEl = document.getElementById('obd-volt-val');
   const voltSub = document.getElementById('obd-volt-status');
+  const barVolt = document.getElementById('obd-bar-volt');
   voltEl.innerHTML = `${volt > 0 ? volt.toFixed(1) : '--'} <small>V</small>`;
+
+  const voltPct = volt > 0 ? Math.max(5, Math.min(100, Math.round(((volt - 11.0) / 4.0) * 100))) : 0;
+  if (barVolt) barVolt.style.width = `${voltPct}%`;
 
   if (volt === 0) {
     voltSub.textContent = 'Leyendo pin 16...';
   } else if (volt < 12.2) {
     voltEl.style.color = 'var(--red-danger)';
     voltSub.textContent = '⚠️ Batería baja';
+    if (barVolt) barVolt.style.backgroundColor = 'var(--red-danger)';
   } else if (volt >= 13.5 && volt <= 14.6) {
     voltEl.style.color = 'var(--neon-lime)';
     voltSub.textContent = '⚡ Estator OK';
+    if (barVolt) barVolt.style.backgroundColor = 'var(--neon-lime)';
   } else {
     voltEl.style.color = 'var(--caribbean-bright)';
     voltSub.textContent = 'Reposo 12V OK';
+    if (barVolt) barVolt.style.backgroundColor = 'var(--caribbean-bright)';
   }
 
   const tps = Number(data.tpsPct) || 0;
   const loadPct = Number(data.engineLoadPct) || 0;
   document.getElementById('obd-tps-val').innerHTML = `${tps} <small>%</small>`;
   document.getElementById('obd-load-status').textContent = `Esfuerzo: ${loadPct}%`;
+  const barTps = document.getElementById('obd-bar-tps');
+  if (barTps) barTps.style.width = `${tps}%`;
+
+  // Economía Instantánea (km/L & km/gal)
+  const instKmL = Number(data.instKmPerL) || 0;
+  const instKmGal = Number(data.instKmPerGal) || 0;
+  const econEl = document.getElementById('obd-inst-econ');
+  const econSub = document.getElementById('obd-inst-gal-sub');
+  const barEcon = document.getElementById('obd-bar-econ');
+
+  if (instKmL > 0) {
+    econEl.innerHTML = `${instKmL.toFixed(1)} <small>km/L</small>`;
+    econSub.textContent = `${instKmGal.toFixed(0)} km/gal en vivo`;
+    const econPct = Math.min(100, Math.round((instKmL / 50) * 100));
+    if (barEcon) barEcon.style.width = `${econPct}%`;
+  } else {
+    econEl.innerHTML = `-- <small>km/L</small>`;
+    econSub.textContent = `Media: ${tele.avgKmPerGal.toFixed(0)} km/gal`;
+    if (barEcon) barEcon.style.width = `0%`;
+  }
 
   // NIVEL 3: Micro-Grilla de 6 Sensores Secundarios
   document.getElementById('obd-micro-load').textContent = `${loadPct}%`;
@@ -1256,19 +1517,19 @@ export function renderObdLiveUI(data) {
 
   const stft = Number(data.stftPct) || 0;
   const stftSign = stft > 0 ? '+' : '';
-  document.getElementById('obd-micro-stft').textContent = `Mezcla: ${stftSign}${stft.toFixed(1)}%`;
+  document.getElementById('obd-micro-stft').textContent = `STFT: ${stftSign}${stft.toFixed(1)}%`;
 
   const totalSec = Math.floor(Number(data.runTimeSec) || 0);
   const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
   const secs = String(totalSec % 60).padStart(2, '0');
   document.getElementById('obd-micro-runtime').textContent = `${mins}:${secs}`;
-  const sessKm = Number(data.sessionKm) || 0;
+
   const distSmall = document.getElementById('obd-micro-dist');
   const sessTxt = document.getElementById('obd-session-km-txt');
   if (distSmall) distSmall.textContent = `Ruta: +${sessKm.toFixed(2)} km`;
-  if (sessTxt) sessTxt.textContent = `+${sessKm.toFixed(2)} km recorridos en sesión`;
+  if (sessTxt) sessTxt.textContent = `+${sessKm.toFixed(2)} km hoy`;
 
-  // NIVEL 4: Diagnóstico Check Engine (DTC)
+  // NIVEL 5: Diagnóstico Check Engine (DTC)
   const dtcSummary = document.getElementById('obd-dtc-summary');
   const dtcListEl = document.getElementById('obd-dtc-list');
   const btnClearDtc = document.getElementById('btn-obd-clear-dtc');

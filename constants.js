@@ -236,8 +236,89 @@ export const TECHNICAL_GUIDES = {
     title: 'Escáner y Borrador de Códigos de Falla (DTC)',
     how: 'Toca "🔍 Escanear Fallas" para consultar la memoria de errores de la ECU. Si reparaste un sensor y quedó la luz amarilla encendida, toca "🧹 Borrar Check Engine".',
     why: 'Te ahorra pagar entre S/ 40 y S/ 60 por escaneo electrónico en talleres externos y traduce cada código (ej. P0131, P0562) al componente exacto de tu Pulsar N160.'
+  },
+  obd_econ_info: {
+    category: 'EFICIENCIA VOLUMÉTRICA & AUTONOMÍA (14 L)',
+    title: 'Economía Instantánea (km/L) y Rango de Tanque',
+    how: 'Cruza en vivo la velocidad real (010D), carga del motor (0104), apertura de mariposa (0111) y tu media histórica de Gasolina Premium para estimar cuántos km/L estás logrando en ese segundo y cuántos kilómetros de autonomía te quedan.',
+    why: 'Te enseña a encontrar el "punto dulce" del acelerador en carretera para estirar al máximo los 14 litros (3.70 galones) del tanque.'
+  },
+  nav_radar_guide: {
+    category: 'NAVEGACIÓN TÁCTICA & TELEMETRÍA GPS',
+    title: 'Mapa Radar, Alcance Seguro y Perfil de Elevación',
+    how: 'Selecciona un destino rápido o ingresa tu ruta (km y altitud meta). Toca "🛰️ Activar GPS" para rastrear tus coordenadas reales, altitud en msnm y mover el punto de tu moto a lo largo del trazado y de la curva topográfica.',
+    why: 'Cruza la gasolina real que queda en tu tanque de 14L con la topografía de ascenso para dibujar el anillo verde de "Alcance Seguro", garantizando que tienes combustible suficiente para llegar y volver.'
+  },
+  nav_elev_guide: {
+    category: 'TOPOGRAFÍA & SENSOR BAROMÉTRICO MAP',
+    title: 'Curva de Elevación (msnm) y Compensación FI',
+    how: 'El gráfico inferior derecho dibuja el perfil longitudinal de altitud desde tu punto de partida hasta la cima del destino y posiciona tu altitud actual (vía GPS o sensor MAP 010B de la ECU).',
+    why: 'Cada 1,000 metros de ascenso la presión atmosférica cae ~10 kPa. Si tu ruta supera los 2,000 msnm, recuerda apagar y encender la llave 5 segundos a mitad de subida para recalibrar la inyección.'
   }
 };
+
+export const ROUTE_PRESETS = [
+  {
+    id: 'samne',
+    name: 'Puente Pala / Samne',
+    region: 'Valle Santa Catalina • Ascenso Moderado',
+    distKm: 42.5,
+    estMin: 55,
+    startAlt: 34,
+    peakAlt: 1450,
+    terrainFactor: 1.10,
+    difficulty: 'Media • Curvas',
+    lat: -7.9942,
+    lon: -78.6851,
+    svgPath: 'M 140 245 C 132 215, 158 190, 146 160 C 134 130, 168 105, 155 72 C 148 52, 172 38, 178 24',
+    elevProfile: [34, 120, 280, 520, 840, 1180, 1450]
+  },
+  {
+    id: 'cachicadan',
+    name: 'Cachicadán / Santiago de Chuco',
+    region: 'Sierra de La Libertad • Alta Montaña',
+    distKm: 168.0,
+    estMin: 230,
+    startAlt: 34,
+    peakAlt: 3180,
+    terrainFactor: 1.18,
+    difficulty: 'Alta • Sierra (>3,000m)',
+    lat: -8.0958,
+    lon: -78.1524,
+    svgPath: 'M 135 248 C 115 220, 165 198, 130 170 C 102 145, 175 122, 142 92 C 118 68, 185 45, 168 20',
+    elevProfile: [34, 480, 1350, 2420, 3180, 2950, 2880]
+  },
+  {
+    id: 'huanchaco',
+    name: 'Circuito Costa / Huanchaco',
+    region: 'Ruta Costera • Nivel del Mar',
+    distKm: 28.0,
+    estMin: 32,
+    startAlt: 34,
+    peakAlt: 65,
+    terrainFactor: 1.0,
+    difficulty: 'Baja • Pista Plana',
+    lat: -8.0782,
+    lon: -79.1194,
+    svgPath: 'M 155 245 C 150 205, 142 165, 138 125 C 134 85, 148 52, 142 24',
+    elevProfile: [34, 42, 28, 15, 12, 35, 18]
+  },
+  {
+    id: 'custom',
+    name: 'Mirador El Cóndor / Ruta Libre',
+    region: 'Tramo Personalizado N160 FI',
+    distKm: 36.7,
+    estMin: 52,
+    startAlt: 180,
+    peakAlt: 1560,
+    terrainFactor: 1.14,
+    difficulty: 'Dificultad Media',
+    lat: -8.1116,
+    lon: -79.0287,
+    svgPath: 'M 142 245 C 128 212, 164 185, 144 152 C 126 122, 168 95, 152 62 C 144 42, 168 32, 172 22',
+    elevProfile: [180, 420, 790, 1120, 1480, 1390, 1560]
+  }
+];
 
 export const DEFAULT_TIRES = {
   front: {

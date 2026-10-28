@@ -8,7 +8,7 @@ import {
   pushStateToCloud,
   pullStateFromCloud
 } from './firebase.js';
-import { DEFAULT_TIRES } from './constants.js';
+import { DEFAULT_TIRES, ROUTE_PRESETS } from './constants.js';
 import {
   appState,
   loadState,
@@ -49,6 +49,7 @@ import {
   renderFuelSection,
   renderRouteAndTCO,
   renderObdLiveUI,
+  renderTacticalMapUI,
   renderAllMain
 } from './ui.js';
 import {
@@ -147,11 +148,29 @@ function renderQuickPicksUI() {
   }
 }
 
+async function exitEcuLandscapeIfNeeded() {
+  document.body.classList.remove('ecu-ride-mode', 'ecu-tab-active');
+  const rideBtn = document.getElementById('btn-obd-ride-mode');
+  if (rideBtn) rideBtn.textContent = '⛶ Timón';
+  const rotBtn = document.getElementById('btn-obd-rotate');
+  if (rotBtn) rotBtn.textContent = '🔄 Horizontal';
+
+  try {
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
+    if (document.fullscreenElement && document.exitFullscreen) {
+      await document.exitFullscreen();
+    }
+  } catch (e) {}
+}
+
 function switchMainTab(tabId) {
-  if (tabId !== 'tab-ecu') {
-    document.body.classList.remove('ecu-ride-mode');
-    const rideBtn = document.getElementById('btn-obd-ride-mode');
-    if (rideBtn) rideBtn.textContent = '⛶ Timón';
+  if (tabId === 'tab-ecu') {
+    document.body.classList.add('ecu-tab-active');
+    renderObdLiveUI(liveEcuData);
+  } else {
+    exitEcuLandscapeIfNeeded();
   }
   document.querySelectorAll('.tab-btn').forEach((b) => {
     b.classList.toggle('active', b.getAttribute('data-tab') === tabId);
@@ -507,7 +526,8 @@ function setupEventListeners() {
       'modal-backup',
       'modal-docs',
       'modal-tire',
-      'modal-mod'
+      'modal-mod',
+      'modal-route-cfg'
     ];
     for (const id of modalPriority) {
       const el = document.getElementById(id);
@@ -581,6 +601,219 @@ function setupEventListeners() {
       });
     });
   }
+
+  // Botón Rotación Horizontal Exclusiva para la Pestaña ECU (Estilo Tablet Machine Outdoors)
+  const btnRotateEcu = document.getElementById('btn-obd-rotate');
+  if (btnRotateEcu) {
+    btnRotateEcu.addEventListener('click', async () => {
+      const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+      try {
+        if (!isLandscape) {
+          document.body.classList.add('ecu-ride-mode', 'ecu-tab-active');
+          if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+            await document.documentElement.requestFullscreen();
+          }
+          if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock('landscape');
+          }
+          btnRotateEcu.textContent = '🔄 Vertical';
+          showToast('🔄 Modo Horizontal ECU Activado');
+        } else {
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+          }
+          if (document.fullscreenElement && document.exitFullscreen) {
+            await document.exitFullscreen();
+          }
+          btnRotateEcu.textContent = '🔄 Horizontal';
+          showToast('📱 Modo Vertical Restaurado');
+        }
+      } catch (err) {
+        showToast('💡 Gira tu Poco X7 Pro horizontalmente (activa Giro Automático)');
+      }
+    });
+  }
+
+  // Selector de Sub-Vista dentro de la Pestaña ECU: Tablero General (Relojes) vs Mapa Táctico & Elevación
+  document.querySelectorAll('.obd-view-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const view = btn.getAttribute('data-ecuview') || 'dials';
+      uiConfig.activeEcuSubView = view;
+      document.querySelectorAll('.obd-view-btn').forEach((b) => b.classList.toggle('active', b === btn));
+      const dialsPanel = document.getElementById('obd-live-panel');
+      const mapPanel = document.getElementById('obd-map-panel');
+      if (dialsPanel && mapPanel) {
+        dialsPanel.classList.toggle('hidden', view !== 'dials');
+        mapPanel.classList.toggle('hidden', view !== 'map');
+      }
+      renderTacticalMapUI(liveEcuData);
+      triggerHaptic(10);
+    });
+  });
+
+  // Selector de Destinos Preconfigurados (Puente Pala / Samne, Cachicadán, Huanchaco, Mirador)
+  document.querySelectorAll('#map-route-presets [data-routepreset]').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      const pid = pill.getAttribute('data-routepreset');
+      document.querySelectorAll('#map-route-presets .mod-filter-pill').forEach((p) => p.classList.remove('active'));
+      pill.classList.add('active');
+      uiConfig.activeRoutePresetId = pid;
+      const found = ROUTE_PRESETS.find((r) => r.id === pid) || ROUTE_PRESETS[0];
+      uiConfig.customRoute = { ...found };
+      renderTacticalMapUI(liveEcuData);
+      triggerHaptic(12);
+      if (pid === 'custom') {
+        openRouteConfigModal();
+      } else {
+        showToast(`🗺️ Ruta trazada: ${found.name}`);
+      }
+    });
+  });
+
+  // Modal de Configuración de Ruta Personalizada
+  let selectedRouteTerrainFactor = 1.10;
+  let selectedRouteDiffLabel = 'Media • Ascenso';
+
+  function openRouteConfigModal() {
+    const r = uiConfig.customRoute || ROUTE_PRESETS[0];
+    document.getElementById('cfg-route-name').value = r.name || '';
+    document.getElementById('cfg-route-region').value = r.region || '';
+    document.getElementById('cfg-route-km').value = r.distKm || 42.5;
+    document.getElementById('cfg-route-min').value = r.estMin || 55;
+    document.getElementById('cfg-route-alt').value = r.peakAlt || 1450;
+    selectedRouteTerrainFactor = r.terrainFactor || 1.10;
+    selectedRouteDiffLabel = r.difficulty || 'Media • Ascenso';
+
+    document.querySelectorAll('#cfg-route-terrain-picker .compound-pill').forEach((p) => {
+      p.classList.toggle('selected', Math.abs(parseFloat(p.getAttribute('data-rterr')) - selectedRouteTerrainFactor) < 0.02);
+    });
+    openModalById('modal-route-cfg');
+  }
+
+  const btnOpenRouteCfg = document.getElementById('btn-open-route-cfg');
+  if (btnOpenRouteCfg) {
+    btnOpenRouteCfg.addEventListener('click', openRouteConfigModal);
+  }
+
+  const closeRouteCfg = () => closeModalById('modal-route-cfg');
+  document.getElementById('btn-close-routecfg-x')?.addEventListener('click', closeRouteCfg);
+  document.getElementById('btn-cancel-routecfg')?.addEventListener('click', closeRouteCfg);
+
+  document.querySelectorAll('#cfg-route-terrain-picker .compound-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('#cfg-route-terrain-picker .compound-pill').forEach((p) => p.classList.remove('selected'));
+      pill.classList.add('selected');
+      selectedRouteTerrainFactor = parseFloat(pill.getAttribute('data-rterr')) || 1.10;
+      selectedRouteDiffLabel = pill.getAttribute('data-rdiff') || 'Media • Ascenso';
+    });
+  });
+
+  document.getElementById('btn-save-routecfg')?.addEventListener('click', () => {
+    const name = document.getElementById('cfg-route-name').value.trim() || 'Destino Personalizado';
+    const region = document.getElementById('cfg-route-region').value.trim() || 'Ruta Táctica N160 FI';
+    const distKm = Math.max(1, parseFloat(document.getElementById('cfg-route-km').value) || 40);
+    const estMin = Math.max(5, parseInt(document.getElementById('cfg-route-min').value, 10) || Math.round(distKm * 1.25));
+    const peakAlt = Math.max(0, parseInt(document.getElementById('cfg-route-alt').value, 10) || 1200);
+    const startAlt = uiConfig.liveGpsAlt !== null ? Math.round(uiConfig.liveGpsAlt) : 34;
+
+    // Generar curva topográfica de 7 puntos hacia la cima
+    const stepAlt = (peakAlt - startAlt) / 6;
+    const elevProfile = [
+      startAlt,
+      Math.round(startAlt + stepAlt * 0.9),
+      Math.round(startAlt + stepAlt * 2.1),
+      Math.round(startAlt + stepAlt * 3.4),
+      Math.round(startAlt + stepAlt * 4.8),
+      Math.round(startAlt + stepAlt * 5.6),
+      peakAlt
+    ];
+
+    uiConfig.customRoute = {
+      ...uiConfig.customRoute,
+      id: 'custom',
+      name,
+      region,
+      distKm,
+      estMin,
+      startAlt,
+      peakAlt,
+      terrainFactor: selectedRouteTerrainFactor,
+      difficulty: selectedRouteDiffLabel,
+      elevProfile
+    };
+
+    renderTacticalMapUI(liveEcuData);
+    closeRouteCfg();
+    triggerHaptic(15);
+    showToast(`🏁 Ruta "${name}" (${distKm} km) actualizada`);
+  });
+
+  // Botón de GPS Satelital en Vivo (Coordenadas, Altitud msnm y Velocidad GPS)
+  const btnToggleGps = document.getElementById('btn-toggle-gps');
+  if (btnToggleGps) {
+    btnToggleGps.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        showToast('⚠️ Tu navegador no tiene soporte de geolocalización');
+        return;
+      }
+      if (uiConfig.gpsWatchId !== null) {
+        navigator.geolocation.clearWatch(uiConfig.gpsWatchId);
+        uiConfig.gpsWatchId = null;
+        btnToggleGps.classList.remove('active');
+        btnToggleGps.textContent = '🛰️ GPS Vivo';
+        renderTacticalMapUI(liveEcuData);
+        showToast('⏹ Rastreo GPS desactivado');
+        return;
+      }
+
+      showToast('🛰️ Buscando satélites GPS...');
+      btnToggleGps.classList.add('active');
+      btnToggleGps.textContent = '🟢 GPS Activo';
+
+      uiConfig.gpsWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          uiConfig.liveGpsLat = pos.coords.latitude;
+          uiConfig.liveGpsLon = pos.coords.longitude;
+          if (pos.coords.altitude !== null) {
+            uiConfig.liveGpsAlt = pos.coords.altitude;
+          }
+          if (pos.coords.speed !== null && pos.coords.speed >= 0) {
+            uiConfig.liveGpsSpeedKmh = pos.coords.speed * 3.6;
+          }
+          renderTacticalMapUI(liveEcuData);
+        },
+        () => {
+          showToast('⚠️ Activa la Ubicación de tu Poco X7 Pro para leer el GPS');
+        },
+        { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+      );
+    });
+  }
+
+  // Controles de Zoom en el Radar SVG y enlace directo a Google Maps
+  const applyRadarZoom = () => {
+    const svg = document.getElementById('machine-radar-svg');
+    if (svg) {
+      svg.style.transform = `scale(${uiConfig.mapZoomScale.toFixed(2)})`;
+      svg.style.transition = 'transform 0.22s ease';
+    }
+  };
+
+  document.getElementById('btn-map-zoom-in')?.addEventListener('click', () => {
+    uiConfig.mapZoomScale = Math.min(1.6, uiConfig.mapZoomScale + 0.15);
+    applyRadarZoom();
+  });
+
+  document.getElementById('btn-map-zoom-out')?.addEventListener('click', () => {
+    uiConfig.mapZoomScale = Math.max(0.85, uiConfig.mapZoomScale - 0.15);
+    applyRadarZoom();
+  });
+
+  document.getElementById('btn-map-open-gmaps')?.addEventListener('click', () => {
+    const r = uiConfig.customRoute || ROUTE_PRESETS[0];
+    const query = encodeURIComponent(`${r.name}, La Libertad, Peru`);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener,noreferrer');
+  });
 
   // Botón Modo Timón (Pantalla Completa dedicada sin cabecera ni distracciones)
   const btnRideMode = document.getElementById('btn-obd-ride-mode');
