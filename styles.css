@@ -2083,3 +2083,148 @@ body.ecu-ride-mode .screen {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* ================= BLOQUE V6.0: MAPA SATELITAL INTERACTIVO (LEAFLET + OSRM + DEM ELEVATION) ================= */
+.map-search-bar-wrap {
+  position: relative;
+  margin-bottom: 7px;
+}
+
+.map-search-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.map-place-input {
+  flex: 1;
+  padding: 8px 11px;
+  font-size: 11.5px;
+  border-radius: 9px;
+  border: 1px solid rgba(73, 191, 230, 0.32);
+  background: #050910;
+  color: #FFFFFF;
+}
+
+.map-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: rgba(10, 16, 26, 0.98);
+  border: 1px solid var(--caribbean-bright);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85);
+  z-index: 1200;
+  max-height: 195px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-search-item {
+  padding: 8px 11px;
+  border-bottom: 1px solid rgba(210, 218, 228, 0.08);
+  cursor: pointer;
+  text-align: left;
+  background: transparent;
+  color: #FFFFFF;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  font-size: 11px;
+}
+
+.map-search-item:hover,
+.map-search-item:active {
+  background: rgba(30, 136, 168, 0.25);
+}
+
+.map-search-item strong {
+  display: block;
+  color: var(--neon-lime);
+  font-size: 11.5px;
+}
+
+.map-search-item small {
+  display: block;
+  color: var(--alloy-silver);
+  font-size: 9px;
+  margin-top: 1px;
+}
+
+.leaflet-sat-container {
+  width: 100%;
+  height: 100%;
+  background: #050A0F;
+  z-index: 1;
+}
+
+/* Filtro táctico estilo Machine Outdoors solo para los tiles satelitales (mantiene la línea verde neón brillante) */
+.leaflet-tile-pane {
+  filter: brightness(0.84) contrast(1.16) saturate(0.92);
+}
+
+.leaflet-control-attribution {
+  font-size: 7px !important;
+  background: rgba(5, 8, 13, 0.65) !important;
+  color: var(--alloy-muted) !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--caribbean-bright) !important;
+}
+
+.map-safe-badge-overlay {
+  position: absolute;
+  bottom: 8px;
+  left: 9px;
+  z-index: 500;
+  background: rgba(6, 11, 18, 0.86);
+  border: 1px solid rgba(88, 232, 0, 0.42);
+  border-radius: 6px;
+  padding: 3px 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--neon-lime);
+  pointer-events: none;
+}
+
+.safe-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-lime);
+  box-shadow: 0 0 6px var(--neon-lime);
+}
+
+/* Marcadores HTML personalizados en el Mapa Satelital */
+.n160-bike-pin {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2563EB;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.n160-dest-pin {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(6, 10, 15, 0.92);
+  border: 2px solid var(--neon-lime);
+  box-shadow: 0 0 12px rgba(88, 232, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}

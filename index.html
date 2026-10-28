@@ -12,6 +12,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,600;0,700;0,800;1,700;1,800;1,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -1120,29 +1122,38 @@
           </div>
         </div>
 
-        <!-- ================= VISTA B: MAPA TÁCTICO, ALCANCE SEGURO & PERFIL DE ELEVACIÓN (ESTILO MACHINE OUTDOORS) ================= -->
+                <!-- ================= VISTA B: MAPA SATELITAL EN VIVO, BUSCADOR DE LUGARES & ELEVACIÓN REAL ================= -->
         <div id="obd-map-panel" class="hidden">
           
-          <!-- Selector Rápido de Ruta / Destino Topográfico -->
+          <!-- BUSCADOR INTELIGENTE DE LUGARES (GEOCODIFICACIÓN + TRAZADO VIAL + ELEVACIÓN AUTOMÁTICA) -->
+          <div class="map-search-bar-wrap">
+            <div class="map-search-input-row">
+              <input type="search" id="map-place-search-input" class="map-place-input" placeholder="🔍 Buscar destino (ej. Otuzco, Poroto, Simbal, Trujillo...)">
+              <button type="button" id="btn-map-search-go" class="btn-action-sleek">Ir 🏁</button>
+            </div>
+            <div id="map-search-results" class="map-search-dropdown hidden"></div>
+          </div>
+
+          <!-- Píldoras Rápidas de Ruta con Coordenadas Reales -->
           <div class="map-preset-pills" id="map-route-presets">
             <button type="button" class="mod-filter-pill active" data-routepreset="samne">⛰️ Puente Pala / Samne</button>
             <button type="button" class="mod-filter-pill" data-routepreset="cachicadan">🏔️ Cachicadán (Sierra)</button>
             <button type="button" class="mod-filter-pill" data-routepreset="huanchaco">🌊 Huanchaco (Costa)</button>
-            <button type="button" class="mod-filter-pill" data-routepreset="custom">📍 Mirador / Editar</button>
+            <button type="button" class="mod-filter-pill" data-routepreset="otuzco">🛣️ Otuzco</button>
           </div>
 
-          <!-- Grilla Principal Estilo Machine Outdoors: Mapa Radar a la Izquierda + Columna de 4 Tarjetas a la Derecha -->
+          <!-- Grilla Principal Estilo Machine Outdoors: Mapa Satelital a la Izquierda + 4 Tarjetas a la Derecha -->
           <div class="machine-map-layout">
             
-            <!-- BARRA COMPACTA DE DESTINO ARRIBA DEL MAPA (NO TAPA EL TRAZADO NI LA META) -->
+            <!-- BARRA COMPACTA DE DESTINO ARRIBA DEL MAPA (DESPEJADA) -->
             <div class="map-dest-top-bar">
               <div class="map-dest-top-left">
                 <div class="title-with-info">
-                  <span class="micro-lbl" style="color:var(--neon-lime);">🏁 DESTINO ACTIVO</span>
+                  <span class="micro-lbl" style="color:var(--neon-lime);" id="map-route-status-tag">🛰️ RUTA SATELITAL ACTIVA</span>
                   <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_radar_guide">ⓘ</button>
                 </div>
                 <strong id="map-dest-title" class="map-dest-name">Puente Pala / Samne</strong>
-                <small id="map-dest-region" class="map-dest-sub">Valle Santa Catalina • Ascenso Moderado</small>
+                <small id="map-dest-region" class="map-dest-sub">Valle Santa Catalina • Toca cualquier punto del mapa o busca arriba</small>
               </div>
 
               <div class="map-dest-top-metrics">
@@ -1157,92 +1168,30 @@
               </div>
 
               <div class="map-dest-top-actions">
-                <button type="button" id="btn-open-route-cfg" class="card-btn">✏️ Ruta</button>
-                <button type="button" id="btn-toggle-gps" class="card-btn gps">🛰️ GPS Vivo</button>
+                <button type="button" id="btn-toggle-gps" class="card-btn gps">🛰️ Mi GPS Vivo</button>
+                <button type="button" id="btn-map-layer-toggle" class="card-btn">🌍 Satélite HD</button>
+                <button type="button" id="btn-open-route-cfg" class="card-btn">✏️ Manual</button>
               </div>
             </div>
 
-            <!-- LIENZO DE MAPA TOPOGRÁFICO OSCURO 100% DESPEJADO + ANILLO DE ALCANCE SEGURO -->
+            <!-- LIENZO DE MAPA SATELITAL INTERACTIVO (LEAFLET + ESRI WORLD IMAGERY + RUTA NEÓN + ALCANCE SEGURO) -->
             <div class="machine-map-canvas-box">
+              <div id="leaflet-sat-map" class="leaflet-sat-container"></div>
 
-              <!-- Controles Flotantes Derecha (Brújula N, Zoom +/-, Centrar) -->
+              <!-- Controles Flotantes Derecha (Brújula, Zoom +/-, Centrar Ruta, Abrir en Google Maps) -->
               <div class="map-floating-controls">
-                <div class="map-compass-btn" title="Norte Táctico"><span style="color:var(--red-danger);font-size:8px;">▲</span><strong>N</strong></div>
-                <button type="button" id="btn-map-zoom-in" class="map-ctrl-btn">+</button>
-                <button type="button" id="btn-map-zoom-out" class="map-ctrl-btn">−</button>
-                <button type="button" id="btn-map-open-gmaps" class="map-ctrl-btn" title="Abrir navegación en Google Maps">🧭</button>
+                <button type="button" id="btn-map-recenter" class="map-compass-btn" title="Centrar ruta completa en pantalla">
+                  <span style="color:var(--red-danger);font-size:8px;">▲</span><strong>N</strong>
+                </button>
+                <button type="button" id="btn-map-zoom-in" class="map-ctrl-btn" title="Acercar">+</button>
+                <button type="button" id="btn-map-zoom-out" class="map-ctrl-btn" title="Alejar">−</button>
+                <button type="button" id="btn-map-open-gmaps" class="map-ctrl-btn" title="Iniciar navegación por voz en Google Maps">🧭</button>
               </div>
 
-              <!-- Gráfico Vectorial Topográfico + Anillos de Alcance Seguro + Trazado + Icono de Moto en Vivo -->
-              <svg id="machine-radar-svg" viewBox="0 0 320 275" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
-                <defs>
-                  <radialGradient id="safeRangeGrad" cx="50%" cy="85%" r="65%">
-                    <stop offset="0%" stop-color="#58E800" stop-opacity="0.22"/>
-                    <stop offset="70%" stop-color="#1E88A8" stop-opacity="0.09"/>
-                    <stop offset="100%" stop-color="#58E800" stop-opacity="0.0"/>
-                  </radialGradient>
-                  <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="2.5" result="blur" />
-                    <feMerge>
-                      <feMergeNode in="blur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                </defs>
-
-                <!-- Curvas de Nivel Topográficas de Fondo -->
-                <g stroke="rgba(73, 191, 230, 0.08)" stroke-width="1" fill="none">
-                  <path d="M -20 40 Q 80 10, 180 55 T 340 30" />
-                  <path d="M -20 95 Q 110 65, 210 110 T 340 85" />
-                  <path d="M -20 150 Q 90 125, 195 165 T 340 140" />
-                  <path d="M -20 210 Q 120 185, 230 220 T 340 195" />
-                  <ellipse cx="220" cy="60" rx="65" ry="32" />
-                  <ellipse cx="220" cy="60" rx="38" ry="18" />
-                  <ellipse cx="65" cy="145" rx="52" ry="25" />
-                </g>
-
-                <!-- Grilla Cartográfica Sutil -->
-                <g stroke="rgba(210, 218, 228, 0.04)" stroke-width="0.8">
-                  <line x1="80" y1="0" x2="80" y2="275" />
-                  <line x1="160" y1="0" x2="160" y2="275" />
-                  <line x1="240" y1="0" x2="240" y2="275" />
-                  <line x1="0" y1="70" x2="320" y2="70" />
-                  <line x1="0" y1="140" x2="320" y2="140" />
-                  <line x1="0" y1="210" x2="320" y2="210" />
-                </g>
-
-                <!-- Círculos Concéntricos de Radar & Anillo Verde de ALCANCE SEGURO -->
-                <circle cx="140" cy="245" r="65" fill="none" stroke="rgba(88, 232, 0, 0.16)" stroke-width="1" stroke-dasharray="3 3" />
-                <circle id="map-safe-ring" cx="140" cy="245" r="135" fill="url(#safeRangeGrad)" stroke="#58E800" stroke-width="1.3" stroke-dasharray="5 4" />
-                <circle cx="140" cy="245" r="195" fill="none" stroke="rgba(73, 191, 230, 0.14)" stroke-width="1" stroke-dasharray="2 4" />
-
-                <!-- Etiquetas Cartográficas -->
-                <text x="208" y="132" fill="rgba(210,218,228,0.45)" font-size="7.5" font-style="italic" id="map- label-mid">Tramo de Ascenso FI</text>
-                <text x="215" y="232" fill="#58E800" font-size="8" font-weight="800" letter-spacing="0.6">ALCANCE</text>
-                <text x="215" y="242" fill="#58E800" font-size="8" font-weight="800" letter-spacing="0.6">SEGURO</text>
-
-                <!-- Trazado de la Carretera (Sombra + Línea Verde Neón) -->
-                <path id="map-route-shadow" d="M 140 245 C 132 215, 158 190, 146 160 C 134 130, 168 105, 155 72 C 148 52, 172 38, 178 24" fill="none" stroke="rgba(88, 232, 0, 0.25)" stroke-width="6" stroke-linecap="round" />
-                <path id="map-route-path" d="M 140 245 C 132 215, 158 190, 146 160 C 134 130, 168 105, 155 72 C 148 52, 172 38, 178 24" fill="none" stroke="#58E800" stroke-width="2.8" stroke-linecap="round" filter="url(#neonGlow)" />
-
-                <!-- Bandera de Meta en la Cima -->
-                <g id="map-dest-pin" transform="translate(178, 24)">
-                  <circle cx="0" cy="0" r="5" fill="#060A0F" stroke="#FFFFFF" stroke-width="1.5"/>
-                  <text x="-4" y="-7" font-size="11">🏁</text>
-                </g>
-
-                <!-- Puntero Azul de Posición Actual de la Moto (Se mueve con el progreso de ruta) -->
-                <g id="map-bike-marker" transform="translate(140, 245)">
-                  <circle cx="0" cy="0" r="11" fill="rgba(56, 189, 248, 0.25)" />
-                  <circle cx="0" cy="0" r="7" fill="#2563EB" stroke="#FFFFFF" stroke-width="1.5" />
-                  <polygon points="0,-4 3.5,3 0,1.5 -3.5,3" fill="#FFFFFF" />
-                </g>
-              </svg>
-
-              <!-- Escala Gráfica Inferior Izquierda (0 - 1 km - 2 km - 3 km) -->
-              <div class="map-scale-bar">
-                <div class="scale-ticks"><span>0</span><span>1 km</span><span>2 km</span><span>3 km</span></div>
-                <div class="scale-line"></div>
+              <!-- Etiqueta Flotante Sutil de Alcance Seguro -->
+              <div class="map-safe-badge-overlay">
+                <span class="safe-dot"></span>
+                <span>ANILLO DE ALCANCE SEGURO</span>
               </div>
             </div>
 
@@ -1279,10 +1228,10 @@
                 <small id="map-safe-pct" class="map-side-sub">85% Tanque 14L</small>
               </div>
 
-              <!-- 4. Perfil de Elevación Topográfica con Curva Verde -->
+              <!-- 4. Perfil de Elevación Topográfica Real con Curva Verde -->
               <div class="map-side-card">
                 <div class="obd-box-head">
-                  <span class="micro-lbl">ELEVACIÓN</span>
+                  <span class="micro-lbl">ELEVACIÓN REAL</span>
                   <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_elev_guide">ⓘ</button>
                 </div>
                 <strong class="map-side-val carib" id="map-current-elev">34 <small>m</small></strong>

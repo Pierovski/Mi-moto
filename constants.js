@@ -257,6 +257,12 @@ export const TECHNICAL_GUIDES = {
   }
 };
 
+export const DEFAULT_ORIGIN_COORDS = {
+  lat: -8.1116,
+  lon: -79.0287,
+  name: 'Trujillo'
+};
+
 export const ROUTE_PRESETS = [
   {
     id: 'samne',
@@ -268,15 +274,14 @@ export const ROUTE_PRESETS = [
     peakAlt: 1450,
     terrainFactor: 1.10,
     difficulty: 'Media • Curvas',
-    lat: -7.9942,
-    lon: -78.6851,
-    svgPath: 'M 140 245 C 132 215, 158 190, 146 160 C 134 130, 168 105, 155 72 C 148 52, 172 38, 178 24',
+    lat: -7.9865,
+    lon: -78.6758,
     elevProfile: [34, 120, 280, 520, 840, 1180, 1450]
   },
   {
     id: 'cachicadan',
-    name: 'Cachicadán / Santiago de Chuco',
-    region: 'Sierra de La Libertad • Alta Montaña',
+    name: 'Cachicadán',
+    region: 'Santiago de Chuco • Alta Montaña',
     distKm: 168.0,
     estMin: 230,
     startAlt: 34,
@@ -285,38 +290,35 @@ export const ROUTE_PRESETS = [
     difficulty: 'Alta • Sierra (>3,000m)',
     lat: -8.0958,
     lon: -78.1524,
-    svgPath: 'M 135 248 C 115 220, 165 198, 130 170 C 102 145, 175 122, 142 92 C 118 68, 185 45, 168 20',
     elevProfile: [34, 480, 1350, 2420, 3180, 2950, 2880]
   },
   {
     id: 'huanchaco',
-    name: 'Circuito Costa / Huanchaco',
+    name: 'Circuito Huanchaco',
     region: 'Ruta Costera • Nivel del Mar',
-    distKm: 28.0,
-    estMin: 32,
+    distKm: 14.5,
+    estMin: 22,
     startAlt: 34,
-    peakAlt: 65,
+    peakAlt: 45,
     terrainFactor: 1.0,
     difficulty: 'Baja • Pista Plana',
     lat: -8.0782,
     lon: -79.1194,
-    svgPath: 'M 155 245 C 150 205, 142 165, 138 125 C 134 85, 148 52, 142 24',
-    elevProfile: [34, 42, 28, 15, 12, 35, 18]
+    elevProfile: [34, 38, 25, 15, 12, 22, 18]
   },
   {
-    id: 'custom',
-    name: 'Mirador El Cóndor / Ruta Libre',
-    region: 'Tramo Personalizado N160 FI',
-    distKm: 36.7,
-    estMin: 52,
-    startAlt: 180,
-    peakAlt: 1560,
-    terrainFactor: 1.14,
-    difficulty: 'Dificultad Media',
-    lat: -8.1116,
-    lon: -79.0287,
-    svgPath: 'M 142 245 C 128 212, 164 185, 144 152 C 126 122, 168 95, 152 62 C 144 42, 168 32, 172 22',
-    elevProfile: [180, 420, 790, 1120, 1480, 1390, 1560]
+    id: 'otuzco',
+    name: 'Otuzco',
+    region: 'Sierra Liberteña • Ascenso Continuo',
+    distKm: 75.0,
+    estMin: 95,
+    startAlt: 34,
+    peakAlt: 2640,
+    terrainFactor: 1.16,
+    difficulty: 'Alta • Curvas de Sierra',
+    lat: -7.9025,
+    lon: -78.5636,
+    elevProfile: [34, 210, 620, 1280, 1890, 2380, 2640]
   }
 ];
 

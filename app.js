@@ -50,6 +50,11 @@ import {
   renderRouteAndTCO,
   renderObdLiveUI,
   renderTacticalMapUI,
+  toggleMapBaseLayer,
+  zoomLeafletMap,
+  recenterLeafletRoute,
+  searchPlaceByName,
+  calculateRealRouteAndElevation,
   renderAllMain
 } from './ui.js';
 import {
@@ -634,7 +639,8 @@ function setupEventListeners() {
     });
   }
 
-  // Selector de Sub-Vista dentro de la Pestaña ECU: Tablero General (Relojes) vs Mapa Táctico & Elevación
+  // Selector de Sub-Vista dentro de la Pestaña ECU: Tablero General (Relojes) vs Mapa Satelital & Elevación Real
+  let hasLoadedInitialRoadRoute = false;
   document.querySelectorAll('.obd-view-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const view = btn.getAttribute('data-ecuview') || 'dials';
@@ -646,31 +652,124 @@ function setupEventListeners() {
         dialsPanel.classList.toggle('hidden', view !== 'dials');
         mapPanel.classList.toggle('hidden', view !== 'map');
       }
-      renderTacticalMapUI(liveEcuData);
+      if (view === 'map') {
+        renderTacticalMapUI(liveEcuData, true);
+        if (!hasLoadedInitialRoadRoute) {
+          hasLoadedInitialRoadRoute = true;
+          const r0 = uiConfig.customRoute || ROUTE_PRESETS[0];
+          calculateRealRouteAndElevation({
+            destLat: r0.lat,
+            destLon: r0.lon,
+            name: r0.name,
+            region: r0.region
+          });
+        }
+      }
       triggerHaptic(10);
     });
   });
 
-  // Selector de Destinos Preconfigurados (Puente Pala / Samne, Cachicadán, Huanchaco, Mirador)
+  // Buscador de Lugares en Vivo (OpenStreetMap Nominatim + OSRM Road Routing + Open-Meteo DEM Elevation)
+  const searchInput = document.getElementById('map-place-search-input');
+  const searchBtn = document.getElementById('btn-map-search-go');
+  const searchDropdown = document.getElementById('map-search-results');
+
+  async function executePlaceSearch() {
+    const q = (searchInput?.value || '').trim();
+    if (!q) {
+      showToast('⚠️ Escribe el nombre de un pueblo, distrito o lugar');
+      return;
+    }
+    showToast(`🔍 Buscando "${q}" en satélite...`);
+    try {
+      const results = await searchPlaceByName(q);
+      if (!results || results.length === 0) {
+        if (searchDropdown) searchDropdown.classList.add('hidden');
+        showToast('⚠️ No se encontró ese lugar. Intenta agregando "La Libertad" o "Perú"');
+        return;
+      }
+
+      if (results.length === 1) {
+        if (searchDropdown) searchDropdown.classList.add('hidden');
+        const chosen = results[0];
+        await calculateRealRouteAndElevation({
+          destLat: chosen.lat,
+          destLon: chosen.lon,
+          name: chosen.name,
+          region: chosen.region
+        });
+        showToast(`🏁 Ruta satelital y altitud trazadas hacia ${chosen.name}`);
+        return;
+      }
+
+      if (searchDropdown) {
+        searchDropdown.innerHTML = results
+          .map(
+            (r, idx) => `
+            <button type="button" class="map-search-item" data-sidx="${idx}">
+              <strong>📍 ${escapeHTML(r.name)}</strong>
+              <small>${escapeHTML(r.region)} (${r.lat.toFixed(3)}, ${r.lon.toFixed(3)})</small>
+            </button>`
+          )
+          .join('');
+        searchDropdown.classList.remove('hidden');
+
+        searchDropdown.querySelectorAll('.map-search-item').forEach((itemBtn) => {
+          itemBtn.addEventListener('click', async () => {
+            const idx = parseInt(itemBtn.getAttribute('data-sidx'), 10) || 0;
+            const picked = results[idx];
+            searchDropdown.classList.add('hidden');
+            if (searchInput) searchInput.value = picked.name;
+            await calculateRealRouteAndElevation({
+              destLat: picked.lat,
+              destLon: picked.lon,
+              name: picked.name,
+              region: picked.region
+            });
+            triggerHaptic(15);
+            showToast(`🏁 Ruta satelital trazada: ${picked.name}`);
+          });
+        });
+      }
+    } catch (err) {
+      showToast('⚠️ Verifica tu conexión a internet para buscar destinos');
+    }
+  }
+
+  if (searchBtn) {
+    searchBtn.addEventListener('click', executePlaceSearch);
+  }
+  if (searchInput) {
+    searchInput.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        executePlaceSearch();
+      }
+    });
+  }
+
+  // Selector de Destinos Preconfigurados (Puente Pala / Samne, Cachicadán, Huanchaco, Otuzco)
   document.querySelectorAll('#map-route-presets [data-routepreset]').forEach((pill) => {
-    pill.addEventListener('click', () => {
+    pill.addEventListener('click', async () => {
       const pid = pill.getAttribute('data-routepreset');
       document.querySelectorAll('#map-route-presets .mod-filter-pill').forEach((p) => p.classList.remove('active'));
       pill.classList.add('active');
       uiConfig.activeRoutePresetId = pid;
       const found = ROUTE_PRESETS.find((r) => r.id === pid) || ROUTE_PRESETS[0];
       uiConfig.customRoute = { ...found };
-      renderTacticalMapUI(liveEcuData);
+      renderTacticalMapUI(liveEcuData, true);
       triggerHaptic(12);
-      if (pid === 'custom') {
-        openRouteConfigModal();
-      } else {
-        showToast(`🗺️ Ruta trazada: ${found.name}`);
-      }
+      showToast(`🛰️ Trazando carretera real a ${found.name}...`);
+      await calculateRealRouteAndElevation({
+        destLat: found.lat,
+        destLon: found.lon,
+        name: found.name,
+        region: found.region
+      });
     });
   });
 
-  // Modal de Configuración de Ruta Personalizada
+  // Modal de Configuración de Ruta Manual
   let selectedRouteTerrainFactor = 1.10;
   let selectedRouteDiffLabel = 'Media • Ascenso';
 
@@ -709,14 +808,13 @@ function setupEventListeners() {
   });
 
   document.getElementById('btn-save-routecfg')?.addEventListener('click', () => {
-    const name = document.getElementById('cfg-route-name').value.trim() || 'Destino Personalizado';
+    const name = document.getElementById('cfg-route-name').value.trim() || 'Destino Manual';
     const region = document.getElementById('cfg-route-region').value.trim() || 'Ruta Táctica N160 FI';
     const distKm = Math.max(1, parseFloat(document.getElementById('cfg-route-km').value) || 40);
     const estMin = Math.max(5, parseInt(document.getElementById('cfg-route-min').value, 10) || Math.round(distKm * 1.25));
     const peakAlt = Math.max(0, parseInt(document.getElementById('cfg-route-alt').value, 10) || 1200);
     const startAlt = uiConfig.liveGpsAlt !== null ? Math.round(uiConfig.liveGpsAlt) : 34;
 
-    // Generar curva topográfica de 7 puntos hacia la cima
     const stepAlt = (peakAlt - startAlt) / 6;
     const elevProfile = [
       startAlt,
@@ -742,13 +840,13 @@ function setupEventListeners() {
       elevProfile
     };
 
-    renderTacticalMapUI(liveEcuData);
+    renderTacticalMapUI(liveEcuData, true);
     closeRouteCfg();
     triggerHaptic(15);
     showToast(`🏁 Ruta "${name}" (${distKm} km) actualizada`);
   });
 
-  // Botón de GPS Satelital en Vivo (Coordenadas, Altitud msnm y Velocidad GPS)
+  // Botón de GPS Satelital en Vivo (Coordenadas reales, Altitud msnm, Velocidad GPS y Re-trazado desde tu ubicación)
   const btnToggleGps = document.getElementById('btn-toggle-gps');
   if (btnToggleGps) {
     btnToggleGps.addEventListener('click', () => {
@@ -760,16 +858,17 @@ function setupEventListeners() {
         navigator.geolocation.clearWatch(uiConfig.gpsWatchId);
         uiConfig.gpsWatchId = null;
         btnToggleGps.classList.remove('active');
-        btnToggleGps.textContent = '🛰️ GPS Vivo';
+        btnToggleGps.textContent = '🛰️ Mi GPS Vivo';
         renderTacticalMapUI(liveEcuData);
         showToast('⏹ Rastreo GPS desactivado');
         return;
       }
 
-      showToast('🛰️ Buscando satélites GPS...');
+      showToast('🛰️ Conectando con satélites GPS...');
       btnToggleGps.classList.add('active');
       btnToggleGps.textContent = '🟢 GPS Activo';
 
+      let recalculatedFromGpsOnce = false;
       uiConfig.gpsWatchId = navigator.geolocation.watchPosition(
         (pos) => {
           uiConfig.liveGpsLat = pos.coords.latitude;
@@ -780,39 +879,56 @@ function setupEventListeners() {
           if (pos.coords.speed !== null && pos.coords.speed >= 0) {
             uiConfig.liveGpsSpeedKmh = pos.coords.speed * 3.6;
           }
-          renderTacticalMapUI(liveEcuData);
+          if (!recalculatedFromGpsOnce) {
+            recalculatedFromGpsOnce = true;
+            const currR = uiConfig.customRoute || ROUTE_PRESETS[0];
+            calculateRealRouteAndElevation({
+              destLat: currR.lat,
+              destLon: currR.lon,
+              name: currR.name,
+              region: currR.region
+            });
+          } else {
+            renderTacticalMapUI(liveEcuData);
+          }
         },
         () => {
-          showToast('⚠️ Activa la Ubicación de tu Poco X7 Pro para leer el GPS');
+          showToast('⚠️ Activa la Ubicación de tu Poco X7 Pro para usar el GPS');
         },
         { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
       );
     });
   }
 
-  // Controles de Zoom en el Radar SVG y enlace directo a Google Maps
-  const applyRadarZoom = () => {
-    const svg = document.getElementById('machine-radar-svg');
-    if (svg) {
-      svg.style.transform = `scale(${uiConfig.mapZoomScale.toFixed(2)})`;
-      svg.style.transition = 'transform 0.22s ease';
-    }
-  };
+  // Botón para alternar entre Imagen Satelital HD (Esri World Imagery) y Mapa de Calles
+  const btnLayerToggle = document.getElementById('btn-map-layer-toggle');
+  if (btnLayerToggle) {
+    btnLayerToggle.addEventListener('click', () => {
+      const isSat = toggleMapBaseLayer();
+      btnLayerToggle.textContent = isSat ? '🌍 Satélite HD' : '🗺️ Calles';
+      triggerHaptic(10);
+      showToast(isSat ? '🛰️ Vista Satelital HD Activada' : '🗺️ Vista de Calles Activada');
+    });
+  }
+
+  // Controles de Zoom, Centrar Ruta y Lanzador Directo de Navegación por Voz en Google Maps
+  document.getElementById('btn-map-recenter')?.addEventListener('click', () => {
+    recenterLeafletRoute();
+    triggerHaptic(10);
+  });
 
   document.getElementById('btn-map-zoom-in')?.addEventListener('click', () => {
-    uiConfig.mapZoomScale = Math.min(1.6, uiConfig.mapZoomScale + 0.15);
-    applyRadarZoom();
+    zoomLeafletMap(1);
   });
 
   document.getElementById('btn-map-zoom-out')?.addEventListener('click', () => {
-    uiConfig.mapZoomScale = Math.max(0.85, uiConfig.mapZoomScale - 0.15);
-    applyRadarZoom();
+    zoomLeafletMap(-1);
   });
 
   document.getElementById('btn-map-open-gmaps')?.addEventListener('click', () => {
     const r = uiConfig.customRoute || ROUTE_PRESETS[0];
-    const query = encodeURIComponent(`${r.name}, La Libertad, Peru`);
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank', 'noopener,noreferrer');
+    const destParam = r.lat && r.lon ? `${r.lat},${r.lon}` : encodeURIComponent(`${r.name}, La Libertad, Peru`);
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destParam}&travelmode=driving`, '_blank', 'noopener,noreferrer');
   });
 
   // Botón Modo Timón (Pantalla Completa dedicada sin cabecera ni distracciones)

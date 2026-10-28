@@ -1,4 +1,4 @@
-import { TANK_CAPACITY_GAL, MAINT_RULES, TECHNICAL_GUIDES, DEFAULT_TIRES, ROUTE_PRESETS } from './constants.js';
+import { TANK_CAPACITY_GAL, MAINT_RULES, TECHNICAL_GUIDES, DEFAULT_TIRES, ROUTE_PRESETS, DEFAULT_ORIGIN_COORDS } from './constants.js';
 import { BAJAJ_DTC_DICTIONARY } from './obd.js';
 import { appState, escapeHTML, playN160IgnitionSound } from './state.js';
 import {
@@ -1195,7 +1195,244 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0.25) {
   `;
 }
 
-export function renderTacticalMapUI(ecuData) {
+
+let leafletMap = null;
+let satTileLayer = null;
+let labelsTileLayer = null;
+let streetTileLayer = null;
+let isSatelliteLayerActive = true;
+let routeShadowPolyline = null;
+let routeNeonPolyline = null;
+let safeRangeCircle = null;
+let bikeLeafletMarker = null;
+let destLeafletMarker = null;
+let currentRoadLatLngs = [];
+
+export function initLeafletSatelliteMap(onMapClickCallback) {
+  const container = document.getElementById('leaflet-sat-map');
+  if (!container || typeof window.L === 'undefined') return null;
+
+  if (leafletMap) {
+    setTimeout(() => leafletMap.invalidateSize(), 120);
+    return leafletMap;
+  }
+
+  const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
+  const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
+
+  leafletMap = window.L.map('leaflet-sat-map', {
+    center: [origLat, origLon],
+    zoom: 10,
+    zoomControl: false,
+    attributionControl: true
+  });
+
+  // Capa 1: Imagen Satelital HD Esri World Imagery
+  satTileLayer = window.L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    {
+      maxZoom: 18,
+      attribution: 'Satélite © Esri'
+    }
+  );
+
+  // Superposición de nombres de pueblos, carreteras y ríos sobre el satélite
+  labelsTileLayer = window.L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
+    {
+      maxZoom: 19,
+      subdomains: 'abcd',
+      opacity: 0.88
+    }
+  );
+
+  // Capa 2: Mapa Topográfico / Calles
+  streetTileLayer = window.L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }
+  );
+
+  satTileLayer.addTo(leafletMap);
+  labelsTileLayer.addTo(leafletMap);
+
+  // Permitir tocar cualquier punto del mapa satelital para trazar la ruta hacia allí
+  leafletMap.on('click', (ev) => {
+    if (typeof onMapClickCallback === 'function') {
+      onMapClickCallback(ev.latlng.lat, ev.latlng.lng);
+    }
+  });
+
+  return leafletMap;
+}
+
+export function toggleMapBaseLayer() {
+  if (!leafletMap || !satTileLayer || !streetTileLayer) return true;
+  isSatelliteLayerActive = !isSatelliteLayerActive;
+
+  if (isSatelliteLayerActive) {
+    if (leafletMap.hasLayer(streetTileLayer)) leafletMap.removeLayer(streetTileLayer);
+    satTileLayer.addTo(leafletMap);
+    labelsTileLayer.addTo(leafletMap);
+  } else {
+    if (leafletMap.hasLayer(satTileLayer)) leafletMap.removeLayer(satTileLayer);
+    if (leafletMap.hasLayer(labelsTileLayer)) leafletMap.removeLayer(labelsTileLayer);
+    streetTileLayer.addTo(leafletMap);
+  }
+  return isSatelliteLayerActive;
+}
+
+export function zoomLeafletMap(delta) {
+  if (!leafletMap) return;
+  leafletMap.setZoom(leafletMap.getZoom() + delta);
+}
+
+export function recenterLeafletRoute() {
+  if (!leafletMap) return;
+  if (routeNeonPolyline && currentRoadLatLngs.length >= 2) {
+    leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [24, 24] });
+  } else {
+    const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
+    const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
+    leafletMap.setView([origLat, origLon], 11);
+  }
+}
+
+// Busca cualquier pueblo, ciudad, mirador o dirección usando OpenStreetMap Nominatim
+export async function searchPlaceByName(query) {
+  const clean = String(query || '').trim();
+  if (!clean) return [];
+
+  const urlPe = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&countrycodes=pe&q=${encodeURIComponent(clean)}`;
+  const res = await fetch(urlPe, { headers: { 'Accept-Language': 'es' } });
+  let data = await res.json();
+
+  if (!Array.isArray(data) || data.length === 0) {
+    const urlGlobal = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(clean)}`;
+    const resG = await fetch(urlGlobal, { headers: { 'Accept-Language': 'es' } });
+    data = await resG.json();
+  }
+
+  return (Array.isArray(data) ? data : []).map((item) => {
+    const parts = String(item.display_name || '').split(',').map((s) => s.trim());
+    const shortName = parts[0] || clean;
+    const region = parts.slice(1, 3).join(' • ') || 'Ruta Satelital N160';
+    return {
+      name: shortName,
+      region,
+      lat: parseFloat(item.lat),
+      lon: parseFloat(item.lon)
+    };
+  });
+}
+
+// Calcula la carretera real con OSRM y extrae los metros sobre el nivel del mar (msnm) reales con Open-Meteo DEM
+export async function calculateRealRouteAndElevation({ destLat, destLon, name, region }) {
+  const statusTag = document.getElementById('map-route-status-tag');
+  if (statusTag) statusTag.textContent = '🔄 CALCULANDO CARRETERA Y ALTITUD...';
+
+  const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
+  const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
+
+  let distKm = 40;
+  let estMin = 50;
+  let roadLatLngs = [
+    [origLat, origLon],
+    [destLat, destLon]
+  ];
+
+  try {
+    // 1. Trazado vial real por carretera (OSRM)
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${origLon},${origLat};${destLon},${destLat}?overview=full&geometries=geojson`;
+    const osrmRes = await fetch(osrmUrl);
+    const osrmJson = await osrmRes.json();
+
+    if (osrmJson && osrmJson.routes && osrmJson.routes.length > 0) {
+      const r0 = osrmJson.routes[0];
+      distKm = Number((r0.distance / 1000).toFixed(1));
+      estMin = Math.max(2, Math.round(r0.duration / 60));
+      if (r0.geometry && Array.isArray(r0.geometry.coordinates)) {
+        roadLatLngs = r0.geometry.coordinates.map((c) => [c[1], c[0]]);
+      }
+    }
+  } catch (e) {
+    // Si está sin internet, calcula distancia lineal con factor de curva 1.28x
+    const R = 6371;
+    const dLat = ((destLat - origLat) * Math.PI) / 180;
+    const dLon = ((destLon - origLon) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((origLat * Math.PI) / 180) * Math.cos((destLat * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    distKm = Number((R * c * 1.28).toFixed(1));
+    estMin = Math.max(5, Math.round(distKm * 1.25));
+  }
+
+  // 2. Muestrear 10 puntos a lo largo de la carretera para obtener la curva real de Elevación (msnm)
+  let elevProfile = [34, 250, 680, 1100, 1450];
+  let startAlt = 34;
+  let peakAlt = 1450;
+
+  try {
+    const sampleCount = 10;
+    const sampledCoords = [];
+    for (let i = 0; i < sampleCount; i++) {
+      const idx = Math.min(roadLatLngs.length - 1, Math.floor((i / (sampleCount - 1)) * (roadLatLngs.length - 1)));
+      sampledCoords.push(roadLatLngs[idx]);
+    }
+    const latsParam = sampledCoords.map((pt) => pt[0].toFixed(4)).join(',');
+    const lonsParam = sampledCoords.map((pt) => pt[1].toFixed(4)).join(',');
+
+    const elevUrl = `https://api.open-meteo.com/v1/elevation?latitude=${latsParam}&longitude=${lonsParam}`;
+    const elevRes = await fetch(elevUrl);
+    const elevJson = await elevRes.json();
+
+    if (elevJson && Array.isArray(elevJson.elevation) && elevJson.elevation.length >= 2) {
+      elevProfile = elevJson.elevation.map((v) => Math.max(0, Math.round(Number(v) || 0)));
+      startAlt = elevProfile[0];
+      peakAlt = Math.max(...elevProfile);
+    }
+  } catch (e) {
+    // Mantiene el perfil estimado si no hay conexión
+  }
+
+  // 3. Ajustar automáticamente el factor de consumo de Inyección FI según la altitud máxima real de la ruta
+  let terrainFactor = 1.0;
+  let difficulty = 'Baja • Pista Plana';
+  const altGain = Math.max(0, peakAlt - startAlt);
+
+  if (peakAlt >= 2300 || altGain >= 1800) {
+    terrainFactor = 1.18;
+    difficulty = `Alta • Sierra (${peakAlt.toLocaleString('es-PE')}m)`;
+  } else if (peakAlt >= 700 || altGain >= 500) {
+    terrainFactor = 1.10;
+    difficulty = `Media • Ascenso (${peakAlt.toLocaleString('es-PE')}m)`;
+  }
+
+  currentRoadLatLngs = roadLatLngs;
+
+  uiConfig.customRoute = {
+    id: 'live',
+    name: name || 'Destino Seleccionado',
+    region: region || `Ruta Real OSRM • Cima ${peakAlt.toLocaleString('es-PE')} msnm`,
+    distKm,
+    estMin,
+    startAlt,
+    peakAlt,
+    terrainFactor,
+    difficulty,
+    lat: destLat,
+    lon: destLon,
+    elevProfile
+  };
+
+  if (statusTag) statusTag.textContent = '🛰️ RUTA SATELITAL & ELEVACIÓN REAL';
+  renderTacticalMapUI(null, true);
+}
+
+export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   const route = uiConfig.customRoute || ROUTE_PRESETS[0];
   const tele = computeFuelTelemetry();
 
@@ -1211,7 +1448,7 @@ export function renderTacticalMapUI(ecuData) {
   // Progreso a lo largo de la ruta según distancia recorrida en la sesión (o animación suave en modo Demo)
   let progressRatio = route.distKm > 0 ? Math.min(1, sessKm / route.distKm) : 0;
   if (ecuData?.mode === 'sim') {
-    progressRatio = ( (Date.now() / 1000) % 25 ) / 25;
+    progressRatio = ((Date.now() / 1000) % 25) / 25;
   }
 
   const remDistKm = Math.max(0, route.distKm * (1 - progressRatio));
@@ -1226,7 +1463,7 @@ export function renderTacticalMapUI(ecuData) {
   const neededGal = effKmGal > 0 ? route.distKm / effKmGal : 0;
   const neededSoles = route.distKm * tele.avgCostPerKm * (route.terrainFactor || 1.0);
 
-  // Tarjeta Flotante Superior Izquierda
+  // Barra Superior de Destino
   const titleEl = document.getElementById('map-dest-title');
   if (titleEl) {
     titleEl.textContent = route.name;
@@ -1235,31 +1472,114 @@ export function renderTacticalMapUI(ecuData) {
     document.getElementById('map-dest-time').textContent = `${remMin} min`;
   }
 
-  // Actualizar Trazado SVG y mover el Puntero Azul de la Moto sobre la curva real
-  const pathEl = document.getElementById('map-route-path');
-  const shadowEl = document.getElementById('map-route-shadow');
-  const bikeMarker = document.getElementById('map-bike-marker');
-  const safeRing = document.getElementById('map-safe-ring');
-
-  if (pathEl && route.svgPath) {
-    if (pathEl.getAttribute('d') !== route.svgPath) {
-      pathEl.setAttribute('d', route.svgPath);
-      if (shadowEl) shadowEl.setAttribute('d', route.svgPath);
+  // Actualizar Mapa Satelital Leaflet si está visible
+  const mapPanel = document.getElementById('obd-map-panel');
+  if (mapPanel && !mapPanel.classList.contains('hidden') && typeof window.L !== 'undefined') {
+    if (!leafletMap) {
+      initLeafletSatelliteMap((clickedLat, clickedLon) => {
+        calculateRealRouteAndElevation({
+          destLat: clickedLat,
+          destLon: clickedLon,
+          name: `Punto Táctico (${clickedLat.toFixed(3)}, ${clickedLon.toFixed(3)})`,
+          region: 'Coordenada marcada en Mapa Satelital'
+        });
+      });
     }
-    try {
-      const totalLen = pathEl.getTotalLength();
-      if (totalLen > 0 && bikeMarker) {
-        const pt = pathEl.getPointAtLength(totalLen * progressRatio);
-        bikeMarker.setAttribute('transform', `translate(${pt.x.toFixed(1)}, ${pt.y.toFixed(1)})`);
-      }
-    } catch (e) {}
-  }
 
-  // Radio del Anillo de Alcance Seguro proporcional al % de tanque
-  if (safeRing) {
-    const radiusPx = Math.round(55 + (tankPct / 100) * 115);
-    safeRing.setAttribute('r', String(radiusPx));
-    safeRing.setAttribute('stroke', remKm >= route.distKm * 2 ? '#58E800' : (remKm >= route.distKm ? '#FF9F0A' : '#FF453A'));
+    if (leafletMap) {
+      const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
+      const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
+      const destLat = route.lat ?? -7.9865;
+      const destLon = route.lon ?? -78.6758;
+
+      const polyCoords =
+        currentRoadLatLngs && currentRoadLatLngs.length >= 2
+          ? currentRoadLatLngs
+          : [
+              [origLat, origLon],
+              [destLat, destLon]
+            ];
+
+      // Posición interpolada de la moto a lo largo de los puntos reales de la carretera
+      const targetIdx = Math.min(polyCoords.length - 1, Math.floor(progressRatio * (polyCoords.length - 1)));
+      const bikeLatLng = uiConfig.gpsWatchId !== null && uiConfig.liveGpsLat !== null
+        ? [uiConfig.liveGpsLat, uiConfig.liveGpsLon]
+        : polyCoords[targetIdx];
+
+      if (!routeShadowPolyline) {
+        routeShadowPolyline = window.L.polyline(polyCoords, {
+          color: '#05090F',
+          weight: 8,
+          opacity: 0.75
+        }).addTo(leafletMap);
+      } else {
+        routeShadowPolyline.setLatLngs(polyCoords);
+      }
+
+      if (!routeNeonPolyline) {
+        routeNeonPolyline = window.L.polyline(polyCoords, {
+          color: '#58E800',
+          weight: 4,
+          opacity: 1.0
+        }).addTo(leafletMap);
+      } else {
+        routeNeonPolyline.setLatLngs(polyCoords);
+      }
+
+      // Anillo de Alcance Seguro en metros reales (limitado visualmente para verse bien en el zoom de ruta)
+      const safeRadiusMeters = Math.min(180000, Math.max(5000, remKm * 1000));
+      const ringColor = remKm >= route.distKm * 2 ? '#58E800' : (remKm >= route.distKm ? '#FF9F0A' : '#FF453A');
+
+      if (!safeRangeCircle) {
+        safeRangeCircle = window.L.circle([origLat, origLon], {
+          radius: safeRadiusMeters,
+          color: ringColor,
+          weight: 1.5,
+          dashArray: '6, 6',
+          fillColor: ringColor,
+          fillOpacity: 0.08
+        }).addTo(leafletMap);
+      } else {
+        safeRangeCircle.setLatLng([origLat, origLon]);
+        safeRangeCircle.setRadius(safeRadiusMeters);
+        safeRangeCircle.setStyle({ color: ringColor, fillColor: ringColor });
+      }
+
+      // Marcadores de Moto (Azul) y Meta (Bandera 🏁)
+      const bikeIcon = window.L.divIcon({
+        className: '',
+        html: `<div class="n160-bike-pin" title="Mi Pulsar N160">▲</div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      const destIcon = window.L.divIcon({
+        className: '',
+        html: `<div class="n160-dest-pin" title="${escapeHTML(route.name)}">🏁</div>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      });
+
+      if (!bikeLeafletMarker) {
+        bikeLeafletMarker = window.L.marker(bikeLatLng, { icon: bikeIcon }).addTo(leafletMap);
+      } else {
+        bikeLeafletMarker.setLatLng(bikeLatLng);
+      }
+
+      const endCoord = polyCoords[polyCoords.length - 1];
+      if (!destLeafletMarker) {
+        destLeafletMarker = window.L.marker(endCoord, { icon: destIcon }).addTo(leafletMap);
+      } else {
+        destLeafletMarker.setLatLng(endCoord);
+      }
+
+      if (fitMapBounds && routeNeonPolyline) {
+        setTimeout(() => {
+          leafletMap.invalidateSize();
+          leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [26, 26] });
+        }, 80);
+      }
+    }
   }
 
   // Columna Derecha: Velocidad Actual (ECU o GPS), Consumo Promedio, Autonomía y Elevación
@@ -1285,8 +1605,14 @@ export function renderTacticalMapUI(ecuData) {
     safePctEl.textContent = canRoundTrip ? `${tankPct}% • Alcanza Ida y Vuelta ✓` : `${tankPct}% • Abastecer en ruta`;
   }
 
-  // Altitud Actual (Prioriza GPS real -> Sensor Barométrico MAP ECU -> Interpolación de ruta)
-  const interpAlt = Math.round(route.startAlt + (route.peakAlt - route.startAlt) * progressRatio);
+  // Altitud Actual (Prioriza GPS real -> Sensor Barométrico MAP ECU -> Interpolación del perfil DEM real)
+  const elevArr = Array.isArray(route.elevProfile) && route.elevProfile.length >= 2 ? route.elevProfile : [34, 450, 950, 1450];
+  const floatIdx = progressRatio * (elevArr.length - 1);
+  const interpAlt = Math.round(
+    elevArr[Math.floor(floatIdx)] +
+      (elevArr[Math.min(elevArr.length - 1, Math.ceil(floatIdx))] - elevArr[Math.floor(floatIdx)]) * (floatIdx - Math.floor(floatIdx))
+  );
+
   const currentAlt =
     uiConfig.liveGpsAlt !== null
       ? Math.round(uiConfig.liveGpsAlt)
@@ -1295,7 +1621,7 @@ export function renderTacticalMapUI(ecuData) {
   const elevEl = document.getElementById('map-current-elev');
   if (elevEl) elevEl.innerHTML = `${currentAlt.toLocaleString('es-PE')} <small>m</small>`;
 
-  renderElevationProfileSVG(route.elevProfile || [34, 450, 950, 1450], progressRatio);
+  renderElevationProfileSVG(elevArr, progressRatio);
 
   // Barra Inferior de 4 Columnas
   const botRange = document.getElementById('map-bot-range');
@@ -1315,7 +1641,7 @@ export function renderTacticalMapUI(ecuData) {
     const lon = uiConfig.liveGpsLon ?? route.lon ?? -79.0287;
     document.getElementById('map-bot-coords').textContent = formatDmsCoord(lat, lon);
     document.getElementById('map-bot-gps-status').textContent =
-      uiConfig.gpsWatchId !== null ? '🛰️ GPS Satelital Activo' : '📍 Modo Ruta Táctica';
+      uiConfig.gpsWatchId !== null ? '🛰️ GPS Satelital Activo' : '🛰️ Satélite Esri + OSRM';
     document.getElementById('map-bot-peak-alt').textContent = `Cima: ${Number(route.peakAlt || 0).toLocaleString('es-PE')} msnm`;
   }
 }
