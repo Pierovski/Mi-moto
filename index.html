@@ -868,7 +868,7 @@
     </div>
 
 
-            <!-- ================= PESTAÑA 6: PANTALLA EXCLUSIVA DE TELEMETRÍA ECU + MAPA TÁCTICO MACHINE OUTDOORS ================= -->
+                <!-- ================= PESTAÑA 6: PANTALLA EXCLUSIVA DE TELEMETRÍA ECU + MAPA TÁCTICO MACHINE OUTDOORS ================= -->
     <div id="tab-ecu" class="tab-content hidden">
       <div id="obd-cockpit-card" class="progressive-drawer-card obd-live-card">
         
@@ -900,301 +900,368 @@
           </div>
         </div>
 
-        <!-- VISTA A: TABLERO DE RELOJES Y 14 SENSORES -->
-        <div id="obd-live-panel">
-          <!-- NIVEL 1: RELOJES CIRCULARES ESTILO "MACHINE OUTDOORS" (RPM + MARCHA CENTRAL + VELOCIDAD) -->
-          <div class="obd-machine-dials-grid">
-            
-            <!-- Reloj Circular Izquierdo: TACÓMETRO RPM -->
-            <div class="obd-dial-card">
-              <div class="obd-box-head">
-                <span class="obd-hero-tag">TACÓMETRO ECU</span>
-                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_rpm_info">ⓘ</button>
-              </div>
-              <div class="obd-svg-dial-wrap">
-                <svg viewBox="0 0 120 100" class="obd-dial-svg">
-                  <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="#142234" stroke-width="8" stroke-linecap="round"/>
-                  <path id="obd-rpm-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--neon-lime)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
-                </svg>
-                <div class="obd-dial-center-txt">
-                  <strong id="obd-rpm-val">0</strong>
-                  <small>RPM</small>
+        <!-- ================= VISTA A: TABLERO DE RELOJES Y 14 SENSORES (CON ICONO ⓘ EN CADA CAJA) ================= -->
+        <div id="obd-live-panel" class="obd-widescreen-dials-layout">
+          
+          <!-- Columna Izquierda en Horizontal: Relojes Principales + Barra de Tanque/Odómetro + Escáner DTC -->
+          <div class="obd-dials-left-col">
+            <!-- NIVEL 1: RELOJES CIRCULARES ESTILO "MACHINE OUTDOORS" (RPM + MARCHA CENTRAL + VELOCIDAD) -->
+            <div class="obd-machine-dials-grid">
+              
+              <!-- Reloj Circular Izquierdo: TACÓMETRO RPM -->
+              <div class="obd-dial-card">
+                <div class="obd-box-head">
+                  <span class="obd-hero-tag">TACÓMETRO ECU</span>
+                  <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_rpm_info">ⓘ</button>
+                </div>
+                <div class="obd-svg-dial-wrap">
+                  <svg viewBox="0 0 120 100" class="obd-dial-svg">
+                    <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="#142234" stroke-width="8" stroke-linecap="round"/>
+                    <path id="obd-rpm-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--neon-lime)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+                  </svg>
+                  <div class="obd-dial-center-txt">
+                    <strong id="obd-rpm-val">0</strong>
+                    <small>RPM</small>
+                  </div>
+                </div>
+                <div class="obd-dial-foot">
+                  <span>Pico: <strong id="obd-peak-rpm">0</strong></span>
+                  <span class="rpm-scale-danger">Redline 8.5k</span>
                 </div>
               </div>
-              <div class="obd-dial-foot">
-                <span>Pico: <strong id="obd-peak-rpm">0</strong></span>
-                <span class="rpm-scale-danger">Redline 8.5k</span>
-              </div>
-            </div>
 
-            <!-- Columna Central: INDICADOR DE MARCHA + GUARDIÁN ASENTAMIENTO -->
-            <div class="obd-hero-gear-box" id="obd-gear-box">
-              <div class="obd-box-head center">
-                <span class="obd-hero-tag">MARCHA</span>
-                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_gear_info">ⓘ</button>
-              </div>
-              <strong id="obd-gear-val" class="obd-gear-number">N</strong>
-              <span id="obd-breakin-guard" class="obd-guard-pill">ÓPTIMO</span>
-              <div class="obd-progress-mini" style="width:100%;margin-top:4px;">
-                <div id="obd-rpm-bar" style="height:4px;width:0%;background:var(--neon-lime);border-radius:99px;"></div>
-              </div>
-            </div>
-
-            <!-- Reloj Circular Derecho: VELOCÍMETRO ECU -->
-            <div class="obd-dial-card">
-              <div class="obd-box-head">
-                <span class="obd-hero-tag">VELOCIDAD</span>
-                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_speed_info">ⓘ</button>
-              </div>
-              <div class="obd-svg-dial-wrap">
-                <svg viewBox="0 0 120 100" class="obd-dial-svg">
-                  <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="#142234" stroke-width="8" stroke-linecap="round"/>
-                  <path id="obd-speed-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--caribbean-bright)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
-                </svg>
-                <div class="obd-dial-center-txt">
-                  <strong id="obd-speed-val">0</strong>
-                  <small>km/h</small>
+              <!-- Columna Central: INDICADOR DE MARCHA + GUARDIÁN ASENTAMIENTO -->
+              <div class="obd-hero-gear-box" id="obd-gear-box">
+                <div class="obd-box-head center">
+                  <span class="obd-hero-tag">MARCHA</span>
+                  <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_gear_info">ⓘ</button>
+                </div>
+                <strong id="obd-gear-val" class="obd-gear-number">N</strong>
+                <span id="obd-breakin-guard" class="obd-guard-pill">ÓPTIMO</span>
+                <div class="obd-progress-mini" style="width:100%;margin-top:4px;">
+                  <div id="obd-rpm-bar" style="height:4px;width:0%;background:var(--neon-lime);border-radius:99px;"></div>
                 </div>
               </div>
-              <div class="obd-dial-foot">
-                <span>Máx: <strong id="obd-peak-speed">0</strong> km/h</span>
-                <span>ABS 010D</span>
-              </div>
-            </div>
 
-          </div>
-
-          <!-- NIVEL 2: 4 TARJETAS DE SIGNOS VITALES CON MINI-BARRAS "C - H / L - H" -->
-          <div class="obd-vitals-grid-4">
-            <div class="obd-vital-card">
-              <div class="obd-box-head">
-                <span class="tele-label">🌡️ TEMP. MOTOR</span>
-                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_temp_info">ⓘ</button>
-              </div>
-              <strong class="obd-vital-val carib" id="obd-temp-val">-- <small>°C</small></strong>
-              <div class="machine-bar-row">
-                <small>C</small>
-                <div class="machine-bar-track"><div id="obd-bar-temp" class="machine-bar-fill" style="width:0%"></div></div>
-                <small>H</small>
-              </div>
-              <span class="tele-sub" id="obd-temp-status">Sensor térmico FI</span>
-            </div>
-
-            <div class="obd-vital-card">
-              <div class="obd-box-head">
-                <span class="tele-label">🔋 VOLTAJE 4Ah</span>
-                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_volt_info">ⓘ</button>
-              </div>
-              <strong class="obd-vital-val neon" id="obd-volt-val">-- <small>V</small></strong>
-              <div class="machine-bar-row">
-                <small>L</small>
-                <div class="machine-bar-track"><div id="obd-bar-volt" class="machine-bar-fill" style="width:0%"></div></div>
-                <small>H</small>
-              </div>
-              <span class="tele-sub" id="obd-volt-status">Rango 12.4V - 14.4V</span>
-            </div>
-
-            <div class="obd-vital-card">
-              <div class="obd-box-head">
-                <span class="tele-label">🚀 ACELERADOR</span>
-                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_tps_info">ⓘ</button>
-              </div>
-              <strong class="obd-vital-val" id="obd-tps-val">0 <small>%</small></strong>
-              <div class="machine-bar-row">
-                <small>0</small>
-                <div class="machine-bar-track"><div id="obd-bar-tps" class="machine-bar-fill" style="width:0%"></div></div>
-                <small>100</small>
-              </div>
-              <span class="tele-sub" id="obd-load-status">Mariposa TPS</span>
-            </div>
-
-            <div class="obd-vital-card">
-              <div class="obd-box-head">
-                <span class="tele-label">⛽ ECON. INSTANT.</span>
-                <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_econ_info">ⓘ</button>
-              </div>
-              <strong class="obd-vital-val neon" id="obd-inst-econ">-- <small>km/L</small></strong>
-              <div class="machine-bar-row">
-                <small>0</small>
-                <div class="machine-bar-track"><div id="obd-bar-econ" class="machine-bar-fill" style="width:0%"></div></div>
-                <small>50</small>
-              </div>
-              <span class="tele-sub" id="obd-inst-gal-sub">-- km/gal Premium</span>
-            </div>
-          </div>
-
-          <!-- NIVEL 3: MICRO-GRILLA COMPACTA DE 6 SENSORES SECUNDARIOS -->
-          <div class="obd-micro-section-title">TELEMETRÍA SECUNDARIA FI & COMBUSTIÓN DTS-i (TOCA ⓘ PARA EXPLICACIÓN)</div>
-          <div class="obd-micro-grid-6">
-            <div class="obd-micro-cell">
-              <div class="obd-box-head">
-                <span class="micro-lbl">CARGA MOTOR</span>
-                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_load_info">ⓘ</button>
-              </div>
-              <strong id="obd-micro-load">0%</strong>
-              <small>Esfuerzo (0104)</small>
-            </div>
-
-            <div class="obd-micro-cell">
-              <div class="obd-box-head">
-                <span class="micro-lbl">PRESIÓN MAP</span>
-                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_map_info">ⓘ</button>
-              </div>
-              <strong id="obd-micro-map">-- kPa</strong>
-              <small id="obd-micro-alt">Alt: ~0 msnm</small>
-            </div>
-
-            <div class="obd-micro-cell">
-              <div class="obd-box-head">
-                <span class="micro-lbl">TEMP. ADM (IAT)</span>
-                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_iat_info">ⓘ</button>
-              </div>
-              <strong id="obd-micro-iat">-- °C</strong>
-              <small>Aire Caja Filtro</small>
-            </div>
-
-            <div class="obd-micro-cell">
-              <div class="obd-box-head">
-                <span class="micro-lbl">AVANCE CHISPA</span>
-                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_timing_info">ⓘ</button>
-              </div>
-              <strong id="obd-micro-timing">0.0°</strong>
-              <small>Doble Bujía DTS-i</small>
-            </div>
-
-            <div class="obd-micro-cell">
-              <div class="obd-box-head">
-                <span class="micro-lbl">MEZCLA / O2</span>
-                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_o2_info">ⓘ</button>
-              </div>
-              <strong id="obd-micro-o2">0.45 V</strong>
-              <small id="obd-micro-stft">STFT: 0.0%</small>
-            </div>
-
-            <div class="obd-micro-cell">
-              <div class="obd-box-head">
-                <span class="micro-lbl">HORA MOTOR</span>
-                <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_runtime_info">ⓘ</button>
-              </div>
-              <strong id="obd-micro-runtime">00:00</strong>
-              <small id="obd-micro-dist">Ruta: +0.00 km</small>
-            </div>
-          </div>
-
-          <!-- NIVEL 4: BARRA INFERIOR ESTILO MACHINE OUTDOORS -->
-          <div class="obd-machine-footer-strip">
-            <div class="obd-footer-stat">
-              <span class="micro-lbl">⛽ TANQUE (14L)</span>
-              <strong id="obd-footer-fuel-pct">~85%</strong>
-              <div class="machine-bar-track" style="margin-top:3px;"><div id="obd-bar-tank" class="machine-bar-fill" style="width:85%"></div></div>
-            </div>
-            <div class="obd-footer-stat">
-              <span class="micro-lbl">🛣️ RANGO EST.</span>
-              <strong id="obd-footer-range">~440 km</strong>
-              <small>Autonomía rest.</small>
-            </div>
-            <div class="obd-footer-stat">
-              <span class="micro-lbl">⚙️ ODÓMETRO</span>
-              <strong id="obd-footer-odo">0 km</strong>
-              <small id="obd-session-km-txt">+0.00 km hoy</small>
-            </div>
-            <div class="obd-footer-action">
-              <button type="button" id="btn-obd-sync-km" class="btn-quick-done">🏁 +Km</button>
-            </div>
-          </div>
-
-          <!-- NIVEL 5: ESCÁNER DE CÓDIGOS DE FALLA (CHECK ENGINE DTC MODO 03 / 04) -->
-          <div class="obd-dtc-strip">
-            <div class="obd-dtc-top">
-              <div>
-                <div class="title-with-info">
-                  <span class="micro-lbl">DIAGNÓSTICO CHECK ENGINE (DTC BAJAJ)</span>
-                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_dtc_info">ⓘ</button>
+              <!-- Reloj Circular Derecho: VELOCÍMETRO ECU -->
+              <div class="obd-dial-card">
+                <div class="obd-box-head">
+                  <span class="obd-hero-tag">VELOCIDAD</span>
+                  <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_speed_info">ⓘ</button>
                 </div>
-                <div id="obd-dtc-summary" class="obd-dtc-status-txt">✅ 0 Códigos de falla detectados en la ECU</div>
+                <div class="obd-svg-dial-wrap">
+                  <svg viewBox="0 0 120 100" class="obd-dial-svg">
+                    <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="#142234" stroke-width="8" stroke-linecap="round"/>
+                    <path id="obd-speed-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--caribbean-bright)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+                  </svg>
+                  <div class="obd-dial-center-txt">
+                    <strong id="obd-speed-val">0</strong>
+                    <small>km/h</small>
+                  </div>
+                </div>
+                <div class="obd-dial-foot">
+                  <span>Máx: <strong id="obd-peak-speed">0</strong> km/h</span>
+                  <span>ABS 010D</span>
+                </div>
               </div>
-              <div class="obd-btn-group">
-                <button type="button" id="btn-obd-scan-dtc" class="btn-quick-done">🔍 Escanear</button>
-                <button type="button" id="btn-obd-clear-dtc" class="btn-del-log hidden">🧹 Borrar</button>
+
+            </div>
+
+            <!-- NIVEL 4: BARRA INFERIOR ESTILO MACHINE OUTDOORS (CON ICONO ⓘ EN CADA MÉTRICA) -->
+            <div class="obd-machine-footer-strip">
+              <div class="obd-footer-stat">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">⛽ TANQUE (14L)</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_tank_info">ⓘ</button>
+                </div>
+                <strong id="obd-footer-fuel-pct">~85%</strong>
+                <div class="machine-bar-track" style="margin-top:3px;"><div id="obd-bar-tank" class="machine-bar-fill" style="width:85%"></div></div>
+              </div>
+              <div class="obd-footer-stat">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">🛣️ RANGO EST.</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_range_info">ⓘ</button>
+                </div>
+                <strong id="obd-footer-range">~440 km</strong>
+                <small>Autonomía rest.</small>
+              </div>
+              <div class="obd-footer-stat">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">⚙️ ODÓMETRO</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_odo_info">ⓘ</button>
+                </div>
+                <strong id="obd-footer-odo">0 km</strong>
+                <small id="obd-session-km-txt">+0.00 km hoy</small>
+              </div>
+              <div class="obd-footer-action">
+                <button type="button" id="btn-obd-sync-km" class="btn-quick-done">🏁 +Km</button>
               </div>
             </div>
-            <div id="obd-dtc-list" class="obd-dtc-list hidden"></div>
+
+            <!-- NIVEL 5: ESCÁNER DE CÓDIGOS DE FALLA (CHECK ENGINE DTC MODO 03 / 04) -->
+            <div class="obd-dtc-strip">
+              <div class="obd-dtc-top">
+                <div>
+                  <div class="title-with-info">
+                    <span class="micro-lbl">DIAGNÓSTICO CHECK ENGINE (DTC BAJAJ)</span>
+                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_dtc_info">ⓘ</button>
+                  </div>
+                  <div id="obd-dtc-summary" class="obd-dtc-status-txt">✅ 0 Códigos de falla detectados en la ECU</div>
+                </div>
+                <div class="obd-btn-group">
+                  <button type="button" id="btn-obd-scan-dtc" class="btn-quick-done">🔍 Escanear</button>
+                  <button type="button" id="btn-obd-clear-dtc" class="btn-del-log hidden">🧹 Borrar</button>
+                </div>
+              </div>
+              <div id="obd-dtc-list" class="obd-dtc-list hidden"></div>
+            </div>
           </div>
+
+          <!-- Columna Derecha en Horizontal: 4 Signos Vitales + 6 Sensores Secundarios FI -->
+          <div class="obd-dials-right-col">
+            <!-- NIVEL 2: 4 TARJETAS DE SIGNOS VITALES CON MINI-BARRAS "C - H / L - H" -->
+            <div class="obd-vitals-grid-4">
+              <div class="obd-vital-card">
+                <div class="obd-box-head">
+                  <span class="tele-label">🌡️ TEMP. MOTOR</span>
+                  <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_temp_info">ⓘ</button>
+                </div>
+                <strong class="obd-vital-val carib" id="obd-temp-val">-- <small>°C</small></strong>
+                <div class="machine-bar-row">
+                  <small>C</small>
+                  <div class="machine-bar-track"><div id="obd-bar-temp" class="machine-bar-fill" style="width:0%"></div></div>
+                  <small>H</small>
+                </div>
+                <span class="tele-sub" id="obd-temp-status">Sensor térmico FI</span>
+              </div>
+
+              <div class="obd-vital-card">
+                <div class="obd-box-head">
+                  <span class="tele-label">🔋 VOLTAJE 4Ah</span>
+                  <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_volt_info">ⓘ</button>
+                </div>
+                <strong class="obd-vital-val neon" id="obd-volt-val">-- <small>V</small></strong>
+                <div class="machine-bar-row">
+                  <small>L</small>
+                  <div class="machine-bar-track"><div id="obd-bar-volt" class="machine-bar-fill" style="width:0%"></div></div>
+                  <small>H</small>
+                </div>
+                <span class="tele-sub" id="obd-volt-status">Rango 12.4V - 14.4V</span>
+              </div>
+
+              <div class="obd-vital-card">
+                <div class="obd-box-head">
+                  <span class="tele-label">🚀 ACELERADOR</span>
+                  <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_tps_info">ⓘ</button>
+                </div>
+                <strong class="obd-vital-val" id="obd-tps-val">0 <small>%</small></strong>
+                <div class="machine-bar-row">
+                  <small>0</small>
+                  <div class="machine-bar-track"><div id="obd-bar-tps" class="machine-bar-fill" style="width:0%"></div></div>
+                  <small>100</small>
+                </div>
+                <span class="tele-sub" id="obd-load-status">Mariposa TPS</span>
+              </div>
+
+              <div class="obd-vital-card">
+                <div class="obd-box-head">
+                  <span class="tele-label">⛽ ECON. INSTANT.</span>
+                  <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_econ_info">ⓘ</button>
+                </div>
+                <strong class="obd-vital-val neon" id="obd-inst-econ">-- <small>km/L</small></strong>
+                <div class="machine-bar-row">
+                  <small>0</small>
+                  <div class="machine-bar-track"><div id="obd-bar-econ" class="machine-bar-fill" style="width:0%"></div></div>
+                  <small>50</small>
+                </div>
+                <span class="tele-sub" id="obd-inst-gal-sub">-- km/gal Premium</span>
+              </div>
+            </div>
+
+            <!-- NIVEL 3: MICRO-GRILLA COMPACTA DE 6 SENSORES SECUNDARIOS -->
+            <div class="obd-micro-section-title">TELEMETRÍA SECUNDARIA FI & COMBUSTIÓN DTS-i (TOCA ⓘ PARA EXPLICACIÓN)</div>
+            <div class="obd-micro-grid-6">
+              <div class="obd-micro-cell">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">CARGA MOTOR</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_load_info">ⓘ</button>
+                </div>
+                <strong id="obd-micro-load">0%</strong>
+                <small>Esfuerzo (0104)</small>
+              </div>
+
+              <div class="obd-micro-cell">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">PRESIÓN MAP</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_map_info">ⓘ</button>
+                </div>
+                <strong id="obd-micro-map">-- kPa</strong>
+                <small id="obd-micro-alt">Alt: ~0 msnm</small>
+              </div>
+
+              <div class="obd-micro-cell">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">TEMP. ADM (IAT)</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_iat_info">ⓘ</button>
+                </div>
+                <strong id="obd-micro-iat">-- °C</strong>
+                <small>Aire Caja Filtro</small>
+              </div>
+
+              <div class="obd-micro-cell">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">AVANCE CHISPA</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_timing_info">ⓘ</button>
+                </div>
+                <strong id="obd-micro-timing">0.0°</strong>
+                <small>Doble Bujía DTS-i</small>
+              </div>
+
+              <div class="obd-micro-cell">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">MEZCLA / O2</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_o2_info">ⓘ</button>
+                </div>
+                <strong id="obd-micro-o2">0.45 V</strong>
+                <small id="obd-micro-stft">STFT: 0.0%</small>
+              </div>
+
+              <div class="obd-micro-cell">
+                <div class="obd-box-head">
+                  <span class="micro-lbl">HORA MOTOR</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_runtime_info">ⓘ</button>
+                </div>
+                <strong id="obd-micro-runtime">00:00</strong>
+                <small id="obd-micro-dist">Ruta: +0.00 km</small>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-                <!-- ================= VISTA B: MAPA SATELITAL EN VIVO, BUSCADOR DE LUGARES & ELEVACIÓN REAL ================= -->
+        <!-- ================= VISTA B: MAPA SATELITAL EN VIVO, BUSCADOR DE LUGARES & ELEVACIÓN REAL (CON ⓘ EN CADA CAJA) ================= -->
         <div id="obd-map-panel" class="hidden">
           
-          <!-- BUSCADOR INTELIGENTE DE LUGARES (GEOCODIFICACIÓN + TRAZADO VIAL + ELEVACIÓN AUTOMÁTICA) -->
+          <!-- BUSCADOR INTELIGENTE DE LUGARES CON ICONO DE INFO (ⓘ) -->
           <div class="map-search-bar-wrap">
             <div class="map-search-input-row">
               <input type="search" id="map-place-search-input" class="map-place-input" placeholder="🔍 Buscar destino o dirección en el mapa satelital...">
               <button type="button" id="btn-map-search-go" class="btn-action-sleek">Ir 🏁</button>
+              <button type="button" class="btn-info-dot" data-info-key="nav_search_info" title="¿Cómo funciona el buscador y mapa satelital?">ⓘ</button>
             </div>
             <div id="map-search-results" class="map-search-dropdown hidden"></div>
           </div>
 
-          <!-- Grilla Principal Estilo Machine Outdoors: Mapa Satelital a la Izquierda + 4 Tarjetas a la Derecha -->
+          <!-- Grilla Principal Estilo Machine Outdoors: En Horizontal se vuelve 2 Columnas (Mapa Izquierda | 4 Tarjetas Derecha) -->
           <div class="machine-map-layout">
             
-            <!-- BARRA COMPACTA DE DESTINO ARRIBA DEL MAPA (DESPEJADA) -->
-            <div class="map-dest-top-bar">
-              <div class="map-dest-top-left">
-                <div class="title-with-info">
-                  <span class="micro-lbl" style="color:var(--neon-lime);" id="map-route-status-tag">🛰️ RUTA SATELITAL ACTIVA</span>
-                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_radar_guide">ⓘ</button>
+            <!-- Columna Izquierda del Mapa (Barra Destino + Lienzo Satelital + Barra Inferior de 4 Columnas) -->
+            <div class="machine-map-left-col">
+              <!-- BARRA COMPACTA DE DESTINO ARRIBA DEL MAPA (DESPEJADA) -->
+              <div class="map-dest-top-bar">
+                <div class="map-dest-top-left">
+                  <div class="title-with-info">
+                    <span class="micro-lbl" style="color:var(--neon-lime);" id="map-route-status-tag">🛰️ RUTA SATELITAL ACTIVA</span>
+                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_radar_guide">ⓘ</button>
+                  </div>
+                  <strong id="map-dest-title" class="map-dest-name">Ruta Satelital N160</strong>
+                  <small id="map-dest-region" class="map-dest-sub">Busca un lugar arriba o toca cualquier punto del mapa</small>
                 </div>
-                <strong id="map-dest-title" class="map-dest-name">Ruta Satelital N160</strong>
-                <small id="map-dest-region" class="map-dest-sub">Busca un lugar arriba o toca cualquier punto del mapa</small>
+
+                <div class="map-dest-top-metrics">
+                  <div class="map-metric-pill">
+                    <strong id="map-dest-dist">25.0 km</strong>
+                    <span>DISTANCIA</span>
+                  </div>
+                  <div class="map-metric-pill">
+                    <strong id="map-dest-time">32 min</strong>
+                    <span>TIEMPO</span>
+                  </div>
+                </div>
+
+                <div class="map-dest-top-actions">
+                  <button type="button" id="btn-toggle-gps" class="card-btn gps">🛰️ Mi GPS Vivo</button>
+                  <button type="button" id="btn-map-layer-toggle" class="card-btn">🌍 Satélite HD</button>
+                  <button type="button" id="btn-open-route-cfg" class="card-btn">✏️ Manual</button>
+                </div>
               </div>
 
-              <div class="map-dest-top-metrics">
-                <div class="map-metric-pill">
-                  <strong id="map-dest-dist">42.5 km</strong>
-                  <span>DISTANCIA</span>
+              <!-- LIENZO DE MAPA SATELITAL INTERACTIVO (LEAFLET + ESRI WORLD IMAGERY SIN MARCAS DE AGUA + DESTINO ARRIBA) -->
+              <div class="machine-map-canvas-box">
+                <div id="leaflet-sat-map" class="leaflet-sat-container"></div>
+
+                <!-- Controles Flotantes Derecha (Brújula Rumbo/Norte, Encuadrar, Zoom +/-, Abrir en Google Maps) -->
+                <div class="map-floating-controls">
+                  <button type="button" id="btn-map-heading-mode" class="map-compass-btn course-up-active" title="Modo Destino Arriba (Adelante) / Norte Arriba">
+                    <span id="map-compass-needle" style="display:inline-block;transition:transform 0.3s ease;color:var(--neon-lime);font-size:9px;">▲</span>
+                    <strong id="map-compass-label">RUMBO</strong>
+                  </button>
+                  <button type="button" id="btn-map-recenter" class="map-ctrl-btn" title="Encuadrar ruta completa">🎯</button>
+                  <button type="button" id="btn-map-zoom-in" class="map-ctrl-btn" title="Acercar">+</button>
+                  <button type="button" id="btn-map-zoom-out" class="map-ctrl-btn" title="Alejar">−</button>
+                  <button type="button" id="btn-map-open-gmaps" class="map-ctrl-btn" title="Iniciar navegación por voz en Google Maps">🧭</button>
                 </div>
-                <div class="map-metric-pill">
-                  <strong id="map-dest-time">55 min</strong>
-                  <span>TIEMPO</span>
+
+                <!-- Etiqueta Flotante Sutil de Alcance Seguro -->
+                <div class="map-safe-badge-overlay">
+                  <span class="safe-dot"></span>
+                  <span id="map-orientation-badge">▲ DESTINO ARRIBA • ALCANCE SEGURO</span>
                 </div>
               </div>
 
-              <div class="map-dest-top-actions">
-                <button type="button" id="btn-toggle-gps" class="card-btn gps">🛰️ Mi GPS Vivo</button>
-                <button type="button" id="btn-map-layer-toggle" class="card-btn">🌍 Satélite HD</button>
-                <button type="button" id="btn-open-route-cfg" class="card-btn">✏️ Manual</button>
+              <!-- BARRA INFERIOR DE 4 COLUMNAS ESTILO MACHINE OUTDOORS (CON ICONO ⓘ EN CADA COLUMNA) -->
+              <div class="machine-map-bottom-bar">
+                <div class="map-bot-col">
+                  <div class="obd-box-head">
+                    <span class="micro-lbl">RANGO ALCANZABLE ⛽</span>
+                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_range_info">ⓘ</button>
+                  </div>
+                  <strong id="map-bot-range">~440 km</strong>
+                  <div class="machine-bar-track" style="margin:3px 0;"><div id="map-bot-fuel-bar" class="machine-bar-fill" style="width:85%"></div></div>
+                  <small id="map-bot-fuel-txt">85% Combustible actual</small>
+                </div>
+
+                <div class="map-bot-col">
+                  <div class="obd-box-head">
+                    <span class="micro-lbl">DISTANCIA A DESTINO</span>
+                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_eta_info">ⓘ</button>
+                  </div>
+                  <strong id="map-bot-dist">25.0 km</strong>
+                  <small id="map-bot-eta">32 min • ETA --:--</small>
+                  <small id="map-bot-needgal" style="color:var(--neon-lime);">Req: 0.18 gal (S/ 3.00)</small>
+                </div>
+
+                <div class="map-bot-col">
+                  <div class="obd-box-head">
+                    <span class="micro-lbl">RUTA & TOPOGRAFÍA</span>
+                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_terrain_info">ⓘ</button>
+                  </div>
+                  <strong id="map-bot-routename" style="font-size:11px;">Ruta Satelital</strong>
+                  <small id="map-bot-terrain">Terreno mixto (+5%)</small>
+                  <small id="map-bot-diff" style="color:var(--caribbean-bright);">Media • Curvas</small>
+                </div>
+
+                <div class="map-bot-col">
+                  <div class="obd-box-head">
+                    <span class="micro-lbl">POSICIÓN GPS</span>
+                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_gps_info">ⓘ</button>
+                  </div>
+                  <strong id="map-bot-coords" style="font-size:10px;">8° 06' 42" S • 79° 01' O</strong>
+                  <small id="map-bot-gps-status" style="color:var(--neon-lime);">GPS Listo 📶</small>
+                  <small id="map-bot-peak-alt">Cima: 650 msnm</small>
+                </div>
               </div>
             </div>
 
-            <!-- LIENZO DE MAPA SATELITAL INTERACTIVO (LEAFLET + ESRI WORLD IMAGERY + RUTA NEÓN + ALCANCE SEGURO) -->
-            <div class="machine-map-canvas-box">
-              <div id="leaflet-sat-map" class="leaflet-sat-container"></div>
-
-              <!-- Controles Flotantes Derecha (Brújula, Zoom +/-, Centrar Ruta, Abrir en Google Maps) -->
-              <div class="map-floating-controls">
-                <button type="button" id="btn-map-heading-mode" class="map-compass-btn course-up-active" title="Modo Destino Arriba (Adelante) / Norte Arriba">
-                  <span id="map-compass-needle" style="display:inline-block;transition:transform 0.3s ease;color:var(--neon-lime);font-size:9px;">▲</span>
-                  <strong id="map-compass-label">RUMBO</strong>
-                </button>
-                <button type="button" id="btn-map-recenter" class="map-ctrl-btn" title="Encuadrar ruta completa">🎯</button>
-                <button type="button" id="btn-map-zoom-in" class="map-ctrl-btn" title="Acercar">+</button>
-                <button type="button" id="btn-map-zoom-out" class="map-ctrl-btn" title="Alejar">−</button>
-                <button type="button" id="btn-map-open-gmaps" class="map-ctrl-btn" title="Iniciar navegación por voz en Google Maps">🧭</button>
-              </div>
-
-              <!-- Etiqueta Flotante Sutil de Alcance Seguro -->
-              <div class="map-safe-badge-overlay">
-                <span class="safe-dot"></span>
-                <span id="map-orientation-badge">▲ DESTINO ARRIBA • ALCANCE SEGURO</span>
-              </div>
-            </div>
-
-            <!-- COLUMNA DERECHA DE 4 TARJETAS ESTILO MACHINE OUTDOORS -->
+            <!-- Columna Derecha de 4 Tarjetas Estilo Machine Outdoors (CON ICONO ⓘ EN CADA TARJETA) -->
             <div class="machine-map-side-stack">
               
               <!-- 1. Velocidad Actual con Arco Verde -->
               <div class="map-side-card">
-                <span class="micro-lbl">VELOCIDAD ACTUAL</span>
+                <div class="obd-box-head">
+                  <span class="micro-lbl">VELOCIDAD ACTUAL</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_speed_info">ⓘ</button>
+                </div>
                 <div class="map-side-speed-num">
                   <strong id="map-live-speed">0</strong>
                   <small>km/h</small>
@@ -1206,14 +1273,20 @@
 
               <!-- 2. Consumo Promedio -->
               <div class="map-side-card">
-                <span class="micro-lbl">CONSUMO PROMEDIO</span>
+                <div class="obd-box-head">
+                  <span class="micro-lbl">CONSUMO PROMEDIO</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_cons_info">ⓘ</button>
+                </div>
                 <strong class="map-side-val" id="map-avg-kml">-- <small>km/L</small></strong>
-                <small id="map-avg-kmgal" class="map-side-sub">-- km/gal • Últimos tramos</small>
+                <small id="map-avg-kmgal" class="map-side-sub">-- km/gal • Histórico FI</small>
               </div>
 
               <!-- 3. Autonomía Segura -->
               <div class="map-side-card">
-                <span class="micro-lbl">AUTONOMÍA SEGURA</span>
+                <div class="obd-box-head">
+                  <span class="micro-lbl">AUTONOMÍA SEGURA</span>
+                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_safe_range_info">ⓘ</button>
+                </div>
                 <strong class="map-side-val neon" id="map-safe-range">⛽ ~440 <small>km</small></strong>
                 <small class="map-side-sub">ALCANCE SEGURO</small>
                 <div class="machine-bar-track" style="margin:3px 0;">
@@ -1232,37 +1305,6 @@
                 <div id="map-elevation-svg-wrap" class="map-elev-chart-box"></div>
               </div>
 
-            </div>
-          </div>
-
-          <!-- BARRA INFERIOR DE 4 COLUMNAS ESTILO MACHINE OUTDOORS (RANGO, DISTANCIA/ETA, RUTA/TERRENO, POSICIÓN GPS) -->
-          <div class="machine-map-bottom-bar">
-            <div class="map-bot-col">
-              <span class="micro-lbl">RANGO ALCANZABLE ⛽</span>
-              <strong id="map-bot-range">~440 km</strong>
-              <div class="machine-bar-track" style="margin:3px 0;"><div id="map-bot-fuel-bar" class="machine-bar-fill" style="width:85%"></div></div>
-              <small id="map-bot-fuel-txt">85% Combustible actual</small>
-            </div>
-
-            <div class="map-bot-col">
-              <span class="micro-lbl">DISTANCIA A DESTINO</span>
-              <strong id="map-bot-dist">42.5 km</strong>
-              <small id="map-bot-eta">55 min • ETA --:--</small>
-              <small id="map-bot-needgal" style="color:var(--neon-lime);">Req: 0.33 gal (S/ 5.50)</small>
-            </div>
-
-            <div class="map-bot-col">
-              <span class="micro-lbl">RUTA & TOPOGRAFÍA</span>
-              <strong id="map-bot-routename" style="font-size:11px;">Ruta Satelital</strong>
-              <small id="map-bot-terrain">Terreno mixto (+10%)</small>
-              <small id="map-bot-diff" style="color:var(--caribbean-bright);">Media • Curvas</small>
-            </div>
-
-            <div class="map-bot-col">
-              <span class="micro-lbl">POSICIÓN GPS</span>
-              <strong id="map-bot-coords" style="font-size:10px;">8° 06' 42" S • 79° 01' O</strong>
-              <small id="map-bot-gps-status" style="color:var(--neon-lime);">GPS Listo 📶</small>
-              <small id="map-bot-peak-alt">Cima: 1,450 msnm</small>
             </div>
           </div>
 

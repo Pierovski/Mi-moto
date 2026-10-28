@@ -1319,13 +1319,12 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
     }
   );
 
-  // Superposición de nombres de pueblos, carreteras y ríos sobre el satélite
+  // Superposición oficial Esri de nombres de pueblos, carreteras y fronteras sobre el satélite (Sin marcas de agua)
   labelsTileLayer = window.L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
+    'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
     {
-      maxZoom: 19,
-      subdomains: 'abcd',
-      opacity: 0.88
+      maxZoom: 18,
+      opacity: 0.92
     }
   );
 
