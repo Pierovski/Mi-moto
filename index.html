@@ -1128,18 +1128,10 @@
           <!-- BUSCADOR INTELIGENTE DE LUGARES (GEOCODIFICACIÓN + TRAZADO VIAL + ELEVACIÓN AUTOMÁTICA) -->
           <div class="map-search-bar-wrap">
             <div class="map-search-input-row">
-              <input type="search" id="map-place-search-input" class="map-place-input" placeholder="🔍 Buscar destino (ej. Otuzco, Poroto, Simbal, Trujillo...)">
+              <input type="search" id="map-place-search-input" class="map-place-input" placeholder="🔍 Buscar destino o dirección en el mapa satelital...">
               <button type="button" id="btn-map-search-go" class="btn-action-sleek">Ir 🏁</button>
             </div>
             <div id="map-search-results" class="map-search-dropdown hidden"></div>
-          </div>
-
-          <!-- Píldoras Rápidas de Ruta con Coordenadas Reales -->
-          <div class="map-preset-pills" id="map-route-presets">
-            <button type="button" class="mod-filter-pill active" data-routepreset="samne">⛰️ Puente Pala / Samne</button>
-            <button type="button" class="mod-filter-pill" data-routepreset="cachicadan">🏔️ Cachicadán (Sierra)</button>
-            <button type="button" class="mod-filter-pill" data-routepreset="huanchaco">🌊 Huanchaco (Costa)</button>
-            <button type="button" class="mod-filter-pill" data-routepreset="otuzco">🛣️ Otuzco</button>
           </div>
 
           <!-- Grilla Principal Estilo Machine Outdoors: Mapa Satelital a la Izquierda + 4 Tarjetas a la Derecha -->
@@ -1152,8 +1144,8 @@
                   <span class="micro-lbl" style="color:var(--neon-lime);" id="map-route-status-tag">🛰️ RUTA SATELITAL ACTIVA</span>
                   <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_radar_guide">ⓘ</button>
                 </div>
-                <strong id="map-dest-title" class="map-dest-name">Puente Pala / Samne</strong>
-                <small id="map-dest-region" class="map-dest-sub">Valle Santa Catalina • Toca cualquier punto del mapa o busca arriba</small>
+                <strong id="map-dest-title" class="map-dest-name">Ruta Satelital N160</strong>
+                <small id="map-dest-region" class="map-dest-sub">Busca un lugar arriba o toca cualquier punto del mapa</small>
               </div>
 
               <div class="map-dest-top-metrics">
@@ -1180,9 +1172,11 @@
 
               <!-- Controles Flotantes Derecha (Brújula, Zoom +/-, Centrar Ruta, Abrir en Google Maps) -->
               <div class="map-floating-controls">
-                <button type="button" id="btn-map-recenter" class="map-compass-btn" title="Centrar ruta completa en pantalla">
-                  <span style="color:var(--red-danger);font-size:8px;">▲</span><strong>N</strong>
+                <button type="button" id="btn-map-heading-mode" class="map-compass-btn course-up-active" title="Modo Destino Arriba (Adelante) / Norte Arriba">
+                  <span id="map-compass-needle" style="display:inline-block;transition:transform 0.3s ease;color:var(--neon-lime);font-size:9px;">▲</span>
+                  <strong id="map-compass-label">RUMBO</strong>
                 </button>
+                <button type="button" id="btn-map-recenter" class="map-ctrl-btn" title="Encuadrar ruta completa">🎯</button>
                 <button type="button" id="btn-map-zoom-in" class="map-ctrl-btn" title="Acercar">+</button>
                 <button type="button" id="btn-map-zoom-out" class="map-ctrl-btn" title="Alejar">−</button>
                 <button type="button" id="btn-map-open-gmaps" class="map-ctrl-btn" title="Iniciar navegación por voz en Google Maps">🧭</button>
@@ -1191,7 +1185,7 @@
               <!-- Etiqueta Flotante Sutil de Alcance Seguro -->
               <div class="map-safe-badge-overlay">
                 <span class="safe-dot"></span>
-                <span>ANILLO DE ALCANCE SEGURO</span>
+                <span id="map-orientation-badge">▲ DESTINO ARRIBA • ALCANCE SEGURO</span>
               </div>
             </div>
 
@@ -1259,7 +1253,7 @@
 
             <div class="map-bot-col">
               <span class="micro-lbl">RUTA & TOPOGRAFÍA</span>
-              <strong id="map-bot-routename" style="font-size:11px;">Puente Pala / Samne</strong>
+              <strong id="map-bot-routename" style="font-size:11px;">Ruta Satelital</strong>
               <small id="map-bot-terrain">Terreno mixto (+10%)</small>
               <small id="map-bot-diff" style="color:var(--caribbean-bright);">Media • Curvas</small>
             </div>

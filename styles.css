@@ -2228,3 +2228,368 @@ body.ecu-ride-mode .screen {
   justify-content: center;
   font-size: 13px;
 }
+
+/* ================= BLOQUE V7.0: MODO TIMÓN 100% PANTALLA COMPLETA (CERO SCROLL) + MAPA DESTINO ARRIBA ================= */
+
+/* Lienzo Satelital Sobredimensionado para soportar Rotación 360° "Destino Arriba" sin bordes vacíos */
+.machine-map-canvas-box {
+  position: relative;
+  width: 100%;
+  height: 235px;
+  background: #04080D;
+  border: 1px solid rgba(88, 232, 0, 0.32);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.85);
+}
+
+.leaflet-sat-container {
+  position: absolute !important;
+  width: 152% !important;
+  height: 152% !important;
+  top: -26% !important;
+  left: -26% !important;
+  background: #050A0F;
+  z-index: 1;
+  transform: rotate(var(--map-bearing-deg, 0deg));
+  transform-origin: 50% 50%;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Contra-rotación automática de los iconos sobre el mapa para que siempre se vean derechos y la moto apunte ARRIBA */
+.n160-bike-pin {
+  transform: rotate(var(--bike-pin-rot, 0deg));
+  transition: transform 0.35s ease;
+}
+
+.n160-dest-pin {
+  transform: rotate(calc(-1 * var(--map-bearing-deg, 0deg)));
+  transition: transform 0.35s ease;
+}
+
+.map-compass-btn.course-up-active {
+  border-color: var(--neon-lime);
+  box-shadow: 0 0 10px rgba(88, 232, 0, 0.28);
+}
+
+.map-compass-btn strong {
+  font-size: 6.5px !important;
+  letter-spacing: 0.2px;
+}
+
+/* MODO TIMÓN 100% FULLSCREEN (SIN PESTAÑAS ABAJO Y CERO SCROLL EN VERTICAL Y HORIZONTAL) */
+body.ecu-ride-mode {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.ecu-ride-mode .app-header,
+body.ecu-ride-mode #main-bike-banner,
+body.ecu-ride-mode #cockpit-cluster,
+body.ecu-ride-mode .tabs-nav-5 {
+  display: none !important;
+}
+
+body.ecu-ride-mode #main-screen {
+  max-width: 100% !important;
+  height: 100dvh !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+body.ecu-ride-mode #tab-ecu {
+  flex: 1 !important;
+  height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.ecu-ride-mode #obd-cockpit-card {
+  flex: 1 !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border-top: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  padding: 6px 9px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+}
+
+/* Cabecera ultra-compacta en Modo Timón */
+body.ecu-ride-mode .obd-header-stack {
+  gap: 4px !important;
+  margin-bottom: 5px !important;
+  padding-bottom: 5px !important;
+  flex-shrink: 0 !important;
+}
+
+body.ecu-ride-mode .obd-header-top-line {
+  display: none !important;
+}
+
+body.ecu-ride-mode .obd-header-actions-bar button {
+  padding: 4.5px 3px !important;
+  font-size: 9.5px !important;
+}
+
+body.ecu-ride-mode .obd-view-switcher {
+  padding: 2px !important;
+  margin-top: 0 !important;
+}
+
+body.ecu-ride-mode .obd-view-btn {
+  padding: 4.5px 4px !important;
+  font-size: 9px !important;
+}
+
+/* Distribución Elástica CERO SCROLL para Vista A (Tablero de Relojes y 14 Sensores) */
+body.ecu-ride-mode #obd-live-panel {
+  flex: 1 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 4px !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+  overflow: hidden !important;
+}
+
+body.ecu-ride-mode .obd-machine-dials-grid {
+  margin-bottom: 0 !important;
+  gap: 5px !important;
+  flex: 1.15 !important;
+  min-height: 0 !important;
+}
+
+body.ecu-ride-mode .obd-dial-card,
+body.ecu-ride-mode .obd-hero-gear-box {
+  padding: 5px 6px !important;
+}
+
+body.ecu-ride-mode .obd-svg-dial-wrap {
+  height: 68px !important;
+  margin: 0 !important;
+}
+
+body.ecu-ride-mode #obd-rpm-val,
+body.ecu-ride-mode #obd-speed-val {
+  font-size: 21px !important;
+}
+
+body.ecu-ride-mode .obd-gear-number {
+  font-size: 28px !important;
+}
+
+body.ecu-ride-mode .obd-vitals-grid-4 {
+  margin-bottom: 0 !important;
+  gap: 4px !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+
+body.ecu-ride-mode .obd-vital-card {
+  padding: 5px 7px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+body.ecu-ride-mode .obd-vital-val {
+  font-size: 15.5px !important;
+  margin: 0 !important;
+}
+
+body.ecu-ride-mode .obd-micro-section-title {
+  display: none !important;
+}
+
+body.ecu-ride-mode .obd-micro-grid-6 {
+  margin-bottom: 0 !important;
+  gap: 4px !important;
+  flex: 0.95 !important;
+  min-height: 0 !important;
+}
+
+body.ecu-ride-mode .obd-micro-cell {
+  padding: 4px 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+body.ecu-ride-mode .obd-micro-cell strong {
+  font-size: 11.5px !important;
+}
+
+body.ecu-ride-mode .obd-machine-footer-strip {
+  margin-bottom: 0 !important;
+  padding: 4px 7px !important;
+  flex-shrink: 0 !important;
+}
+
+body.ecu-ride-mode .obd-dtc-strip {
+  padding: 4px 7px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Distribución Elástica CERO SCROLL para Vista B (Mapa Satelital & Elevación) */
+body.ecu-ride-mode #obd-map-panel {
+  flex: 1 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 5px !important;
+  overflow: hidden !important;
+}
+
+body.ecu-ride-mode .map-search-bar-wrap {
+  margin-bottom: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+body.ecu-ride-mode .map-place-input {
+  padding: 6px 9px !important;
+  font-size: 11px !important;
+}
+
+body.ecu-ride-mode .machine-map-layout {
+  flex: 1 !important;
+  min-height: 0 !important;
+  margin-bottom: 0 !important;
+  gap: 5px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+body.ecu-ride-mode .map-dest-top-bar {
+  padding: 5px 8px !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+body.ecu-ride-mode .machine-map-canvas-box {
+  flex: 1 !important;
+  height: auto !important;
+  min-height: 120px !important;
+}
+
+body.ecu-ride-mode .machine-map-side-stack {
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+body.ecu-ride-mode .map-side-card {
+  padding: 5px 7px !important;
+}
+
+body.ecu-ride-mode .map-side-speed-num strong {
+  font-size: 19px !important;
+}
+
+body.ecu-ride-mode .map-side-val {
+  font-size: 14px !important;
+  margin: 1px 0 !important;
+}
+
+body.ecu-ride-mode .map-elev-chart-box {
+  height: 28px !important;
+}
+
+body.ecu-ride-mode .machine-map-bottom-bar {
+  padding: 5px 8px !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+body.ecu-ride-mode .map-bot-col strong {
+  font-size: 10.5px !important;
+}
+
+body.ecu-ride-mode .map-bot-col small {
+  font-size: 7px !important;
+}
+
+/* Ajustes Widescreen Horizontal (Landscape) en Modo Timón o Pestaña ECU */
+@media (orientation: landscape) {
+  body.ecu-tab-active {
+    height: 100dvh !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+
+  body.ecu-tab-active .tabs-nav-5 {
+    display: none !important;
+  }
+
+  body.ecu-tab-active #main-screen,
+  body.ecu-tab-active #tab-ecu,
+  body.ecu-tab-active #obd-cockpit-card {
+    max-width: 100% !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: 4px 10px !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
+  }
+
+  body.ecu-tab-active .obd-header-top-line {
+    display: none !important;
+  }
+
+  body.ecu-tab-active .obd-header-stack {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-bottom: 4px !important;
+    padding-bottom: 4px !important;
+  }
+
+  body.ecu-tab-active .obd-header-actions-bar {
+    flex: 1.2 !important;
+  }
+
+  body.ecu-tab-active .obd-view-switcher {
+    flex: 1 !important;
+    margin-top: 0 !important;
+  }
+
+  body.ecu-tab-active #obd-map-panel .machine-map-layout {
+    display: grid !important;
+    grid-template-columns: 2.2fr 1fr !important;
+    grid-template-rows: auto 1fr !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+
+  body.ecu-tab-active #obd-map-panel .map-dest-top-bar {
+    grid-column: 1 / -1 !important;
+  }
+
+  body.ecu-tab-active #obd-map-panel .machine-map-canvas-box {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  body.ecu-tab-active #obd-map-panel .machine-map-side-stack {
+    grid-template-columns: 1fr 1fr !important;
+    height: 100% !important;
+  }
+}

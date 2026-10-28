@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-moto-n160-cache-v16.2';
+const CACHE_NAME = 'mi-moto-n160-cache-v16.3';
 
 const CORE_ASSETS = [
   './',

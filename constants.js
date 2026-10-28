@@ -260,65 +260,23 @@ export const TECHNICAL_GUIDES = {
 export const DEFAULT_ORIGIN_COORDS = {
   lat: -8.1116,
   lon: -79.0287,
-  name: 'Trujillo'
+  name: 'Mi Ubicación'
 };
 
 export const ROUTE_PRESETS = [
   {
-    id: 'samne',
-    name: 'Puente Pala / Samne',
-    region: 'Valle Santa Catalina • Ascenso Moderado',
-    distKm: 42.5,
-    estMin: 55,
+    id: 'default_route',
+    name: 'Selecciona o busca un destino',
+    region: 'Toca cualquier punto del mapa satelital o usa el buscador',
+    distKm: 25.0,
+    estMin: 32,
     startAlt: 34,
-    peakAlt: 1450,
-    terrainFactor: 1.10,
-    difficulty: 'Media • Curvas',
-    lat: -7.9865,
-    lon: -78.6758,
-    elevProfile: [34, 120, 280, 520, 840, 1180, 1450]
-  },
-  {
-    id: 'cachicadan',
-    name: 'Cachicadán',
-    region: 'Santiago de Chuco • Alta Montaña',
-    distKm: 168.0,
-    estMin: 230,
-    startAlt: 34,
-    peakAlt: 3180,
-    terrainFactor: 1.18,
-    difficulty: 'Alta • Sierra (>3,000m)',
-    lat: -8.0958,
-    lon: -78.1524,
-    elevProfile: [34, 480, 1350, 2420, 3180, 2950, 2880]
-  },
-  {
-    id: 'huanchaco',
-    name: 'Circuito Huanchaco',
-    region: 'Ruta Costera • Nivel del Mar',
-    distKm: 14.5,
-    estMin: 22,
-    startAlt: 34,
-    peakAlt: 45,
-    terrainFactor: 1.0,
-    difficulty: 'Baja • Pista Plana',
-    lat: -8.0782,
-    lon: -79.1194,
-    elevProfile: [34, 38, 25, 15, 12, 22, 18]
-  },
-  {
-    id: 'otuzco',
-    name: 'Otuzco',
-    region: 'Sierra Liberteña • Ascenso Continuo',
-    distKm: 75.0,
-    estMin: 95,
-    startAlt: 34,
-    peakAlt: 2640,
-    terrainFactor: 1.16,
-    difficulty: 'Alta • Curvas de Sierra',
-    lat: -7.9025,
-    lon: -78.5636,
-    elevProfile: [34, 210, 620, 1280, 1890, 2380, 2640]
+    peakAlt: 650,
+    terrainFactor: 1.05,
+    difficulty: 'Ruta Satelital Activa',
+    lat: -8.0150,
+    lon: -78.8500,
+    elevProfile: [34, 95, 180, 310, 460, 580, 650]
   }
 ];
 

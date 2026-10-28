@@ -51,6 +51,8 @@ import {
   renderObdLiveUI,
   renderTacticalMapUI,
   toggleMapBaseLayer,
+  toggleCourseUpMode,
+  refreshLeafletSize,
   zoomLeafletMap,
   recenterLeafletRoute,
   searchPlaceByName,
@@ -748,27 +750,6 @@ function setupEventListeners() {
     });
   }
 
-  // Selector de Destinos Preconfigurados (Puente Pala / Samne, Cachicadán, Huanchaco, Otuzco)
-  document.querySelectorAll('#map-route-presets [data-routepreset]').forEach((pill) => {
-    pill.addEventListener('click', async () => {
-      const pid = pill.getAttribute('data-routepreset');
-      document.querySelectorAll('#map-route-presets .mod-filter-pill').forEach((p) => p.classList.remove('active'));
-      pill.classList.add('active');
-      uiConfig.activeRoutePresetId = pid;
-      const found = ROUTE_PRESETS.find((r) => r.id === pid) || ROUTE_PRESETS[0];
-      uiConfig.customRoute = { ...found };
-      renderTacticalMapUI(liveEcuData, true);
-      triggerHaptic(12);
-      showToast(`🛰️ Trazando carretera real a ${found.name}...`);
-      await calculateRealRouteAndElevation({
-        destLat: found.lat,
-        destLon: found.lon,
-        name: found.name,
-        region: found.region
-      });
-    });
-  });
-
   // Modal de Configuración de Ruta Manual
   let selectedRouteTerrainFactor = 1.10;
   let selectedRouteDiffLabel = 'Media • Ascenso';
@@ -911,6 +892,13 @@ function setupEventListeners() {
     });
   }
 
+  // Botón para alternar Orientación del Mapa: Destino Arriba (Adelante) vs Norte Arriba
+  document.getElementById('btn-map-heading-mode')?.addEventListener('click', () => {
+    const isCourseUp = toggleCourseUpMode();
+    triggerHaptic(12);
+    showToast(isCourseUp ? '▲ Mapa: Destino Siempre Arriba (Adelante)' : '🧭 Mapa: Norte Fijo Arriba');
+  });
+
   // Controles de Zoom, Centrar Ruta y Lanzador Directo de Navegación por Voz en Google Maps
   document.getElementById('btn-map-recenter')?.addEventListener('click', () => {
     recenterLeafletRoute();
@@ -927,18 +915,26 @@ function setupEventListeners() {
 
   document.getElementById('btn-map-open-gmaps')?.addEventListener('click', () => {
     const r = uiConfig.customRoute || ROUTE_PRESETS[0];
-    const destParam = r.lat && r.lon ? `${r.lat},${r.lon}` : encodeURIComponent(`${r.name}, La Libertad, Peru`);
+    const destParam = r.lat && r.lon ? `${r.lat},${r.lon}` : encodeURIComponent(`${r.name}, Peru`);
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${destParam}&travelmode=driving`, '_blank', 'noopener,noreferrer');
   });
 
-  // Botón Modo Timón (Pantalla Completa dedicada sin cabecera ni distracciones)
+  // Botón Modo Timón (100% Pantalla Completa Cero Scroll y Sin Barra Inferior)
   const btnRideMode = document.getElementById('btn-obd-ride-mode');
   if (btnRideMode) {
-    btnRideMode.addEventListener('click', () => {
+    btnRideMode.addEventListener('click', async () => {
       const isRide = document.body.classList.toggle('ecu-ride-mode');
       btnRideMode.textContent = isRide ? '↙ Salir Timón' : '⛶ Timón';
+      try {
+        if (isRide && document.documentElement.requestFullscreen && !document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        } else if (!isRide && document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
+      } catch (e) {}
+      refreshLeafletSize();
       triggerHaptic(12);
-      showToast(isRide ? '🏍️ Modo Timón Activo (100% Pantalla)' : 'Vista estándar restaurada');
+      showToast(isRide ? '🏍️ Modo Timón 100% Pantalla (Sin Scroll)' : 'Vista estándar restaurada');
     });
   }
 

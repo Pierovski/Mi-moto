@@ -31,7 +31,15 @@ export const uiConfig = {
   routeTerrainFactor: 1,
   activeEcuSubView: 'dials',
   activeRoutePresetId: 'samne',
-  customRoute: { ...ROUTE_PRESETS[0] },
+  customRoute: (function () {
+    try {
+      const saved = localStorage.getItem('mi_moto_last_sat_route_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return { ...ROUTE_PRESETS[0] };
+  })(),
+  courseUpMode: true,
+  currentBearingDeg: 0,
   mapZoomScale: 1.0,
   gpsWatchId: null,
   liveGpsLat: null,
@@ -1208,6 +1216,81 @@ let bikeLeafletMarker = null;
 let destLeafletMarker = null;
 let currentRoadLatLngs = [];
 
+
+// Calcula el rumbo azimutal (0° a 360°) desde el punto A (Moto) hacia el punto B (Destino)
+export function calculateBearingDeg(lat1, lon1, lat2, lon2) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const toDeg = (r) => (r * 180) / Math.PI;
+  const phi1 = toRad(lat1);
+  const phi2 = toRad(lat2);
+  const dLambda = toRad(lon2 - lon1);
+
+  const y = Math.sin(dLambda) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLambda);
+  const theta = Math.atan2(y, x);
+  return (toDeg(theta) + 360) % 360;
+}
+
+export function applyMapOrientationRotation(origLat, origLon, destLat, destLon) {
+  const mapEl = document.getElementById('leaflet-sat-map');
+  const needleEl = document.getElementById('map-compass-needle');
+  const labelEl = document.getElementById('map-compass-label');
+  const btnEl = document.getElementById('btn-map-heading-mode');
+  const badgeEl = document.getElementById('map-orientation-badge');
+
+  const bearing = calculateBearingDeg(origLat, origLon, destLat, destLon);
+  uiConfig.currentBearingDeg = bearing;
+
+  // En modo "Destino Arriba" (Course-Up), rotamos el mapa -bearing grados para que el destino quede a las 12 en punto (arriba/adelante)
+  const mapRotDeg = uiConfig.courseUpMode ? -bearing : 0;
+  // El icono de la moto apunta en la dirección del rumbo (+bearing dentro del mapa, que al sumarse con -bearing queda en 0° apuntando directo hacia arriba)
+  const bikePinRotDeg = bearing;
+
+  if (mapEl) {
+    mapEl.style.setProperty('--map-bearing-deg', `${mapRotDeg.toFixed(1)}deg`);
+    mapEl.style.setProperty('--bike-pin-rot', `${bikePinRotDeg.toFixed(1)}deg`);
+  }
+
+  if (needleEl) {
+    needleEl.style.transform = `rotate(${mapRotDeg.toFixed(1)}deg)`;
+    needleEl.style.color = uiConfig.courseUpMode ? 'var(--neon-lime)' : 'var(--red-danger)';
+  }
+
+  if (labelEl) {
+    labelEl.textContent = uiConfig.courseUpMode ? 'RUMBO' : 'NORTE';
+  }
+
+  if (btnEl) {
+    btnEl.classList.toggle('course-up-active', Boolean(uiConfig.courseUpMode));
+  }
+
+  if (badgeEl) {
+    badgeEl.textContent = uiConfig.courseUpMode
+      ? '▲ DESTINO ARRIBA • ALCANCE SEGURO'
+      : '🧭 NORTE ARRIBA • ALCANCE SEGURO';
+  }
+}
+
+export function toggleCourseUpMode() {
+  uiConfig.courseUpMode = !uiConfig.courseUpMode;
+  const r = uiConfig.customRoute || ROUTE_PRESETS[0];
+  const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
+  const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
+  applyMapOrientationRotation(origLat, origLon, r.lat ?? -8.015, r.lon ?? -78.85);
+  return uiConfig.courseUpMode;
+}
+
+export function refreshLeafletSize() {
+  if (leafletMap) {
+    setTimeout(() => {
+      leafletMap.invalidateSize();
+      if (routeNeonPolyline && currentRoadLatLngs.length >= 2) {
+        leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [36, 36] });
+      }
+    }, 140);
+  }
+}
+
 export function initLeafletSatelliteMap(onMapClickCallback) {
   const container = document.getElementById('leaflet-sat-map');
   if (!container || typeof window.L === 'undefined') return null;
@@ -1428,6 +1511,9 @@ export async function calculateRealRouteAndElevation({ destLat, destLon, name, r
     elevProfile
   };
 
+  try {
+    localStorage.setItem('mi_moto_last_sat_route_v1', JSON.stringify(uiConfig.customRoute));
+  } catch (e) {}
   if (statusTag) statusTag.textContent = '🛰️ RUTA SATELITAL & ELEVACIÓN REAL';
   renderTacticalMapUI(null, true);
 }
@@ -1489,8 +1575,9 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
     if (leafletMap) {
       const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
       const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
-      const destLat = route.lat ?? -7.9865;
-      const destLon = route.lon ?? -78.6758;
+      const destLat = route.lat ?? -8.0150;
+      const destLon = route.lon ?? -78.8500;
+      applyMapOrientationRotation(origLat, origLon, destLat, destLon);
 
       const polyCoords =
         currentRoadLatLngs && currentRoadLatLngs.length >= 2
@@ -1576,7 +1663,7 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
       if (fitMapBounds && routeNeonPolyline) {
         setTimeout(() => {
           leafletMap.invalidateSize();
-          leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [26, 26] });
+          leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [38, 38] });
         }, 80);
       }
     }
