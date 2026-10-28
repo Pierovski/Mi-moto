@@ -176,6 +176,9 @@ function switchMainTab(tabId) {
   if (tabId === 'tab-ecu') {
     document.body.classList.add('ecu-tab-active');
     renderObdLiveUI(liveEcuData);
+    setTimeout(() => {
+      renderTacticalMapUI(liveEcuData, true);
+    }, 100);
   } else {
     exitEcuLandscapeIfNeeded();
   }
@@ -545,6 +548,15 @@ function setupEventListeners() {
     }
   });
 
+  window.addEventListener('orientationchange', () => {
+    refreshLeafletSize();
+  });
+  window.addEventListener('resize', () => {
+    if (document.body.classList.contains('ecu-tab-active')) {
+      refreshLeafletSize();
+    }
+  });
+
   window.addEventListener('cloud-sync-status', (ev) => {
     updateHeaderCloudIndicator(ev.detail);
   });
@@ -641,34 +653,63 @@ function setupEventListeners() {
     });
   }
 
-  // Selector de Sub-Vista dentro de la Pestaña ECU: Tablero General (Relojes) vs Mapa Satelital & Elevación Real
+  // Selector de Vistas Machine Outdoors OS (Sidebar: TABLERO | MAPA | DIAGNÓSTICO | INICIO | AJUSTES)
   let hasLoadedInitialRoadRoute = false;
-  document.querySelectorAll('.obd-view-btn').forEach((btn) => {
+
+  function activateMachineOutdoorsSubView(view) {
+    uiConfig.activeEcuSubView = view;
+    document.querySelectorAll('[data-ecuview]').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-ecuview') === view);
+    });
+
+    const dialsPanel = document.getElementById('obd-live-panel');
+    const mapPanel = document.getElementById('obd-map-panel');
+    const diagPanel = document.getElementById('obd-diag-panel');
+    const crumbEl = document.getElementById('mo-active-view-title');
+
+    if (dialsPanel) dialsPanel.classList.toggle('hidden', view !== 'dials');
+    if (mapPanel) mapPanel.classList.toggle('hidden', view !== 'map');
+    if (diagPanel) diagPanel.classList.toggle('hidden', view !== 'diag');
+
+    const titleMap = { map: 'MAPA', dials: 'TABLERO', diag: 'DIAGNÓSTICO' };
+    if (crumbEl) crumbEl.textContent = titleMap[view] || 'MAPA';
+
+    if (view === 'map') {
+      renderTacticalMapUI(liveEcuData, true);
+      if (!hasLoadedInitialRoadRoute) {
+        hasLoadedInitialRoadRoute = true;
+        const r0 = uiConfig.customRoute || ROUTE_PRESETS[0];
+        calculateRealRouteAndElevation({
+          destLat: r0.lat,
+          destLon: r0.lon,
+          name: r0.name,
+          region: r0.region
+        });
+      }
+    }
+  }
+
+  document.querySelectorAll('[data-ecuview]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const view = btn.getAttribute('data-ecuview') || 'dials';
-      uiConfig.activeEcuSubView = view;
-      document.querySelectorAll('.obd-view-btn').forEach((b) => b.classList.toggle('active', b === btn));
-      const dialsPanel = document.getElementById('obd-live-panel');
-      const mapPanel = document.getElementById('obd-map-panel');
-      if (dialsPanel && mapPanel) {
-        dialsPanel.classList.toggle('hidden', view !== 'dials');
-        mapPanel.classList.toggle('hidden', view !== 'map');
-      }
-      if (view === 'map') {
-        renderTacticalMapUI(liveEcuData, true);
-        if (!hasLoadedInitialRoadRoute) {
-          hasLoadedInitialRoadRoute = true;
-          const r0 = uiConfig.customRoute || ROUTE_PRESETS[0];
-          calculateRealRouteAndElevation({
-            destLat: r0.lat,
-            destLon: r0.lon,
-            name: r0.name,
-            region: r0.region
-          });
-        }
-      }
+      const view = btn.getAttribute('data-ecuview') || 'map';
+      activateMachineOutdoorsSubView(view);
       triggerHaptic(10);
     });
+  });
+
+  // Botón INICIO en el Sidebar de Machine Outdoors (Vuelve al Taller de Mi Moto)
+  document.getElementById('btn-mo-exit-home')?.addEventListener('click', () => {
+    switchMainTab('tab-maint');
+    triggerHaptic(12);
+  });
+
+  // Botón para minimizar/expandir la tarjeta flotante de Destino sobre el mapa
+  document.getElementById('btn-toggle-dest-card')?.addEventListener('click', (e) => {
+    const card = document.getElementById('mo-floating-dest-card');
+    if (!card) return;
+    const isCollapsed = card.classList.toggle('collapsed');
+    e.currentTarget.textContent = isCollapsed ? '+' : '−';
+    triggerHaptic(8);
   });
 
   // Buscador de Lugares en Vivo (OpenStreetMap Nominatim + OSRM Road Routing + Open-Meteo DEM Elevation)
@@ -774,6 +815,7 @@ function setupEventListeners() {
   if (btnOpenRouteCfg) {
     btnOpenRouteCfg.addEventListener('click', openRouteConfigModal);
   }
+  document.getElementById('btn-mo-open-cfg')?.addEventListener('click', openRouteConfigModal);
 
   const closeRouteCfg = () => closeModalById('modal-route-cfg');
   document.getElementById('btn-close-routecfg-x')?.addEventListener('click', closeRouteCfg);

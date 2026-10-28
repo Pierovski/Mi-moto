@@ -29,7 +29,7 @@ export const uiConfig = {
   fuelSearchQuery: '',
   routeMultiplier: 1,
   routeTerrainFactor: 1,
-  activeEcuSubView: 'dials',
+  activeEcuSubView: 'map',
   activeRoutePresetId: 'samne',
   customRoute: (function () {
     try {
@@ -1157,26 +1157,26 @@ export function formatDmsCoord(lat, lon) {
     const sec = Math.round((minFloat - min) * 60);
     return `${deg}° ${String(min).padStart(2, '0')}' ${String(sec).padStart(2, '0')}" ${val >= 0 ? posChar : negChar}`;
   };
-  return `${toDms(lat, 'N', 'S')} • ${toDms(lon, 'E', 'O')}`;
+  return `${toDms(lat, 'N', 'S')}<br>${toDms(lon, 'E', 'O')}`;
 }
 
 export function renderElevationProfileSVG(elevArray, progressRatio = 0.25) {
   const wrap = document.getElementById('map-elevation-svg-wrap');
   if (!wrap || !Array.isArray(elevArray) || elevArray.length < 2) return;
 
-  const w = 155, h = 40, padX = 6, padY = 5;
+  const w = 165, h = 42, padLeft = 24, padRight = 6, padY = 5;
   const minE = Math.min(...elevArray);
-  const maxE = Math.max(...elevArray, minE + 100);
-  const span = Math.max(50, maxE - minE);
+  const maxE = Math.max(...elevArray, minE + 150);
+  const span = Math.max(100, maxE - minE);
 
   const pts = elevArray.map((val, idx) => {
-    const x = padX + (idx / (elevArray.length - 1)) * (w - padX * 2);
+    const x = padLeft + (idx / (elevArray.length - 1)) * (w - padLeft - padRight);
     const y = h - padY - ((val - minE) / span) * (h - padY * 2);
     return { x, y, val };
   });
 
   const polyStr = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-  const areaStr = `${pts[0].x.toFixed(1)},${h} ${polyStr} ${pts[pts.length - 1].x.toFixed(1)},${h}`;
+  const areaStr = `${pts[0].x.toFixed(1)},${h - 2} ${polyStr} ${pts[pts.length - 1].x.toFixed(1)},${h - 2}`;
 
   const clampedProg = Math.max(0, Math.min(1, progressRatio));
   const targetFloatIdx = clampedProg * (pts.length - 1);
@@ -1187,17 +1187,27 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0.25) {
   const dotX = pts[lowIdx].x + (pts[highIdx].x - pts[lowIdx].x) * frac;
   const dotY = pts[lowIdx].y + (pts[highIdx].y - pts[lowIdx].y) * frac;
 
+  const midE = Math.round((minE + maxE) / 2);
+
   wrap.innerHTML = `
     <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">
       <defs>
         <linearGradient id="elevFillGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#58E800" stop-opacity="0.38"/>
+          <stop offset="0%" stop-color="#58E800" stop-opacity="0.42"/>
           <stop offset="100%" stop-color="#58E800" stop-opacity="0.02"/>
         </linearGradient>
       </defs>
+      <!-- Guías horizontales y escala altitudinal estilo Machine Outdoors -->
+      <line x1="${padLeft}" y1="${padY}" x2="${w - padRight}" y2="${padY}" stroke="rgba(210,218,228,0.12)" stroke-dasharray="2 2" stroke-width="0.8"/>
+      <line x1="${padLeft}" y1="${(h / 2).toFixed(1)}" x2="${w - padRight}" y2="${(h / 2).toFixed(1)}" stroke="rgba(210,218,228,0.10)" stroke-dasharray="2 2" stroke-width="0.8"/>
+      <line x1="${padLeft}" y1="${h - padY}" x2="${w - padRight}" y2="${h - padY}" stroke="rgba(210,218,228,0.12)" stroke-width="0.8"/>
+      <text x="1" y="${padY + 3}" fill="#7C8B9E" font-size="6.8" font-weight="700">${Math.round(maxE)}</text>
+      <text x="1" y="${(h / 2 + 2).toFixed(1)}" fill="#7C8B9E" font-size="6.8" font-weight="700">${midE}</text>
+      <text x="1" y="${h - 2}" fill="#7C8B9E" font-size="6.8" font-weight="700">${Math.round(minE)}</text>
+
       <polygon points="${areaStr}" fill="url(#elevFillGrad)" />
-      <polyline fill="none" stroke="#58E800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polyStr}" />
-      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4.5" fill="rgba(88,232,0,0.3)" />
+      <polyline fill="none" stroke="#58E800" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${polyStr}" />
+      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4.8" fill="rgba(88,232,0,0.35)" />
       <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="2.8" fill="#FFFFFF" stroke="#58E800" stroke-width="1.5" />
     </svg>
   `;
@@ -1217,6 +1227,9 @@ let destLeafletMarker = null;
 let currentRoadLatLngs = [];
 
 
+let radarInnerRing = null;
+let radarOuterRing = null;
+
 // Calcula el rumbo azimutal (0° a 360°) desde el punto A (Moto) hacia el punto B (Destino)
 export function calculateBearingDeg(lat1, lon1, lat2, lon2) {
   const toRad = (d) => (d * Math.PI) / 180;
@@ -1231,63 +1244,48 @@ export function calculateBearingDeg(lat1, lon1, lat2, lon2) {
   return (toDeg(theta) + 360) % 360;
 }
 
+export function getCardinalLabel(deg) {
+  const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+  return dirs[Math.round(((deg % 360) / 45)) % 8];
+}
+
 export function applyMapOrientationRotation(origLat, origLon, destLat, destLon) {
   const mapEl = document.getElementById('leaflet-sat-map');
   const needleEl = document.getElementById('map-compass-needle');
-  const labelEl = document.getElementById('map-compass-label');
-  const btnEl = document.getElementById('btn-map-heading-mode');
-  const badgeEl = document.getElementById('map-orientation-badge');
+  const degTxtEl = document.getElementById('map-bearing-deg-txt');
 
   const bearing = calculateBearingDeg(origLat, origLon, destLat, destLon);
   uiConfig.currentBearingDeg = bearing;
 
-  // En modo "Destino Arriba" (Course-Up), rotamos el mapa -bearing grados para que el destino quede a las 12 en punto (arriba/adelante)
-  const mapRotDeg = uiConfig.courseUpMode ? -bearing : 0;
-  // El icono de la moto apunta en la dirección del rumbo (+bearing dentro del mapa, que al sumarse con -bearing queda en 0° apuntando directo hacia arriba)
-  const bikePinRotDeg = bearing;
-
+  // Sin rotación CSS del contenedor para que el arrastre táctil con los dedos sea 100% natural (derecha = derecha, arriba = arriba)
   if (mapEl) {
-    mapEl.style.setProperty('--map-bearing-deg', `${mapRotDeg.toFixed(1)}deg`);
-    mapEl.style.setProperty('--bike-pin-rot', `${bikePinRotDeg.toFixed(1)}deg`);
+    mapEl.style.setProperty('--bike-pin-rot', `${bearing.toFixed(1)}deg`);
   }
 
   if (needleEl) {
-    needleEl.style.transform = `rotate(${mapRotDeg.toFixed(1)}deg)`;
-    needleEl.style.color = uiConfig.courseUpMode ? 'var(--neon-lime)' : 'var(--red-danger)';
+    needleEl.style.transform = `rotate(${bearing.toFixed(1)}deg)`;
   }
 
-  if (labelEl) {
-    labelEl.textContent = uiConfig.courseUpMode ? 'RUMBO' : 'NORTE';
-  }
-
-  if (btnEl) {
-    btnEl.classList.toggle('course-up-active', Boolean(uiConfig.courseUpMode));
-  }
-
-  if (badgeEl) {
-    badgeEl.textContent = uiConfig.courseUpMode
-      ? '▲ DESTINO ARRIBA • ALCANCE SEGURO'
-      : '🧭 NORTE ARRIBA • ALCANCE SEGURO';
+  if (degTxtEl) {
+    degTxtEl.textContent = `Rumbo ${Math.round(bearing)}° ${getCardinalLabel(bearing)}`;
   }
 }
 
 export function toggleCourseUpMode() {
-  uiConfig.courseUpMode = !uiConfig.courseUpMode;
-  const r = uiConfig.customRoute || ROUTE_PRESETS[0];
-  const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
-  const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
-  applyMapOrientationRotation(origLat, origLon, r.lat ?? -8.015, r.lon ?? -78.85);
-  return uiConfig.courseUpMode;
+  recenterLeafletRoute();
+  return true;
 }
 
 export function refreshLeafletSize() {
   if (leafletMap) {
-    setTimeout(() => {
-      leafletMap.invalidateSize();
-      if (routeNeonPolyline && currentRoadLatLngs.length >= 2) {
-        leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [36, 36] });
-      }
-    }, 140);
+    [60, 220, 450].forEach((ms) => {
+      setTimeout(() => {
+        leafletMap.invalidateSize({ animate: false });
+        if (routeNeonPolyline && currentRoadLatLngs.length >= 2) {
+          leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [28, 28] });
+        }
+      }, ms);
+    });
   }
 }
 
@@ -1296,7 +1294,7 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
   if (!container || typeof window.L === 'undefined') return null;
 
   if (leafletMap) {
-    setTimeout(() => leafletMap.invalidateSize(), 120);
+    refreshLeafletSize();
     return leafletMap;
   }
 
@@ -1305,7 +1303,7 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
 
   leafletMap = window.L.map('leaflet-sat-map', {
     center: [origLat, origLon],
-    zoom: 10,
+    zoom: 11,
     zoomControl: false,
     attributionControl: true
   });
@@ -1319,16 +1317,17 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
     }
   );
 
-  // Superposición oficial Esri de nombres de pueblos, carreteras y fronteras sobre el satélite (Sin marcas de agua)
+  // Superposición de nombres limpios de localidades y rutas (Sin marca de agua de API key)
   labelsTileLayer = window.L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
     {
-      maxZoom: 18,
-      opacity: 0.92
+      maxZoom: 19,
+      subdomains: 'abcd',
+      opacity: 0.9
     }
   );
 
-  // Capa 2: Mapa Topográfico / Calles
+  // Capa 2: Mapa de Calles y Carreteras OpenStreetMap
   streetTileLayer = window.L.tileLayer(
     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {
@@ -1340,7 +1339,16 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
   satTileLayer.addTo(leafletMap);
   labelsTileLayer.addTo(leafletMap);
 
-  // Permitir tocar cualquier punto del mapa satelital para trazar la ruta hacia allí
+  // Observador automático de tamaño: cada vez que cambie el contenedor (Vertical <-> Horizontal o Modo Timón), centra el mapa al instante
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => {
+      if (leafletMap) {
+        leafletMap.invalidateSize({ animate: false });
+      }
+    });
+    ro.observe(container);
+  }
+
   leafletMap.on('click', (ev) => {
     if (typeof onMapClickCallback === 'function') {
       onMapClickCallback(ev.latlng.lat, ev.latlng.lng);
@@ -1518,6 +1526,22 @@ export async function calculateRealRouteAndElevation({ destLat, destLon, name, r
 }
 
 export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
+  // Actualizar Reloj en Vivo y Barra de Estado Superior de Machine Outdoors
+  const clockEl = document.getElementById('mo-live-clock');
+  if (clockEl) {
+    clockEl.textContent = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+  const topTempEl = document.getElementById('mo-top-temp-txt');
+  if (topTempEl) {
+    const iatOrMotor = ecuData?.connected && ecuData?.iatC > 0 ? ecuData.iatC : 24;
+    topTempEl.textContent = `${iatOrMotor}°C`;
+  }
+  const connBarFill = document.getElementById('mo-conn-bar-fill');
+  if (connBarFill) {
+    connBarFill.style.background = ecuData?.connected ? '#58E800' : '#49BFE6';
+    connBarFill.style.width = ecuData?.connected ? '100%' : '35%';
+  }
+
   const route = uiConfig.customRoute || ROUTE_PRESETS[0];
   const tele = computeFuelTelemetry();
 
@@ -1612,23 +1636,53 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
         routeNeonPolyline.setLatLngs(polyCoords);
       }
 
-      // Anillo de Alcance Seguro en metros reales (limitado visualmente para verse bien en el zoom de ruta)
-      const safeRadiusMeters = Math.min(180000, Math.max(5000, remKm * 1000));
+      // 3 Anillos Concéntricos de Radar Estilo "Machine Outdoors" centrados en la Moto
+      const routeSpanMeters = Math.max(3000, (route.distKm || 20) * 1000);
+      const rInner = Math.round(routeSpanMeters * 0.33);
+      const rMid = Math.round(routeSpanMeters * 0.68);
+      const rOuter = Math.round(routeSpanMeters * 1.05);
       const ringColor = remKm >= route.distKm * 2 ? '#58E800' : (remKm >= route.distKm ? '#FF9F0A' : '#FF453A');
 
-      if (!safeRangeCircle) {
-        safeRangeCircle = window.L.circle([origLat, origLon], {
-          radius: safeRadiusMeters,
+      if (!radarInnerRing) {
+        radarInnerRing = window.L.circle(bikeLatLng, {
+          radius: rInner,
           color: ringColor,
-          weight: 1.5,
-          dashArray: '6, 6',
-          fillColor: ringColor,
-          fillOpacity: 0.08
+          weight: 1,
+          dashArray: '4, 6',
+          fillOpacity: 0
         }).addTo(leafletMap);
       } else {
-        safeRangeCircle.setLatLng([origLat, origLon]);
-        safeRangeCircle.setRadius(safeRadiusMeters);
+        radarInnerRing.setLatLng(bikeLatLng);
+        radarInnerRing.setRadius(rInner);
+        radarInnerRing.setStyle({ color: ringColor });
+      }
+
+      if (!safeRangeCircle) {
+        safeRangeCircle = window.L.circle(bikeLatLng, {
+          radius: rMid,
+          color: ringColor,
+          weight: 1.6,
+          dashArray: '6, 5',
+          fillColor: ringColor,
+          fillOpacity: 0.09
+        }).addTo(leafletMap);
+      } else {
+        safeRangeCircle.setLatLng(bikeLatLng);
+        safeRangeCircle.setRadius(rMid);
         safeRangeCircle.setStyle({ color: ringColor, fillColor: ringColor });
+      }
+
+      if (!radarOuterRing) {
+        radarOuterRing = window.L.circle(bikeLatLng, {
+          radius: rOuter,
+          color: '#49BFE6',
+          weight: 1,
+          dashArray: '3, 7',
+          fillOpacity: 0
+        }).addTo(leafletMap);
+      } else {
+        radarOuterRing.setLatLng(bikeLatLng);
+        radarOuterRing.setRadius(rOuter);
       }
 
       // Marcadores de Moto (Azul) y Meta (Bandera 🏁)
@@ -1660,10 +1714,7 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
       }
 
       if (fitMapBounds && routeNeonPolyline) {
-        setTimeout(() => {
-          leafletMap.invalidateSize();
-          leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [38, 38] });
-        }, 80);
+        refreshLeafletSize();
       }
     }
   }
@@ -1672,8 +1723,11 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   const liveSpd = Number(ecuData?.speedKmh) || Number(uiConfig.liveGpsSpeedKmh) || 0;
   const spdEl = document.getElementById('map-live-speed');
   const spdBar = document.getElementById('map-live-speed-bar');
+  const spdArc = document.getElementById('map-live-speed-arc');
+  const spdPct = Math.min(100, Math.round((liveSpd / 130) * 100));
   if (spdEl) spdEl.textContent = Math.round(liveSpd);
-  if (spdBar) spdBar.style.width = `${Math.min(100, Math.round((liveSpd / 130) * 100))}%`;
+  if (spdBar) spdBar.style.width = `${spdPct}%`;
+  if (spdArc) spdArc.setAttribute('stroke-dashoffset', String(100 - spdPct));
 
   const avgKmL = tele.avgKmPerGal / 3.78541;
   const kmlEl = document.getElementById('map-avg-kml');
@@ -1725,7 +1779,7 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
 
     const lat = uiConfig.liveGpsLat ?? route.lat ?? -8.1116;
     const lon = uiConfig.liveGpsLon ?? route.lon ?? -79.0287;
-    document.getElementById('map-bot-coords').textContent = formatDmsCoord(lat, lon);
+    document.getElementById('map-bot-coords').innerHTML = formatDmsCoord(lat, lon);
     document.getElementById('map-bot-gps-status').textContent =
       uiConfig.gpsWatchId !== null ? '🛰️ GPS Satelital Activo' : '🛰️ Satélite Esri + OSRM';
     document.getElementById('map-bot-peak-alt').textContent = `Cima: ${Number(route.peakAlt || 0).toLocaleString('es-PE')} msnm`;

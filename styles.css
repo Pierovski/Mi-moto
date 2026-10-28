@@ -2229,275 +2229,802 @@ body.ecu-ride-mode .screen {
   font-size: 13px;
 }
 
-/* ================= BLOQUE V8.0: CORRECCIÓN TOTAL DE MODO HORIZONTAL (2 COLUMNAS SIN DISTORSIÓN) + MODO TIMÓN ================= */
+/* ================= BLOQUE V9.0: SISTEMA OPERATIVO "MACHINE OUTDOORS" (REPLICA FIEL DE TABLET AUTOMOTRIZ) ================= */
 
-/* Regla de Oro: JAMÁS mostrar un panel que tenga la clase .hidden */
+/* REGLA SAGRADA: Cualquier elemento con .hidden jamás se muestra */
 #obd-live-panel.hidden,
 #obd-map-panel.hidden,
+#obd-diag-panel.hidden,
 .hidden {
   display: none !important;
 }
 
-/* Protección de Relojes SVG para que NUNCA se salgan de su tarjeta */
-.obd-dial-card,
-.obd-hero-gear-box {
-  position: relative;
+/* En Pestaña ECU (o Modo Timón) ocultamos cabeceras normales para dar una experiencia 100% Machine Outdoors */
+body.ecu-tab-active,
+body.ecu-ride-mode {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #06090D !important;
+}
+
+body.ecu-tab-active .app-header,
+body.ecu-tab-active #main-bike-banner,
+body.ecu-tab-active #cockpit-cluster,
+body.ecu-ride-mode .app-header,
+body.ecu-ride-mode #main-bike-banner,
+body.ecu-ride-mode #cockpit-cluster,
+body.ecu-ride-mode .tabs-nav-5 {
+  display: none !important;
+}
+
+body.ecu-tab-active #main-screen,
+body.ecu-tab-active #tab-ecu:not(.hidden) {
+  max-width: 100vw !important;
+  width: 100vw !important;
+  height: calc(100dvh - 58px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+body.ecu-ride-mode #main-screen,
+body.ecu-ride-mode #tab-ecu:not(.hidden) {
+  height: 100dvh !important;
+}
+
+/* Armazón Principal de Machine Outdoors */
+.machine-os-shell {
+  flex: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: #080C10 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* 1. Barra Lateral Izquierda (En Vertical se ve como barra superior compacta; en Horizontal se convierte en la columna izquierda idéntica a la tablet) */
+.mo-sidebar {
+  background: #0A0E13;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mo-brand-block {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.mo-brand-title {
+  font-family: var(--font-speed);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #FFFFFF;
+}
+
+.mo-brand-sub {
+  font-size: 6.5px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #8E9BAE;
+  margin-top: 2px;
+}
+
+.mo-side-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mo-nav-item {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #8E9BAE;
+  border-radius: 7px;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.mo-nav-item.active {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.32);
+  color: #38BDF8;
+}
+
+.mo-nav-ico {
+  font-size: 12px;
+}
+
+.mo-sidebar-vehicle-foot {
+  display: none;
+}
+
+.mo-vehicle-name {
+  font-size: 9px;
+  font-weight: 800;
+  color: #D2DAE4;
+  letter-spacing: 0.5px;
+}
+
+.mo-vehicle-sub {
+  font-size: 7.5px;
+  color: #7C8B9E;
+  margin-bottom: 6px;
+}
+
+.mo-conn-text {
+  display: block;
+  font-size: 8px;
+  font-weight: 800;
+  color: #58E800;
+  letter-spacing: 0.6px;
+  margin-bottom: 3px;
+}
+
+.mo-conn-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
   overflow: hidden;
 }
 
-.obd-dial-svg {
+.mo-conn-bar-fill {
   width: 100%;
   height: 100%;
-  max-width: 114px;
+  background: #58E800;
+}
+
+/* 2. Escenario Principal Derecha (Barra de Estado + Panel Activo) */
+.mo-main-stage {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  gap: 6px;
   overflow: hidden;
 }
 
-/* Lienzo Satelital Sobredimensionado para soportar Rotación 360° "Destino Arriba" sin bordes vacíos */
+.mo-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.mo-status-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mo-clock-txt {
+  font-size: 11px;
+  font-weight: 700;
+  color: #B0BCCB;
+  font-variant-numeric: tabular-nums;
+}
+
+.mo-section-crumb {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #FFFFFF;
+}
+
+.mo-status-center-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mo-top-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #D2DAE4;
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 3.5px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mo-top-pill.connect {
+  background: rgba(88, 232, 0, 0.14);
+  border-color: rgba(88, 232, 0, 0.45);
+  color: #58E800;
+}
+
+.mo-status-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #B0BCCB;
+}
+
+.mo-temp-readout {
+  font-size: 11px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+/* Paneles de Escenario */
+.mo-stage-panel:not(.hidden) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  overflow: hidden;
+}
+
+/* ================= GRILLA MAESTRA DEL MAPA MACHINE OUTDOORS ================= */
+.mo-map-master-grid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mo-map-center-column {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Lienzo Satelital Full-Bleed */
 .machine-map-canvas-box {
   position: relative;
+  flex: 1;
   width: 100%;
-  height: 235px;
-  background: #04080D;
-  border: 1px solid rgba(88, 232, 0, 0.32);
-  border-radius: 12px;
+  min-height: 175px;
+  background: #060B0E;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.85);
 }
 
 .leaflet-sat-container {
   position: absolute !important;
-  width: 152% !important;
-  height: 152% !important;
-  top: -26% !important;
-  left: -26% !important;
-  background: #050A0F;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: #060B0E;
   z-index: 1;
-  transform: rotate(var(--map-bearing-deg, 0deg));
-  transform-origin: 50% 50%;
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Contra-rotación automática de los iconos sobre el mapa */
-.n160-bike-pin {
-  transform: rotate(var(--bike-pin-rot, 0deg));
-  transition: transform 0.35s ease;
+/* Tarjeta Flotante "DESTINO" en Esquina Superior Izquierda (Idéntica a Machine Outdoors) */
+.mo-dest-overlay-card {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 176px;
+  background: rgba(12, 16, 20, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 9px 11px;
+  z-index: 500;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65);
+  transition: width 0.2s ease;
 }
 
-.n160-dest-pin {
-  transform: rotate(calc(-1 * var(--map-bearing-deg, 0deg)));
-  transition: transform 0.35s ease;
+.mo-dest-overlay-card.collapsed {
+  width: 118px;
+  padding: 6px 9px;
 }
 
-.map-compass-btn.course-up-active {
-  border-color: var(--neon-lime);
-  box-shadow: 0 0 10px rgba(88, 232, 0, 0.28);
-}
-
-.map-compass-btn strong {
-  font-size: 6.5px !important;
-  letter-spacing: 0.2px;
-}
-
-/* Estructura en Vertical (Portrait) para el Mapa: Destino -> Mapa -> 4 Tarjetas -> Barra Inferior */
-.machine-map-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin-bottom: 4px;
-}
-
-.machine-map-left-col {
-  display: contents;
-}
-
-.map-dest-top-bar { order: 1; }
-.machine-map-canvas-box { order: 2; }
-.machine-map-side-stack { order: 3; }
-.machine-map-bottom-bar { order: 4; }
-
-/* MODO TIMÓN EN VERTICAL (Oculta cabeceras y barra inferior de pestañas sin aplastar relojes) */
-body.ecu-ride-mode {
-  padding-bottom: 8px !important;
-}
-
-body.ecu-ride-mode .app-header,
-body.ecu-ride-mode #main-bike-banner,
-body.ecu-ride-mode #cockpit-cluster,
-body.ecu-ride-mode .tabs-nav-5,
-body.ecu-ride-mode .obd-header-top-line,
-body.ecu-ride-mode .obd-micro-section-title {
+.mo-dest-overlay-card.collapsed #mo-dest-card-body {
   display: none !important;
 }
 
-body.ecu-ride-mode .screen {
-  padding: 5px 8px !important;
+.mo-dest-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-body.ecu-ride-mode #obd-cockpit-card {
-  margin-bottom: 0 !important;
-  padding: 7px 9px !important;
+.mo-card-collapse-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #D2DAE4;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
 }
 
-body.ecu-ride-mode .obd-header-stack {
-  gap: 4px !important;
-  margin-bottom: 6px !important;
-  padding-bottom: 5px !important;
+.mo-dest-title {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-top: 3px;
+  line-height: 1.2;
 }
 
-body.ecu-ride-mode .obd-svg-dial-wrap {
-  height: 70px !important;
+.mo-dest-sub {
+  display: block;
+  font-size: 8px;
+  color: #8E9BAE;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-body.ecu-ride-mode .machine-map-canvas-box {
-  height: 215px;
+.mo-inline-search-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 7px;
 }
 
-/* ================= DISEÑO HORIZONTAL (LANDSCAPE) WIDESCREEN DE 2 COLUMNAS (CERO SUPERPOSICIÓN) ================= */
+.mo-inline-search-inp {
+  flex: 1;
+  padding: 4px 7px !important;
+  font-size: 9.5px !important;
+  border-radius: 5px !important;
+  background: rgba(0, 0, 0, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #FFFFFF !important;
+}
+
+.mo-inline-search-btn {
+  background: rgba(88, 232, 0, 0.2);
+  border: 1px solid rgba(88, 232, 0, 0.5);
+  color: #58E800;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 0 7px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.mo-dest-stats-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 7px;
+}
+
+.mo-dest-stats-pair strong {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.mo-dest-stats-pair strong small {
+  font-size: 9px;
+  font-weight: 600;
+  color: #B0BCCB;
+}
+
+.mo-dest-stats-pair span {
+  display: block;
+  font-size: 6.5px;
+  font-weight: 800;
+  color: #7C8B9E;
+  letter-spacing: 0.4px;
+}
+
+.mo-btn-route-details {
+  width: 100%;
+  padding: 5.5px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  color: #D2DAE4;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.mo-dest-mini-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.mo-mini-action {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #B0BCCB;
+  font-size: 7.5px;
+  font-weight: 700;
+  padding: 3.5px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mo-mini-action.gps.active {
+  background: rgba(88, 232, 0, 0.18);
+  border-color: #58E800;
+  color: #58E800;
+}
+
+/* Controles Flotantes Derecha del Mapa (Idénticos a Machine Outdoors) */
+.mo-map-right-controls {
+  position: absolute;
+  top: 12px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  z-index: 500;
+}
+
+.mo-compass-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(12, 16, 20, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.mo-compass-arrow {
+  font-size: 7px;
+  color: #FF453A;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+
+.mo-compass-circle strong {
+  font-size: 8.5px;
+  line-height: 1;
+}
+
+.mo-zoom-pill-group {
+  background: rgba(12, 16, 20, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 99px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.mo-zoom-pill-group button {
+  width: 30px;
+  height: 27px;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mo-zoom-divider {
+  height: 1px;
+  width: 18px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.mo-scale-overlay {
+  position: absolute;
+  bottom: 9px;
+  left: 12px;
+  width: 92px;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.mo-safe-label-overlay {
+  position: absolute;
+  bottom: 12px;
+  right: 48px;
+  z-index: 500;
+  text-align: right;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  color: #58E800;
+  line-height: 1.15;
+  pointer-events: none;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+/* Barra Inferior de 4 Columnas del Mapa */
+.mo-bottom-4col-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  background: #0B1015;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  padding: 6px 9px;
+  flex-shrink: 0;
+}
+
+.mo-bot-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.mo-bot-big {
+  font-family: var(--font-speed);
+  font-size: 14px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.mo-bot-big small {
+  font-size: 9px;
+  font-weight: 600;
+  color: #B0BCCB;
+}
+
+.mo-bot-route-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mo-bot-coords-txt {
+  font-family: var(--font-speed);
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #D2DAE4;
+  line-height: 1.2;
+}
+
+.mo-bot-sub {
+  font-size: 7.5px;
+  color: #7C8B9E;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Columna Derecha de 4 Tarjetas Apiladas (En Vertical se ve en grilla 2x2; en Horizontal se apila en 1 columna vertical de 4 pisos igual a la foto) */
+.mo-right-4cards-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mo-side-metric-card {
+  background: #0C1116;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 7px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.mo-speed-big-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1px;
+}
+
+.mo-speed-big-wrap strong {
+  font-family: var(--font-speed);
+  font-size: 28px;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 0.92;
+}
+
+.mo-speed-big-wrap small {
+  font-size: 8.5px;
+  color: #8E9BAE;
+  margin-top: 2px;
+}
+
+.mo-speed-smile-arc {
+  width: 100%;
+  max-width: 105px;
+  height: 16px;
+  margin: 0 auto;
+}
+
+.mo-card-primary-val {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 17px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 2px 0;
+}
+
+.mo-card-primary-val small {
+  font-size: 10px;
+  font-weight: 600;
+  color: #B0BCCB;
+}
+
+.mo-card-sub-lbl {
+  display: block;
+  font-size: 7.5px;
+  font-weight: 700;
+  color: #7C8B9E;
+  letter-spacing: 0.4px;
+}
+
+.mo-elev-chart-container {
+  width: 100%;
+  height: 36px;
+  margin-top: 2px;
+}
+
+/* Puntero Azul Triangular de la Moto (Idéntico al círculo azul con flecha blanca de Machine Outdoors) */
+.n160-bike-pin {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2563EB;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 0 14px rgba(37, 99, 235, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 900;
+  transform: rotate(var(--bike-pin-rot, 0deg));
+  transition: transform 0.3s ease;
+}
+
+/* ================= MODO HORIZONTAL WIDESCREEN (REPLICA 1:1 DE LA TABLET MACHINE OUTDOORS) ================= */
 @media (orientation: landscape) {
-  body.ecu-tab-active {
-    padding-bottom: 6px !important;
-  }
-
-  body.ecu-tab-active .app-header,
-  body.ecu-tab-active #main-bike-banner,
-  body.ecu-tab-active #cockpit-cluster,
-  body.ecu-tab-active .tabs-nav-5,
-  body.ecu-tab-active .obd-header-top-line,
-  body.ecu-tab-active .obd-micro-section-title {
+  body.ecu-tab-active .tabs-nav-5 {
     display: none !important;
   }
 
-  body.ecu-tab-active #main-screen {
-    max-width: 100% !important;
-    padding: 4px 10px !important;
-    margin: 0 !important;
+  body.ecu-tab-active #main-screen,
+  body.ecu-tab-active #tab-ecu:not(.hidden) {
+    height: 100dvh !important;
   }
 
-  body.ecu-tab-active #obd-cockpit-card {
-    padding: 6px 10px !important;
-    margin: 0 !important;
-  }
-
-  /* Barra Superior en 1 sola línea horizontal: 4 Botones a la izquierda + Selector Tablero/Mapa a la derecha */
-  body.ecu-tab-active .obd-header-stack {
+  /* En Horizontal, .machine-os-shell pone el Sidebar a la izquierda y el Escenario a la derecha */
+  body.ecu-tab-active .machine-os-shell {
     flex-direction: row !important;
-    align-items: center !important;
+  }
+
+  body.ecu-tab-active .mo-sidebar {
+    width: 126px !important;
+    height: 100dvh !important;
+    border-bottom: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    padding: 12px 10px !important;
+  }
+
+  body.ecu-tab-active .mo-side-nav {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 4px !important;
+  }
+
+  body.ecu-tab-active .mo-nav-item {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    padding: 7px 9px !important;
+  }
+
+  body.ecu-tab-active .mo-sidebar-vehicle-foot {
+    display: block !important;
+    width: 100% !important;
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+  }
+
+  /* En Horizontal, el Mapa queda al centro y las 4 tarjetas se apilan verticalmente a la derecha (1 sola columna de 4 filas) */
+  body.ecu-tab-active .mo-map-master-grid {
+    flex-direction: row !important;
+    align-items: stretch !important;
     gap: 8px !important;
-    margin-bottom: 6px !important;
-    padding-bottom: 5px !important;
   }
 
-  body.ecu-tab-active .obd-header-actions-bar {
-    flex: 1.15 !important;
-  }
-
-  body.ecu-tab-active .obd-view-switcher {
+  body.ecu-tab-active .mo-map-center-column {
     flex: 1 !important;
-    margin-top: 0 !important;
+    min-width: 0 !important;
+    height: 100% !important;
   }
 
-  /* VISTA A EN HORIZONTAL: 2 COLUMNAS LADO A LADO (Izquierda: Relojes + Tanque + DTC | Derecha: 4 Vitales + 6 Sensores) */
+  body.ecu-tab-active .mo-right-4cards-stack {
+    width: 175px !important;
+    height: 100% !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1.15fr 0.9fr 1fr 1.15fr !important;
+    gap: 6px !important;
+  }
+
+  /* Vista A (Tablero de Relojes) en Horizontal */
   body.ecu-tab-active #obd-live-panel:not(.hidden) {
     display: grid !important;
-    grid-template-columns: 1.05fr 1.25fr !important;
-    gap: 8px !important;
-    align-items: start !important;
-  }
-
-  body.ecu-tab-active .obd-dials-left-col,
-  body.ecu-tab-active .obd-dials-right-col {
-    display: flex !important;
-    flex-direction: column !important;
+    grid-template-columns: 1.15fr 1.35fr !important;
+    grid-template-rows: 1fr auto auto !important;
     gap: 6px !important;
   }
 
   body.ecu-tab-active .obd-machine-dials-grid {
+    grid-column: 1 / 2 !important;
+    grid-row: 1 / 2 !important;
     margin-bottom: 0 !important;
-    gap: 5px !important;
-  }
-
-  body.ecu-tab-active .obd-svg-dial-wrap {
-    height: 72px !important;
-    min-height: 72px !important;
-  }
-
-  body.ecu-tab-active #obd-rpm-val,
-  body.ecu-tab-active #obd-speed-val {
-    font-size: 20px !important;
-  }
-
-  body.ecu-tab-active .obd-gear-number {
-    font-size: 28px !important;
-  }
-
-  body.ecu-tab-active .obd-machine-footer-strip {
-    margin-bottom: 0 !important;
-    padding: 5px 8px !important;
-  }
-
-  body.ecu-tab-active .obd-dtc-strip {
-    padding: 5px 8px !important;
   }
 
   body.ecu-tab-active .obd-vitals-grid-4 {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 5px !important;
+    grid-column: 2 / 3 !important;
+    grid-row: 1 / 2 !important;
+    grid-template-columns: 1fr 1fr !important;
     margin-bottom: 0 !important;
-  }
-
-  body.ecu-tab-active .obd-vital-card {
-    padding: 6px 8px !important;
-  }
-
-  body.ecu-tab-active .obd-vital-val {
-    font-size: 16px !important;
   }
 
   body.ecu-tab-active .obd-micro-grid-6 {
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 5px !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 2 / 3 !important;
+    grid-template-columns: repeat(6, 1fr) !important;
     margin-bottom: 0 !important;
   }
 
-  /* VISTA B EN HORIZONTAL (ESTILO TABLET MACHINE OUTDOORS): Mapa a la Izquierda | 4 Tarjetas a la Derecha */
-  body.ecu-tab-active #obd-map-panel:not(.hidden) .machine-map-layout {
-    display: grid !important;
-    grid-template-columns: 1.95fr 1fr !important;
-    gap: 8px !important;
-    align-items: stretch !important;
-  }
-
-  body.ecu-tab-active #obd-map-panel:not(.hidden) .machine-map-left-col {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 6px !important;
-  }
-
-  body.ecu-tab-active #obd-map-panel:not(.hidden) .map-dest-top-bar {
-    grid-template-columns: 1.3fr auto auto !important;
-    padding: 5px 9px !important;
-  }
-
-  body.ecu-tab-active #obd-map-panel:not(.hidden) .map-dest-top-actions {
-    grid-column: auto !important;
-    border-top: none !important;
-    padding-top: 0 !important;
-  }
-
-  body.ecu-tab-active #obd-map-panel:not(.hidden) .machine-map-canvas-box {
-    height: 175px !important;
-    flex: 1 !important;
-  }
-
-  body.ecu-tab-active #obd-map-panel:not(.hidden) .machine-map-bottom-bar {
-    grid-template-columns: repeat(4, 1fr) !important;
-    padding: 5px 8px !important;
-  }
-
-  body.ecu-tab-active #obd-map-panel:not(.hidden) .machine-map-side-stack {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    gap: 5px !important;
+  body.ecu-tab-active .obd-machine-footer-strip {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 / 4 !important;
+    margin-bottom: 0 !important;
   }
 }

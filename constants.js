@@ -251,75 +251,57 @@ export const TECHNICAL_GUIDES = {
   },
   nav_elev_guide: {
     category: 'TOPOGRAFÍA & SENSOR BAROMÉTRICO MAP',
-    title: 'Curva de Elevación Real (msnm) y Compensación FI',
-    how: 'El gráfico dibuja el perfil longitudinal real de altitud (extraído por satélite DEM en 10 puntos de la carretera) desde tu ubicación hasta la cima del destino, y mueve el punto blanco según tu avance.',
+    title: 'Curva de Elevación (msnm) y Compensación FI',
+    how: 'El gráfico inferior derecho dibuja el perfil longitudinal de altitud desde tu punto de partida hasta la cima del destino y posiciona tu altitud actual (vía GPS o sensor MAP 010B de la ECU).',
     why: 'Cada 1,000 metros de ascenso la presión atmosférica cae ~10 kPa. Si tu ruta supera los 2,000 msnm, recuerda apagar y encender la llave 5 segundos a mitad de subida para recalibrar la inyección.'
   },
-  nav_search_info: {
-    category: 'GEOCODIFICACIÓN & TRAZADO SATELITAL',
-    title: 'Buscador de Destinos y Toque Directo en Mapa',
-    how: 'Escribe cualquier distrito, pueblo, playa o punto de interés (ej. Corculla, Otuzco, Samne) y toca "Ir 🏁", o simplemente toca con tu dedo cualquier punto directamente sobre el mapa satelital.',
-    why: 'El sistema localiza las coordenadas exactas, traza la carretera real mediante el motor vial OSRM y descarga las altitudes reales de la ruta sin consumir llaves de pago.'
-  },
   nav_speed_info: {
-    category: 'VELOCIDAD EN RUTA (ECU / GPS SATELITAL)',
-    title: 'Velocidad Actual de Navegación (km/h)',
-    how: 'Muestra en tiempo real tu velocidad física combinando la lectura del sensor ABS de la ECU (PID 010D) o, si vas sin el escáner conectado, la velocidad Doppler de los satélites GPS de tu celular.',
-    why: 'Te permite mantener un ritmo constante en carretera para lograr el tiempo estimado (ETA) sin exceder el rango económico de la inyección.'
+    category: 'VELOCIDAD DE NAVEGACIÓN EN RUTA',
+    title: 'Velocidad Actual (ECU / GPS Satelital)',
+    how: 'Prioriza la lectura física del sensor ABS de rueda de la ECU (PID 010D). Si el escáner OBD2 no está conectado, toma automáticamente la velocidad satelital en vivo del GPS de tu teléfono.',
+    why: 'Conocer tu velocidad real en curvas de montaña o carretera te permite mantener un ritmo constante y seguro dentro del rango óptimo de frenado ABS.'
   },
-  nav_cons_info: {
-    category: 'HISTÓRICO REAL DE COMBUSTIBLE',
-    title: 'Consumo Promedio Certificado (km/L y km/gal)',
-    how: 'Convierte automáticamente tu rendimiento histórico real de Gasolina Premium (medido método tanque lleno al primer corte en la pestaña Grifo) tanto a kilómetros por litro (km/L) como a kilómetros por galón.',
-    why: 'Es la base matemática real con la que el mapa calcula cuánta gasolina gastarás en subir a la sierra o rodar en costa.'
+  nav_avg_econ_info: {
+    category: 'EFICIENCIA HISTÓRICA FI (14 LITROS)',
+    title: 'Consumo Promedio Real (km/L y km/gal)',
+    how: 'Se calcula automáticamente a partir de tus tanqueadas al primer corte registradas en la pestaña Grifo, convirtiendo tu rendimiento de galones a kilómetros por litro.',
+    why: 'Es la base matemática real con la que la computadora proyecta cuántos galones y Soles exactos te costará llegar al destino.'
   },
   nav_safe_range_info: {
-    category: 'RESERVA TÁCTICA Y RETORNO',
-    title: 'Autonomía Segura y Verificador Ida/Vuelta',
-    how: 'Cruza los litros restantes en tu tanque de 14L con la distancia total hacia el destino y te confirma con un check (✓) si te alcanza para ir y regresar sin repostar.',
-    why: 'En rutas rurales o de sierra donde no hay grifos con Gasolina Premium garantizada, saber si tienes autonomía de retorno evita quedarte varado.'
+    category: 'RADAR DE AUTONOMÍA & RESERVA',
+    title: 'Autonomía Segura y Anillo de Alcance',
+    how: 'Resta los kilómetros que has rodado desde tu última tanqueada a la capacidad total de tu tanque de 14 Litros (3.70 galones) y dibuja en el mapa el radio de alcance real.',
+    why: 'Si el indicador está en verde ("Alcanza Ida y Vuelta ✓"), tienes combustible garantizado para ir al destino y regresar sin depender de grifos en ruta.'
   },
   nav_bot_range_info: {
-    category: 'CAPACIDAD RESTANTE DE TANQUE (14 L)',
-    title: 'Rango Alcanzable con Combustible Actual',
-    how: 'Descuenta automáticamente los kilómetros que has recorrido desde tu última tanqueada registrada en la pestaña Grifo respecto a la autonomía total de tus 3.70 galones.',
-    why: 'Actualiza el diámetro del Anillo Verde de Alcance Seguro sobre el mapa satelital.'
+    category: 'CAPACIDAD RESTANTE EN TANQUE (14 L)',
+    title: 'Rango Alcanzable y Nivel de Combustible (%)',
+    how: 'Muestra el porcentaje estimado de gasolina que queda físicamente dentro de los 14 litros del tanque junto con los kilómetros totales que puedes recorrer antes de quedar vacío.',
+    why: 'Evita rodar con menos del 15% de nivel ( ~2 litros ) de forma continua, ya que la bomba electrónica de inyección FI usa la propia gasolina para refrigerarse.'
   },
   nav_bot_eta_info: {
-    category: 'LOGÍSTICA DE TIEMPO Y PRESUPUESTO',
-    title: 'Distancia Restante, Hora de Llegada (ETA) y Costo',
-    how: 'Calcula los kilómetros y minutos que faltan por recorrer en carretera, suma esos minutos a tu reloj actual para darte la hora exacta de llegada (ETA) y calcula cuántos galones y Soles consumirás.',
-    why: 'Te permite planificar paradas antes de que anochezca en carretera y saber exactamente cuánto dinero representa ese viaje.'
+    category: 'PROYECCIÓN VIAL OSRM & PRESUPUESTO',
+    title: 'Distancia Restante, Tiempo (ETA) y Costo de Ruta',
+    how: 'Calcula por carretera real (OSRM) los kilómetros que faltan, suma los minutos a la hora actual para darte tu Hora Estimada de Llegada (ETA) y calcula cuántos galones y Soles consumirás.',
+    why: 'Te permite saber antes de arrancar si llegarás con luz de día y cuánto dinero exacto en Gasolina Premium representa ese viaje.'
   },
-  nav_bot_terrain_info: {
-    category: 'FACTOR DE EXIGENCIA TOPOGRÁFICA FI',
-    title: 'Ruta, Pendiente y Recargo de Inyección (+% FI)',
-    how: 'Analiza el desnivel entre tu punto de partida y la cima de la ruta: aplica 0% en costa plana, +10% en ascenso moderado (>700 msnm) y +18% en alta montaña (>2,300 msnm).',
-    why: 'Subir pendientes exige mayor apertura de mariposa (TPS) y marchas más cortas (3ra/4ta), incrementando el consumo real de combustible.'
+  nav_bot_topo_info: {
+    category: 'EXIGENCIA TOPOGRÁFICA E INYECCIÓN FI',
+    title: 'Tipo de Terreno, Altitud y Recargo de Mezcla',
+    how: 'Analiza el desnivel positivo entre tu punto de partida y la cima de la ruta: Plano (0%), Ascenso Moderado (+10% combustible) o Alta Montaña/Sierra (+18% combustible).',
+    why: 'Subir pendientes pronunciadas exige mayor apertura de mariposa (TPS) y carga de motor, incrementando el consumo real frente al manejo en costa plana.'
   },
   nav_bot_gps_info: {
-    category: 'GEODESIA Y TELEMETRÍA SATELITAL',
-    title: 'Coordenadas DMS (Grados, Minutos, Segundos) y Cima',
-    how: 'Muestra tu posición geodésica exacta en formato sexagesimal (Latitud Sur / Longitud Oeste) y la cota máxima (msnm) que alcanzarás en la ruta.',
-    why: 'Fundamental para ubicarte en zonas sin señal de telefonía móvil o compartir tu posición exacta en ruta.'
+    category: 'GEODESTA & TELEMETRÍA SATELITAL',
+    title: 'Coordenadas DMS, Estado GPS y Altitud de Cima',
+    how: 'Muestra tu posición exacta en Grados, Minutos y Segundos (Latitud Sur / Longitud Oeste), el estado del enlace satelital y los metros sobre el nivel del mar (msnm) del punto más alto.',
+    why: 'Indispensable para ubicarte en zonas rurales sin señal celular, compartir coordenadas de emergencia o verificar el techo altitudinal de la ruta.'
   },
-  obd_tank_info: {
-    category: 'NIVEL ESTIMADO DE TANQUE (14 LITROS)',
-    title: 'Porcentaje de Combustible Disponible (%)',
-    how: 'Calcula el porcentaje restante en tu tanque de 14L (3.70 gal) restando los kilómetros rodados desde tu último abastecimiento lleno.',
-    why: 'Cambia de color verde a ámbar (<35%) y rojo (<20%) para proteger la bomba sumergida de inyección FI contra el recalentamiento.'
-  },
-  obd_range_info: {
-    category: 'PROYECCIÓN DE AUTONOMÍA RESTANTE',
-    title: 'Rango Estimado de Rodaje (km)',
-    how: 'Multiplica el combustible restante estimado en tu tanque por tu rendimiento promedio real en km/gal.',
-    why: 'Te indica cuántos kilómetros reales puedes seguir rodando antes de buscar una estación de servicio.'
-  },
-  obd_odo_info: {
-    category: 'ODÓMETRO SINCRONIZADO ECU + APP',
-    title: 'Kilometraje Total y Distancia de Sesión (+Km)',
-    how: 'Suma en vivo cada metro recorrido durante tu ruta (medido por el sensor de velocidad ABS) a tu odómetro general. Al terminar de rodar, toca "🏁 +Km" para guardarlo.',
-    why: 'Mantiene tu semáforo de mantenimientos, desgaste de llantas y lavados actualizado automáticamente sin tener que digitar el kilometraje a mano.'
+  obd_tank_footer_info: {
+    category: 'TELEMETRÍA DE TANQUE EN TABLERO',
+    title: 'Nivel Estimado de Tanque (14 L) y Odómetro en Vivo',
+    how: 'Cruza tu odómetro actual más los kilómetros rodados en la sesión OBD2 con tu último llenado en grifo. El botón "🏁 +Km" inyecta los kilómetros del viaje directo al odómetro general.',
+    why: 'Mantiene sincronizado el desgaste de todos tus mantenimientos (aceite, cadena, llantas) con lo que ruedas en cada salida.'
   }
 };
 
