@@ -570,7 +570,7 @@
               <strong id="tco-spa-all">S/ 0.00</strong>
             </div>
             <div class="tco-item">
-              <span>🛞 Garaje: Llantas y Accesorios (<small id="pct-garage">0%</small>)</span>
+              <span>🛞 Neumáticos (Desgaste Operativo) (<small id="pct-garage">0%</small>)</span>
               <strong class="carib-txt" id="tco-garage-all">S/ 0.00</strong>
             </div>
             <div class="tco-item">
@@ -925,7 +925,8 @@
 
             <div class="mo-status-center-actions">
               <button type="button" id="btn-obd-rotate" class="mo-top-pill" title="Rotar Horizontal / Vertical">🔄 Horizontal</button>
-              <button type="button" id="btn-obd-ride-mode" class="mo-top-pill" title="Pantalla Completa">⛶ Timón</button>
+              <button type="button" id="btn-obd-ride-mode" class="mo-top-pill" title="Modo Timón Alto Contraste">⛶ Timón</button>
+              <button type="button" id="btn-obd-rec-toggle" class="mo-top-pill rec" title="Grabar Caja Negra de Telemetría">🔴 Grabar</button>
               <button type="button" id="btn-obd-sim" class="mo-top-pill" title="Simulación en vivo">Demo</button>
               <button type="button" id="btn-obd-connect" class="mo-top-pill connect">⚡ Conectar</button>
             </div>
@@ -950,6 +951,8 @@
                 <div class="obd-svg-dial-wrap">
                   <svg viewBox="0 0 120 100" class="obd-dial-svg">
                     <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="#142234" stroke-width="8" stroke-linecap="round"/>
+                    <!-- Zona Roja Dinámica según Asentamiento (5k / 6.5k / 8.5k RPM) -->
+                    <path id="obd-rpm-redzone-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="rgba(255, 69, 58, 0.28)" stroke-width="8" stroke-linecap="butt" pathLength="100" stroke-dasharray="50 100" stroke-dashoffset="-50"/>
                     <path id="obd-rpm-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--neon-lime)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
                   </svg>
                   <div class="obd-dial-center-txt">
@@ -1340,28 +1343,101 @@
             </div>
           </div>
 
-          <!-- ================= VISTA C: DIAGNÓSTICO CHECK ENGINE (DTC BAJAJ) ================= -->
-          <div id="obd-diag-panel" class="mo-stage-panel hidden">
-            <div class="obd-dtc-strip" style="height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:14px;">
-              <div>
+          <!-- ================= VISTA C: LABORATORIO DE DIAGNÓSTICO (DTC + TEST ELÉCTRICO 15S + CAJA NEGRA) ================= -->
+          <div id="obd-diag-panel" class="mo-stage-panel hidden" style="overflow-y:auto;">
+            <div class="obd-diag-master-grid">
+              
+              <!-- BLOQUE 1: TEST AUTOMÁTICO DE SALUD ELÉCTRICA 15 SEGUNDOS (BATERÍA 4Ah + CCA + ESTATOR) -->
+              <div class="obd-dtc-strip elec-test-card" id="elec-test-card">
+                <div class="obd-dtc-top">
+                  <div>
+                    <div class="title-with-info">
+                      <span class="section-title-sleek">⚡ TEST DE SALUD ELÉCTRICA (15 SEGUNDOS)</span>
+                      <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_elec_test_info">ⓘ</button>
+                    </div>
+                    <div id="elec-test-title" class="obd-dtc-status-txt" style="font-size:11.5px;margin-top:3px;">
+                      Audita Batería 12V 4Ah (Reposo), Caída en Arranque (CCA) y Estator Trifásico
+                    </div>
+                  </div>
+                  <button type="button" id="btn-start-elec-test" class="btn-action-sleek">⚡ Test 15s</button>
+                </div>
+
+                <div class="elec-test-metrics-3">
+                  <div class="et-metric-box">
+                    <span>1. REPOSO (KOEO)</span>
+                    <strong id="et-val-rest">-- V</strong>
+                    <small>Meta: >12.4V</small>
+                  </div>
+                  <div class="et-metric-box">
+                    <span>2. ARRANQUE (CCA)</span>
+                    <strong id="et-val-crank">-- V</strong>
+                    <small>Mínimo: >9.6V</small>
+                  </div>
+                  <div class="et-metric-box">
+                    <span>3. ESTATOR (4k RPM)</span>
+                    <strong id="et-val-charge">-- V</strong>
+                    <small>Óptimo: 13.6-14.5V</small>
+                  </div>
+                </div>
+
+                <div id="elec-test-detail" class="tele-tip-banner" style="margin-top:6px;padding:6px 9px;font-size:10px;">
+                  Abre contacto (o activa Demo) y presiona <strong>"⚡ Test 15s"</strong> para iniciar el diagnóstico guiado.
+                </div>
+              </div>
+
+              <!-- BLOQUE 2: GRABADOR DE CAJA NEGRA (BLACKBOX TELEMETRY LOGGER) -->
+              <div class="obd-dtc-strip blackbox-card">
+                <div class="obd-dtc-top">
+                  <div>
+                    <div class="title-with-info">
+                      <span class="section-title-sleek">🔴 CAJA NEGRA DE TELEMETRÍA (GPS + 14 SENSORES ECU)</span>
+                      <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_blackbox_info">ⓘ</button>
+                    </div>
+                    <div id="bb-status-summary" class="obd-dtc-status-txt" style="font-size:11px;margin-top:3px;color:var(--alloy-silver);">
+                      Listo para grabar trazado satelital y parámetros del motor cada 2.5s
+                    </div>
+                  </div>
+                  <div class="obd-btn-group">
+                    <button type="button" id="btn-bb-toggle-diag" class="btn-action-sleek">🔴 Grabar Ruta</button>
+                    <button type="button" id="btn-bb-export-gpx" class="btn-quick-done">🗺️ .GPX</button>
+                    <button type="button" id="btn-bb-export-csv" class="btn-quick-done">📊 .CSV</button>
+                  </div>
+                </div>
+
+                <div class="elec-test-metrics-3" style="margin-top:6px;">
+                  <div class="et-metric-box">
+                    <span>MUESTRAS GRABADAS</span>
+                    <strong id="bb-val-points">0 pts</strong>
+                  </div>
+                  <div class="et-metric-box">
+                    <span>TEMP. PICO RUTA</span>
+                    <strong id="bb-val-maxtemp">-- °C</strong>
+                  </div>
+                  <div class="et-metric-box">
+                    <span>VEL. / RPM PICO</span>
+                    <strong id="bb-val-peaks">0 km/h • 0 RPM</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- BLOQUE 3: ESCÁNER DE FALLAS CHECK ENGINE (MODOS 03 Y 04) -->
+              <div class="obd-dtc-strip">
                 <div class="obd-dtc-top">
                   <div>
                     <div class="title-with-info">
                       <span class="section-title-sleek">🔍 ESCÁNER DE FALLAS CHECK ENGINE (MODOS 03 Y 04)</span>
                       <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_dtc_info">ⓘ</button>
                     </div>
-                    <div id="obd-dtc-summary" class="obd-dtc-status-txt" style="font-size:13px;margin-top:6px;">✅ 0 Códigos de falla detectados en la ECU Bosch/Bajaj</div>
+                    <div id="obd-dtc-summary" class="obd-dtc-status-txt" style="font-size:11.5px;margin-top:4px;">✅ 0 Códigos de falla detectados en la ECU Bosch/Bajaj</div>
                   </div>
                   <div class="obd-btn-group">
                     <button type="button" id="btn-obd-scan-dtc" class="btn-action-sleek">🔍 Escanear ECU</button>
                     <button type="button" id="btn-obd-clear-dtc" class="btn-del-log hidden">🧹 Borrar Check Engine</button>
                   </div>
                 </div>
-                <div id="obd-dtc-list" class="obd-dtc-list hidden" style="margin-top:12px;"></div>
+                <div id="obd-dtc-list" class="obd-dtc-list hidden" style="margin-top:8px;"></div>
               </div>
-              <div class="tele-tip-banner" style="margin-top:14px;">
-                Conecta tu escáner <strong>KONNWEI KW901</strong> con el contacto de la Pulsar N160 abierto para leer y borrar códigos de falla almacenados en la memoria EEPROM de la ECU.
-              </div>
+
             </div>
           </div>
 

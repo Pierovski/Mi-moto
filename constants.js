@@ -178,10 +178,10 @@ export const TECHNICAL_GUIDES = {
     why: 'El torque máximo de tu N160 se entrega a las 6,750 RPM (14.65 Nm) y la potencia máxima a las 8,750 RPM (15.78 HP). Pasar de 8,800 RPM no da más empuje y desgasta el tren alternativo.'
   },
   obd_temp_info: {
-    category: 'TERMOMETRÍA DEL MOTOR (PID 0105)',
-    title: 'Temperatura Exacta de Motor y Aceite (°C)',
-    how: 'Menos de 45 °C: Motor frío (no acelerar fuerte). Entre 65 °C y 95 °C: Rango térmico óptimo de trabajo. Más de 105 °C: Alerta de sobrecalentamiento.',
-    why: 'El tablero original de la N160 no tiene medidor de temperatura en grados, solo un icono que prende cuando ya está hirviendo. Con este dato sabes el segundo exacto en que el aceite 20W-50 ya lubricó toda la culata.'
+    category: 'TERMOMETRÍA DE ACEITE Y CULATA (PID 0105)',
+    title: 'Temperatura Exacta EOT (°C) - Refrigeración Aire/Aceite',
+    how: 'Menos de 45 °C: Motor frío (no acelerar fuerte). Entre 65 °C y 110 °C: Rango térmico normal en motor refrigerado por aire y radiador de aceite. Más de 115 °C: Alerta de sobrecalentamiento.',
+    why: 'A diferencia de una moto refrigerada por líquido (que prende ventilador a 98 °C), el sensor EOT de la N160 mide la temperatura del aceite 20W-50 en el bloque, donde trabajar entre 95 °C y 110 °C en ruta o subida es completamente normal.'
   },
   obd_volt_info: {
     category: 'SISTEMA DE CARGA 12V (COMANDO ATRV)',
@@ -302,6 +302,18 @@ export const TECHNICAL_GUIDES = {
     title: 'Nivel Estimado de Tanque (14 L) y Odómetro en Vivo',
     how: 'Cruza tu odómetro actual más los kilómetros rodados en la sesión OBD2 con tu último llenado en grifo. El botón "🏁 +Km" inyecta los kilómetros del viaje directo al odómetro general.',
     why: 'Mantiene sincronizado el desgaste de todos tus mantenimientos (aceite, cadena, llantas) con lo que ruedas en cada salida.'
+  },
+  obd_elec_test_info: {
+    category: 'DIAGNÓSTICO ELÉCTRICO 3 ETAPAS (15 SEGUNDOS)',
+    title: 'Test de Batería 4Ah, Caída de Arranque (CCA) y Estator',
+    how: 'Con el contacto abierto (motor apagado) toca "⚡ Test Eléctrico 15s". Durante los primeros 3s mide el reposo; luego arranca la moto cuando te lo indique para capturar la caída de tensión (Cranking Drop) y finalmente acelera a 3,500-4,000 RPM para auditar el regulador/estator.',
+    why: 'Una batería 4Ah saludable no debe caer de 9.8V en el milisegundo del chispazo de arranque, y el estator trifásico debe entregar entre 13.6V y 14.5V sin exceder 14.8V.'
+  },
+  obd_blackbox_info: {
+    category: 'CAJA NEGRA DE TELEMETRÍA (BLACKBOX RECORDER)',
+    title: 'Grabador de Ruta + Sensores ECU (.GPX y .CSV)',
+    how: 'Toca "🔴 Grabar Ruta" antes de rodar. Captura cada 3 segundos tu coordenada GPS, altitud msnm, RPM, velocidad real, temperatura EOT, voltaje 12V, apertura TPS, carga de motor y sonda O2. Al terminar, exporta tu archivo .GPX o .CSV.',
+    why: 'Permite auditar en qué subida o curva calentó más el motor, dónde exigiste más el acelerador TPS y revivir el trazado satelital con telemetría completa.'
   }
 };
 

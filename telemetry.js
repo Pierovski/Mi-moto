@@ -503,10 +503,8 @@ export function computeMasterFinancials(period = 'all') {
   const bikePrice = Number(appState.bikePurchasePrice) || 0;
   const capexTotal = bikePrice + modsCost;
 
-  const modsInPeriod = (appState.accessories || [])
-    .filter((m) => filterFn(m.date))
-    .reduce((s, m) => s + (Number(m.cost) || 0), 0);
-  const allGarage = allTires + (period === 'all' ? modsCost : modsInPeriod);
+  // En OPEX Operativo solo entran consumibles de desgaste (Llantas), mientras que los Accesorios pertenecen exclusivamente a CAPEX
+  const allGarage = allTires;
 
   const soatCost =
     period === 'all' || filterFn(appState.docs?.soatExp)

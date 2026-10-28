@@ -1878,6 +1878,20 @@ export function renderObdLiveUI(data) {
   const isBreakin2k = appState.currentKm >= 1000 && appState.currentKm < 2000;
   const shiftLimit = isBreakin1k ? 5000 : (isBreakin2k ? 6500 : 8500);
 
+  // Actualiza físicamente el arco de Zona Roja en el tacómetro según etapa de asentamiento (50%, 65% u 85%)
+  const redzoneArc = document.getElementById('obd-rpm-redzone-arc');
+  if (redzoneArc) {
+    const startPct = Math.round((shiftLimit / 10000) * 100);
+    const zoneLen = 100 - startPct;
+    redzoneArc.setAttribute('stroke-dasharray', `${zoneLen} 100`);
+    redzoneArc.setAttribute('stroke-dashoffset', `-${startPct}`);
+  }
+
+  // Resplandor dinámico al entrar en zona de torque máximo (6,000 - 8,500 RPM)
+  if (rpmArc) {
+    rpmArc.classList.toggle('torque-glow', rpm >= 6000 && rpm < shiftLimit);
+  }
+
   const guardPill = document.getElementById('obd-breakin-guard');
   if (rpm >= shiftLimit) {
     card.classList.add('obd-shift-alert');
@@ -1906,19 +1920,23 @@ export function renderObdLiveUI(data) {
   const barTemp = document.getElementById('obd-bar-temp');
   tempEl.innerHTML = `${tempC} <small>°C</small>`;
 
-  const tempPct = Math.max(5, Math.min(100, Math.round(((tempC - 20) / 95) * 100)));
+  const tempPct = Math.max(5, Math.min(100, Math.round(((tempC - 20) / 105) * 100)));
   if (barTemp) barTemp.style.width = `${tempPct}%`;
 
   if (tempC < 45) {
     tempSub.textContent = '❄️ Frío (Calentar)';
     tempEl.style.color = 'var(--caribbean-bright)';
     if (barTemp) barTemp.style.backgroundColor = 'var(--caribbean-bright)';
-  } else if (tempC <= 95) {
-    tempSub.textContent = '✅ Operativa normal';
+  } else if (tempC <= 110) {
+    tempSub.textContent = '✅ Aceite/Culata OK';
     tempEl.style.color = 'var(--neon-lime)';
     if (barTemp) barTemp.style.backgroundColor = 'var(--neon-lime)';
+  } else if (tempC <= 115) {
+    tempSub.textContent = '⚠️ Exigencia Alta';
+    tempEl.style.color = 'var(--amber-warn)';
+    if (barTemp) barTemp.style.backgroundColor = 'var(--amber-warn)';
   } else {
-    tempSub.textContent = '🔥 Alerta térmica';
+    tempSub.textContent = '🔥 Alerta EOT >115°C';
     tempEl.style.color = 'var(--red-danger)';
     if (barTemp) barTemp.style.backgroundColor = 'var(--red-danger)';
   }
@@ -2021,5 +2039,67 @@ export function renderObdLiveUI(data) {
         return `<div class="obd-dtc-item"><span class="obd-dtc-code">${escapeHTML(code)}</span><span style="color:#FFFFFF;flex:1;">${escapeHTML(desc)}</span></div>`;
       })
       .join('');
+  }
+
+  // NIVEL 6: Actualizar UI del Test Eléctrico de 15 Segundos
+  if (data.elecTest) {
+    const et = data.elecTest;
+    const btnStartEt = document.getElementById('btn-start-elec-test');
+    const etTitle = document.getElementById('elec-test-title');
+    const etDetail = document.getElementById('elec-test-detail');
+    const etRest = document.getElementById('et-val-rest');
+    const etCrank = document.getElementById('et-val-crank');
+    const etCharge = document.getElementById('et-val-charge');
+
+    if (btnStartEt) {
+      btnStartEt.textContent = et.active ? `⏳ ${et.remainingSec}s...` : '⚡ Test 15s';
+      btnStartEt.disabled = et.active;
+    }
+    if (etRest) etRest.textContent = et.restingVolt > 0 ? `${et.restingVolt.toFixed(2)} V` : '-- V';
+    if (etCrank) etCrank.textContent = et.crankingMinVolt < 90 ? `${et.crankingMinVolt.toFixed(2)} V` : '-- V';
+    if (etCharge) etCharge.textContent = et.chargingAvgVolt > 0 ? `${et.chargingAvgVolt.toFixed(2)} V` : '-- V';
+
+    if (etTitle && et.verdictTitle) {
+      etTitle.textContent = et.verdictTitle;
+      etTitle.style.color =
+        et.verdictStatus === 'danger'
+          ? 'var(--red-danger)'
+          : et.verdictStatus === 'warn'
+          ? 'var(--amber-warn)'
+          : 'var(--neon-lime)';
+    }
+    if (etDetail && et.verdictDetail) {
+      etDetail.textContent = et.verdictDetail;
+    }
+  }
+
+  // NIVEL 7: Actualizar UI de Caja Negra (BlackBox Recorder)
+  if (data.blackbox) {
+    const bb = data.blackbox;
+    const topRecBtn = document.getElementById('btn-obd-rec-toggle');
+    const diagRecBtn = document.getElementById('btn-bb-toggle-diag');
+    const bbSummary = document.getElementById('bb-status-summary');
+    const bbPts = document.getElementById('bb-val-points');
+    const bbTemp = document.getElementById('bb-val-maxtemp');
+    const bbPeaks = document.getElementById('bb-val-peaks');
+
+    if (topRecBtn) {
+      topRecBtn.textContent = bb.recording ? `⏹ REC (${bb.points.length})` : '🔴 Grabar';
+      topRecBtn.classList.toggle('recording-active', bb.recording);
+    }
+    if (diagRecBtn) {
+      diagRecBtn.textContent = bb.recording ? '⏹ Detener Grabación' : '🔴 Grabar Ruta';
+    }
+    if (bbSummary) {
+      bbSummary.textContent = bb.recording
+        ? `🔴 GRABANDO EN VIVO: ${bb.points.length} puntos capturados (GPS + 14 sensores ECU)`
+        : bb.points.length > 0
+        ? `✅ Sesión lista (${bb.points.length} puntos). Descarga tu ruta en .GPX o .CSV`
+        : 'Listo para grabar trazado satelital y parámetros del motor cada 2.5s';
+      bbSummary.style.color = bb.recording ? 'var(--red-danger)' : 'var(--neon-lime)';
+    }
+    if (bbPts) bbPts.textContent = `${bb.points.length} pts`;
+    if (bbTemp) bbTemp.textContent = bb.maxTempC > 0 ? `${bb.maxTempC} °C` : '-- °C';
+    if (bbPeaks) bbPeaks.textContent = `${bb.maxSpeed} km/h • ${bb.maxRpm} RPM`;
   }
 }

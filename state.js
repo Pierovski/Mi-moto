@@ -1,6 +1,9 @@
 import { getCurrentUser, pushStateToCloud } from './firebase.js';
 import { STORAGE_KEY, CURRENT_SCHEMA_VERSION, DEFAULT_TIRES } from './constants.js';
 
+const LOGO_STORAGE_KEY = 'mi_moto_n160_media_logo_v1';
+const PHOTO_STORAGE_KEY = 'mi_moto_n160_media_photo_v1';
+
 // Instancia única global de AudioContext (Evita saturar el límite de hardware móvil)
 let sharedAudioCtx = null;
 
@@ -259,6 +262,9 @@ export function migrateAndNormalizeState(raw) {
     fuelType: 'Premium'
   }));
 
+  const storedLogo = localStorage.getItem(LOGO_STORAGE_KEY) || '';
+  const storedPhoto = localStorage.getItem(PHOTO_STORAGE_KEY) || '';
+
   const merged = {
     ...base,
     ...raw,
@@ -274,6 +280,8 @@ export function migrateAndNormalizeState(raw) {
     lastWashKm: Number(raw.lastWashKm) || 0,
     lastWashDate: raw.lastWashDate || '',
     firstUseDate: raw.firstUseDate || getLocalISODate(),
+    logoBase64: raw.logoBase64 || storedLogo,
+    bikePhotoBase64: raw.bikePhotoBase64 || storedPhoto,
     checklistState: Array.isArray(raw.checklistState) ? raw.checklistState : [false, false, false, false, false],
     docs: {
       ...base.docs,
@@ -313,7 +321,7 @@ export function loadState() {
       appState = migrateAndNormalizeState(parsed);
       recalculateServiceKmFromLogs();
       recalculateWashFromLogs();
-      saveState();
+      saveState(false);
     } catch (e) {
       console.error('Error al cargar estado:', e);
     }
@@ -322,15 +330,27 @@ export function loadState() {
 
 let autoSyncTimer = null;
 
-export function saveState() {
+// Separa las imágenes pesadas en llaves propias de almacenamiento local para que el JSON operativo sea ultraligero
+export function saveState(triggerCloud = true) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    if (appState.logoBase64) {
+      localStorage.setItem(LOGO_STORAGE_KEY, appState.logoBase64);
+    }
+    if (appState.bikePhotoBase64) {
+      localStorage.setItem(PHOTO_STORAGE_KEY, appState.bikePhotoBase64);
+    }
+    const slimState = {
+      ...appState,
+      logoBase64: '',
+      bikePhotoBase64: ''
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(slimState));
   } catch (e) {
     console.error('Error guardando estado local:', e);
   }
 
-  // Auto-guardado silencioso en la nube (Debounce de 2.5 segundos)
-  if (getCurrentUser() && navigator.onLine) {
+  // Auto-guardado silencioso en la nube (Debounce de 2.5 segundos, sin re-subir megabytes de fotos Base64 en cada cambio menor)
+  if (triggerCloud && getCurrentUser() && navigator.onLine) {
     if (autoSyncTimer) clearTimeout(autoSyncTimer);
     window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'syncing' }));
 

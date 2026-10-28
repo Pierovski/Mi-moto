@@ -66,7 +66,11 @@ import {
   clearEcuDtcCodes,
   startSimulatorMode,
   stopEcuTelemetry,
-  resetSessionDistance
+  resetSessionDistance,
+  startElectricalHealthTest,
+  toggleBlackboxRecording,
+  exportBlackboxFile,
+  registerGpsProviderForBlackbox
 } from './obd.js';
 
 let editingLogId = null;
@@ -597,6 +601,49 @@ function setupEventListeners() {
       }
     });
   }
+
+  // Proveedor de coordenadas GPS en vivo para la Caja Negra (BlackBox Recorder)
+  registerGpsProviderForBlackbox(() => {
+    const r = uiConfig.customRoute || ROUTE_PRESETS[0];
+    return {
+      lat: uiConfig.liveGpsLat ?? r.lat ?? -8.1116,
+      lon: uiConfig.liveGpsLon ?? r.lon ?? -79.0287,
+      alt: uiConfig.liveGpsAlt ?? liveEcuData.estimatedAltM ?? 34
+    };
+  });
+
+  // Botón de Test Automático de Salud Eléctrica (15 Segundos)
+  const btnStartElecTest = document.getElementById('btn-start-elec-test');
+  if (btnStartElecTest) {
+    btnStartElecTest.addEventListener('click', () => {
+      startElectricalHealthTest(renderObdLiveUI, (msg) => showToast(msg));
+    });
+  }
+
+  // Botones de Grabación y Exportación de Caja Negra (BlackBox .GPX y .CSV)
+  const handleBlackboxToggle = () => {
+    toggleBlackboxRecording(renderObdLiveUI, (msg) => showToast(msg));
+  };
+  document.getElementById('btn-obd-rec-toggle')?.addEventListener('click', handleBlackboxToggle);
+  document.getElementById('btn-bb-toggle-diag')?.addEventListener('click', handleBlackboxToggle);
+
+  document.getElementById('btn-bb-export-gpx')?.addEventListener('click', () => {
+    if (!exportBlackboxFile('gpx')) {
+      showToast('⚠️ Primero graba una sesión con "🔴 Grabar Ruta"');
+    } else {
+      triggerHaptic(15);
+      showToast('🗺️ Ruta .GPX descargada con telemetría ECU');
+    }
+  });
+
+  document.getElementById('btn-bb-export-csv')?.addEventListener('click', () => {
+    if (!exportBlackboxFile('csv')) {
+      showToast('⚠️ Primero graba una sesión con "🔴 Grabar Ruta"');
+    } else {
+      triggerHaptic(15);
+      showToast('📊 Telemetría .CSV descargada');
+    }
+  });
 
   const btnScanDtc = document.getElementById('btn-obd-scan-dtc');
   if (btnScanDtc) {
