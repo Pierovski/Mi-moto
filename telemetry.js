@@ -53,6 +53,85 @@ export function computeMaintMemoryMap() {
   return memoryMap;
 }
 
+// Auditoría Predictiva del Kit de Arrastre (Detecta estiramiento prematuro de cadena 428 O-Ring)
+export function computeChainHealth() {
+  const chainLogs = appState.logs
+    .filter((l) => l.typeId === 'chain_lube')
+    .sort((a, b) => Number(a.km) - Number(b.km) || a.id - b.id);
+
+  let lastKitReplaceKm = Number(appState.initialKm) || 0;
+  chainLogs.forEach((l) => {
+    if (l.chainAction === 'kit_replace') {
+      lastKitReplaceKm = Number(l.km) || lastKitReplaceKm;
+    }
+  });
+
+  const logsSinceReplace = chainLogs.filter((l) => Number(l.km) >= lastKitReplaceKm);
+  const tensionLogs = logsSinceReplace.filter((l) => l.chainAction === 'lube_and_tension');
+
+  let stretchWarning = false;
+  let stretchSpanKm = 0;
+
+  if (tensionLogs.length >= 3) {
+    const last3 = tensionLogs.slice(-3);
+    stretchSpanKm = Math.max(0, Number(last3[2].km) - Number(last3[0].km));
+    if (stretchSpanKm > 0 && stretchSpanKm <= 2500) {
+      stretchWarning = true;
+    }
+  }
+
+  return {
+    totalServices: logsSinceReplace.length,
+    tensionCount: tensionLogs.length,
+    lastKitReplaceKm,
+    kmOnCurrentKit: Math.max(0, Number(appState.currentKm) - lastKitReplaceKm),
+    stretchWarning,
+    stretchSpanKm
+  };
+}
+
+// Cálculo Físico de Desgaste de Neumático por Milímetro de Cocada (Límite legal TWI = 1.6 mm)
+export function computeTireTreadWear(tire, posKey = 'front') {
+  const defaultNewMm = posKey === 'front' ? 4.8 : 6.0;
+  const twiLimitMm = 1.6;
+  const currentMm = tire && tire.treadMm !== null && tire.treadMm !== '' && !isNaN(Number(tire.treadMm))
+    ? Number(tire.treadMm)
+    : null;
+
+  if (currentMm === null || currentMm <= 0) {
+    return { hasMeasurement: false };
+  }
+
+  const installKm = Number(tire.installKm) || 0;
+  const kmRodados = Math.max(0, Number(appState.currentKm) - installKm);
+  const usableTotalMm = Math.max(1.0, defaultNewMm - twiLimitMm);
+  const remainingUsableMm = Math.max(0, currentMm - twiLimitMm);
+  const wornMm = Math.max(0, defaultNewMm - currentMm);
+
+  const wearRatio = Math.min(1, Math.max(0, 1 - (remainingUsableMm / usableTotalMm)));
+  const lifeRemainingPct = Math.round((1 - wearRatio) * 100);
+
+  let kmPerMm = 0;
+  let projectedRemainingKm = null;
+
+  if (kmRodados >= 300 && wornMm >= 0.25) {
+    kmPerMm = Math.round(kmRodados / wornMm);
+    projectedRemainingKm = Math.round(remainingUsableMm * kmPerMm);
+  }
+
+  return {
+    hasMeasurement: true,
+    currentMm,
+    twiLimitMm,
+    remainingUsableMm: Number(remainingUsableMm.toFixed(1)),
+    wearRatio,
+    lifeRemainingPct,
+    kmPerMm,
+    projectedRemainingKm,
+    isBelowTwi: currentMm <= twiLimitMm
+  };
+}
+
 export function getLastFuelPriceRecord(excludeId = null) {
   const withPrice = [...appState.fuelLogs]
     .filter((f) => Number(f.priceGal) > 0 && String(f.id) !== String(excludeId))
@@ -498,12 +577,10 @@ export function computeMasterFinancials(period = 'all') {
       : 0;
   const allTires = frontCost + rearCost + histTireCost;
 
-  // El Patrimonio Físico (CAPEX) siempre muestra el valor total de tu activo
   const modsCost = (appState.accessories || []).reduce((s, m) => s + (Number(m.cost) || 0), 0);
   const bikePrice = Number(appState.bikePurchasePrice) || 0;
   const capexTotal = bikePrice + modsCost;
 
-  // En OPEX Operativo solo entran consumibles de desgaste (Llantas), mientras que los Accesorios pertenecen exclusivamente a CAPEX
   const allGarage = allTires;
 
   const soatCost =
@@ -589,7 +666,6 @@ export function computeMasterFinancials(period = 'all') {
   };
 }
 
-// Abre directamente Google Calendar con el evento pre-cargado (Sin descargar archivos .ics)
 export function openGoogleCalendarEvent({ title, description, dateStr }) {
   let targetDate = dateStr;
   if (!targetDate) {
@@ -613,7 +689,7 @@ export function openGoogleCalendarEvent({ title, description, dateStr }) {
 
   window.open(gcalUrl, '_blank', 'noopener,noreferrer');
 }
-// Genera y descarga un reporte Excel (.csv) con todos los gastos e inversiones según el periodo activo
+
 export function exportFinancialsToCSV(period = 'all') {
   const filterFn = (dateStr) => (period === 'all' ? true : isWithinPeriod(dateStr, period));
   const rows = [
@@ -716,7 +792,6 @@ export function exportFinancialsToCSV(period = 'all') {
     return `"${str}"`;
   };
 
-  // Usamos punto y coma (;) y BOM UTF-8 (\uFEFF) para que Excel en español separe las columnas automáticamente
   const csvContent = '\uFEFF' + rows.map((r) => r.map(escapeCsvCell).join(';')).join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

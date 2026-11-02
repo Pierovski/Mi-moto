@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mi-moto-n160-cache-v17.0';
+const CACHE_NAME = 'mi-moto-n160-cache-v18.0';
 const MAP_TILES_CACHE = 'mi-moto-n160-maptiles-v1';
 const MAX_MAP_TILES = 120;
 

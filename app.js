@@ -42,6 +42,7 @@ import {
   executeConfirmCallback,
   openInfoGuide,
   closeInfoGuide,
+  openSosModal,
   renderImages,
   checkDocsStatusUI,
   renderGarageSection,
@@ -70,12 +71,15 @@ import {
   startElectricalHealthTest,
   toggleBlackboxRecording,
   exportBlackboxFile,
-  registerGpsProviderForBlackbox
+  registerGpsProviderForBlackbox,
+  updateAltitudeDeltaCheck,
+  acknowledgeMapReset
 } from './obd.js';
 
 let editingLogId = null;
 let selectedServiceType = 'breakin_500';
 let selectedServiceTitle = '1er Servicio (500 km - Aceite + Filtro)';
+let selectedChainAction = 'lube_only';
 
 let editingFuelId = null;
 let selectedFullTank = true;
@@ -111,6 +115,16 @@ function applyBikeTheme(themeName = 'blue') {
     btn.classList.toggle('selected', btn.getAttribute('data-theme') === normalized);
   });
 }
+
+function applySunlightMode(enabled) {
+  appState.sunlightMode = Boolean(enabled);
+  document.body.setAttribute('data-sunlight', appState.sunlightMode ? 'true' : 'false');
+  const topBtn = document.getElementById('btn-toggle-sunlight');
+  const obdBtn = document.getElementById('btn-obd-sunlight');
+  if (topBtn) topBtn.classList.toggle('sun-active', appState.sunlightMode);
+  if (obdBtn) obdBtn.textContent = appState.sunlightMode ? '🌙 Oscuro' : '☀️ Sol';
+}
+
 
 function updateHeaderCloudIndicator(status = 'idle') {
   const pill = document.getElementById('cloud-live-indicator');
@@ -164,7 +178,7 @@ async function exitEcuLandscapeIfNeeded() {
   const rideBtn = document.getElementById('btn-obd-ride-mode');
   if (rideBtn) rideBtn.textContent = '⛶ Timón';
   const rotBtn = document.getElementById('btn-obd-rotate');
-  if (rotBtn) rotBtn.textContent = '🔄 Horizontal';
+  if (rotBtn) rotBtn.textContent = '🔄 Giro';
 
   try {
     if (screen.orientation && screen.orientation.unlock) {
@@ -179,7 +193,7 @@ async function exitEcuLandscapeIfNeeded() {
 function switchMainTab(tabId) {
   if (tabId === 'tab-ecu') {
     document.body.classList.add('ecu-tab-active');
-    renderObdLiveUI(liveEcuData);
+    renderObdLiveUI(liveEcuData, true);
     setTimeout(() => {
       renderTacticalMapUI(liveEcuData, true);
     }, 100);
@@ -187,7 +201,8 @@ function switchMainTab(tabId) {
     exitEcuLandscapeIfNeeded();
   }
   document.querySelectorAll('.tab-btn').forEach((b) => {
-    b.classList.toggle('active', b.getAttribute('data-tab') === tabId);
+    const isTarget = b.getAttribute('data-tab') === tabId || (tabId === 'tab-specs' && b.getAttribute('data-tab') === 'tab-maint');
+    b.classList.toggle('active', isTarget);
   });
   document.querySelectorAll('.tab-content').forEach((c) => {
     c.classList.toggle('hidden', c.id !== tabId);
@@ -212,7 +227,14 @@ function showMainScreen() {
   renderAllMain(true);
 }
 
-// ================= MODALES DE TALLER (CREAR Y EDITAR) =================
+// ================= MODALES DE TALLER (CON AUDITORÍA DE CADENA O-RING) =================
+function selectChainActionPill(actionVal) {
+  selectedChainAction = actionVal || 'lube_only';
+  document.querySelectorAll('#chain-action-picker .compound-pill').forEach((p) => {
+    p.classList.toggle('selected', p.getAttribute('data-chainact') === selectedChainAction);
+  });
+}
+
 function selectServiceInModal(serviceId) {
   document.querySelectorAll('#custom-service-picker .service-option').forEach((c) => {
     if (c.getAttribute('data-value') === serviceId) {
@@ -223,6 +245,11 @@ function selectServiceInModal(serviceId) {
       c.classList.remove('selected');
     }
   });
+
+  const chainWrap = document.getElementById('chain-action-picker-wrap');
+  if (chainWrap) {
+    chainWrap.classList.toggle('hidden', selectedServiceType !== 'chain_lube');
+  }
   updateMaintMemoryBanner();
 }
 
@@ -278,6 +305,7 @@ function openLogModal(preselectSrvId = null, editItem = null) {
     document.getElementById('log-date').value = editItem.date || getLocalISODate();
     if (workshopInput) workshopInput.value = editItem.workshop || '';
     document.getElementById('log-notes').value = editItem.notes || '';
+    selectChainActionPill(editItem.chainAction || 'lube_only');
     selectServiceInModal(editItem.typeId || 'other');
   } else {
     document.getElementById('log-parts-cost').value = '';
@@ -287,6 +315,7 @@ function openLogModal(preselectSrvId = null, editItem = null) {
     document.getElementById('log-date').value = getLocalISODate();
     if (workshopInput) workshopInput.value = '';
     document.getElementById('log-notes').value = '';
+    selectChainActionPill('lube_only');
     selectServiceInModal(preselectSrvId || selectedServiceType);
   }
 
@@ -480,6 +509,7 @@ function openExpenseModal(editItem = null) {
 function syncTireModalFields() {
   const curr = appState.tires[editingTirePos] || DEFAULT_TIRES[editingTirePos];
   const memBanner = document.getElementById('tire-memory-banner');
+  const treadInput = document.getElementById('tire-tread-mm');
 
   if (selectedTireAction === 'replace') {
     document.getElementById('tire-brand').value = '';
@@ -487,6 +517,7 @@ function syncTireModalFields() {
     document.getElementById('tire-install-km').value = appState.currentKm;
     document.getElementById('tire-cost').value = '';
     document.getElementById('tire-dot').value = '';
+    if (treadInput) treadInput.value = editingTirePos === 'front' ? '4.8' : '6.0';
     document.getElementById('tire-date').value = getLocalISODate();
     memBanner.innerHTML = `<span>🔄 <strong>Montar Nueva:</strong> La llanta actual (${escapeHTML(curr.brand)}) pasará automáticamente al historial de llantas anteriores.</span>`;
   } else {
@@ -496,8 +527,9 @@ function syncTireModalFields() {
     document.getElementById('tire-life-km').value = curr.lifeKm || (editingTirePos === 'front' ? 18000 : 16000);
     document.getElementById('tire-cost').value = curr.cost > 0 ? curr.cost : '';
     document.getElementById('tire-dot').value = curr.dot || '';
+    if (treadInput) treadInput.value = curr.treadMm !== null && curr.treadMm !== undefined ? curr.treadMm : '';
     document.getElementById('tire-date').value = curr.date || getLocalISODate();
-    memBanner.innerHTML = `<span>✏️ <strong>Modo Edición:</strong> Actualiza la marca (ej. Timsun, Pirelli), el código DOT o corrige datos sin archivar la llanta actual.</span>`;
+    memBanner.innerHTML = `<span>✏️ <strong>Modo Edición:</strong> Si ingresas la <strong>Cocada Actual (mm)</strong>, la app calculará el desgaste real en km/mm hasta el límite TWI (1.6 mm).</span>`;
   }
 }
 
@@ -529,6 +561,7 @@ function setupEventListeners() {
   window.addEventListener('popstate', () => {
     const modalPriority = [
       'modal-confirm',
+      'modal-sos',
       'modal-info-guide',
       'modal-km',
       'modal-bike-price',
@@ -570,6 +603,75 @@ function setupEventListeners() {
     cloudHeaderPill.addEventListener('click', () => openModalById('modal-backup'));
   }
 
+  // Modo Alto Contraste Solar (Ruta a Mediodía)
+  const toggleSunlightHandler = () => {
+    applySunlightMode(!appState.sunlightMode);
+    saveState();
+    triggerHaptic(12);
+    showToast(appState.sunlightMode ? '☀️ Modo Sol (Alto Contraste) Activado' : '🌙 Modo Oscuro Apex Restaurado');
+  };
+  document.getElementById('btn-toggle-sunlight')?.addEventListener('click', toggleSunlightHandler);
+  document.getElementById('btn-obd-sunlight')?.addEventListener('click', toggleSunlightHandler);
+
+  // Acceso Rápido a Ficha Técnica & OEM desde Taller
+  document.getElementById('btn-open-specs-shortcut')?.addEventListener('click', () => {
+    switchMainTab('tab-specs');
+    triggerHaptic(10);
+  });
+  document.getElementById('btn-back-to-maint')?.addEventListener('click', () => {
+    switchMainTab('tab-maint');
+    triggerHaptic(10);
+  });
+
+  // Confirmación de reinicio barométrico del sensor MAP en Sierra
+  document.getElementById('btn-ack-map-reset')?.addEventListener('click', () => {
+    acknowledgeMapReset();
+    renderObdLiveUI(liveEcuData, true);
+    triggerHaptic(15);
+    showToast('✅ Sensor MAP recalibrado para tu altitud actual');
+  });
+
+  // Eventos de Ficha SOS en Ruta (WhatsApp + Copiar Coordenadas)
+  const handleOpenSos = () => {
+    openSosModal(liveEcuData);
+    triggerHaptic(20);
+  };
+  document.getElementById('btn-mo-open-sos')?.addEventListener('click', handleOpenSos);
+  document.getElementById('btn-map-quick-sos')?.addEventListener('click', handleOpenSos);
+  document.getElementById('btn-close-sos-x')?.addEventListener('click', () => closeModalById('modal-sos'));
+  document.getElementById('btn-close-sos-ok')?.addEventListener('click', () => closeModalById('modal-sos'));
+
+  document.getElementById('btn-sos-copy')?.addEventListener('click', () => {
+    const r = uiConfig.customRoute || ROUTE_PRESETS[0];
+    const lat = (uiConfig.liveGpsLat ?? r.lat ?? -8.1116).toFixed(6);
+    const lon = (uiConfig.liveGpsLon ?? r.lon ?? -79.0287).toFixed(6);
+    const text = `🆘 SOS Ruta Pulsar N160 FI (${appState.docs?.plate || 'S/P'}) - Coordenadas: ${lat}, ${lon} (https://maps.google.com/?q=${lat},${lon})`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => showToast('📋 Coordenadas SOS copiadas'));
+    } else {
+      showToast(`📍 ${lat}, ${lon}`);
+    }
+  });
+
+  document.getElementById('btn-sos-whatsapp')?.addEventListener('click', () => {
+    const r = uiConfig.customRoute || ROUTE_PRESETS[0];
+    const lat = (uiConfig.liveGpsLat ?? r.lat ?? -8.1116).toFixed(6);
+    const lon = (uiConfig.liveGpsLon ?? r.lon ?? -79.0287).toFixed(6);
+    const plate = appState.docs?.plate || 'Pulsar N160 FI';
+    const volt = liveEcuData.voltage > 0 ? `${liveEcuData.voltage.toFixed(1)}V` : 'S/D';
+    const msg =
+      `🆘 *REPORTE SOS EN RUTA - MI MOTO N160*\n` +
+      `🏍️ Unidad: ${plate} (${appState.currentKm.toLocaleString('es-PE')} km)\n` +
+      `📍 Ubicación GPS: ${lat}, ${lon}\n` +
+      `🗺️ Mapa: https://maps.google.com/?q=${lat},${lon}\n` +
+      `🔋 Estado ECU: Batería ${volt} | Temp ${liveEcuData.tempC || '--'}°C`;
+    const cleanPhone = String(appState.docs?.sosPhone || '').replace(/\D/g, '');
+    const waUrl = cleanPhone
+      ? `https://wa.me/51${cleanPhone.replace(/^51/, '')}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+  });
+
   // Eventos de Telemetría OBD2 en Vivo (Konnwei KW901 BLE + Simulador Demo)
   const btnObdConnect = document.getElementById('btn-obd-connect');
   if (btnObdConnect) {
@@ -589,7 +691,7 @@ function setupEventListeners() {
     });
   }
 
-    const btnObdSim = document.getElementById('btn-obd-sim');
+  const btnObdSim = document.getElementById('btn-obd-sim');
   if (btnObdSim) {
     btnObdSim.addEventListener('click', () => {
       if (liveEcuData.connected && liveEcuData.mode === 'sim') {
@@ -629,7 +731,7 @@ function setupEventListeners() {
 
   document.getElementById('btn-bb-export-gpx')?.addEventListener('click', () => {
     if (!exportBlackboxFile('gpx')) {
-      showToast('⚠️ Primero graba una sesión con "🔴 Grabar Ruta"');
+      showToast('⚠️ Primero graba una sesión con "🔴 REC"');
     } else {
       triggerHaptic(15);
       showToast('🗺️ Ruta .GPX descargada con telemetría ECU');
@@ -638,7 +740,7 @@ function setupEventListeners() {
 
   document.getElementById('btn-bb-export-csv')?.addEventListener('click', () => {
     if (!exportBlackboxFile('csv')) {
-      showToast('⚠️ Primero graba una sesión con "🔴 Grabar Ruta"');
+      showToast('⚠️ Primero graba una sesión con "🔴 REC"');
     } else {
       triggerHaptic(15);
       showToast('📊 Telemetría .CSV descargada');
@@ -668,7 +770,7 @@ function setupEventListeners() {
     });
   }
 
-  // Botón Rotación Horizontal Exclusiva para la Pestaña ECU (Estilo Tablet Machine Outdoors)
+  // Botón Rotación Horizontal Exclusiva para la Pestaña ECU
   const btnRotateEcu = document.getElementById('btn-obd-rotate');
   if (btnRotateEcu) {
     btnRotateEcu.addEventListener('click', async () => {
@@ -682,7 +784,7 @@ function setupEventListeners() {
           if (screen.orientation && screen.orientation.lock) {
             await screen.orientation.lock('landscape');
           }
-          btnRotateEcu.textContent = '🔄 Vertical';
+          btnRotateEcu.textContent = '🔄 Vert';
           showToast('🔄 Modo Horizontal ECU Activado');
         } else {
           if (screen.orientation && screen.orientation.unlock) {
@@ -691,16 +793,16 @@ function setupEventListeners() {
           if (document.fullscreenElement && document.exitFullscreen) {
             await document.exitFullscreen();
           }
-          btnRotateEcu.textContent = '🔄 Horizontal';
+          btnRotateEcu.textContent = '🔄 Giro';
           showToast('📱 Modo Vertical Restaurado');
         }
       } catch (err) {
-        showToast('💡 Gira tu Poco X7 Pro horizontalmente (activa Giro Automático)');
+        showToast('💡 Gira tu teléfono horizontalmente (activa Giro Automático)');
       }
     });
   }
 
-  // Selector de Vistas Machine Outdoors OS (Sidebar: TABLERO | MAPA | DIAGNÓSTICO | INICIO | AJUSTES)
+  // Selector de Vistas Machine Outdoors OS
   let hasLoadedInitialRoadRoute = false;
 
   function activateMachineOutdoorsSubView(view) {
@@ -744,13 +846,11 @@ function setupEventListeners() {
     });
   });
 
-  // Botón INICIO en el Sidebar de Machine Outdoors (Vuelve al Taller de Mi Moto)
   document.getElementById('btn-mo-exit-home')?.addEventListener('click', () => {
     switchMainTab('tab-maint');
     triggerHaptic(12);
   });
 
-  // Botón para minimizar/expandir la tarjeta flotante de Destino sobre el mapa
   document.getElementById('btn-toggle-dest-card')?.addEventListener('click', (e) => {
     const card = document.getElementById('mo-floating-dest-card');
     if (!card) return;
@@ -858,11 +958,7 @@ function setupEventListeners() {
     openModalById('modal-route-cfg');
   }
 
-  const btnOpenRouteCfg = document.getElementById('btn-open-route-cfg');
-  if (btnOpenRouteCfg) {
-    btnOpenRouteCfg.addEventListener('click', openRouteConfigModal);
-  }
-  document.getElementById('btn-mo-open-cfg')?.addEventListener('click', openRouteConfigModal);
+  document.getElementById('btn-open-route-cfg')?.addEventListener('click', openRouteConfigModal);
 
   const closeRouteCfg = () => closeModalById('modal-route-cfg');
   document.getElementById('btn-close-routecfg-x')?.addEventListener('click', closeRouteCfg);
@@ -916,7 +1012,7 @@ function setupEventListeners() {
     showToast(`🏁 Ruta "${name}" (${distKm} km) actualizada`);
   });
 
-  // Botón de GPS Satelital en Vivo (Coordenadas reales, Altitud msnm, Velocidad GPS y Re-trazado desde tu ubicación)
+  // Botón de GPS Satelital en Vivo (Con detección de ascenso para recalibración de sensor MAP)
   const btnToggleGps = document.getElementById('btn-toggle-gps');
   if (btnToggleGps) {
     btnToggleGps.addEventListener('click', () => {
@@ -928,8 +1024,8 @@ function setupEventListeners() {
         navigator.geolocation.clearWatch(uiConfig.gpsWatchId);
         uiConfig.gpsWatchId = null;
         btnToggleGps.classList.remove('active');
-        btnToggleGps.textContent = '🛰️ Mi GPS Vivo';
-        renderTacticalMapUI(liveEcuData);
+        btnToggleGps.textContent = '🛰️ GPS Vivo';
+        renderTacticalMapUI(liveEcuData, true);
         showToast('⏹ Rastreo GPS desactivado');
         return;
       }
@@ -945,6 +1041,7 @@ function setupEventListeners() {
           uiConfig.liveGpsLon = pos.coords.longitude;
           if (pos.coords.altitude !== null) {
             uiConfig.liveGpsAlt = pos.coords.altitude;
+            updateAltitudeDeltaCheck(pos.coords.altitude);
           }
           if (pos.coords.speed !== null && pos.coords.speed >= 0) {
             uiConfig.liveGpsSpeedKmh = pos.coords.speed * 3.6;
@@ -959,36 +1056,33 @@ function setupEventListeners() {
               region: currR.region
             });
           } else {
-            renderTacticalMapUI(liveEcuData);
+            renderTacticalMapUI(liveEcuData, true);
           }
         },
         () => {
-          showToast('⚠️ Activa la Ubicación de tu Poco X7 Pro para usar el GPS');
+          showToast('⚠️ Activa la Ubicación de tu teléfono para usar el GPS');
         },
         { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
       );
     });
   }
 
-  // Botón para alternar entre Imagen Satelital HD (Esri World Imagery) y Mapa de Calles
   const btnLayerToggle = document.getElementById('btn-map-layer-toggle');
   if (btnLayerToggle) {
     btnLayerToggle.addEventListener('click', () => {
       const isSat = toggleMapBaseLayer();
-      btnLayerToggle.textContent = isSat ? '🌍 Satélite HD' : '🗺️ Calles';
+      btnLayerToggle.textContent = isSat ? '🌍 Satélite' : '🗺️ Calles';
       triggerHaptic(10);
       showToast(isSat ? '🛰️ Vista Satelital HD Activada' : '🗺️ Vista de Calles Activada');
     });
   }
 
-  // Botón para alternar Orientación del Mapa: Destino Arriba (Adelante) vs Norte Arriba
   document.getElementById('btn-map-heading-mode')?.addEventListener('click', () => {
     const isCourseUp = toggleCourseUpMode();
     triggerHaptic(12);
-    showToast(isCourseUp ? '▲ Mapa: Destino Siempre Arriba (Adelante)' : '🧭 Mapa: Norte Fijo Arriba');
+    showToast(isCourseUp ? '▲ Ruta centrada en pantalla' : '🧭 Mapa actualizado');
   });
 
-  // Controles de Zoom, Centrar Ruta y Lanzador Directo de Navegación por Voz en Google Maps
   document.getElementById('btn-map-recenter')?.addEventListener('click', () => {
     recenterLeafletRoute();
     triggerHaptic(10);
@@ -1008,12 +1102,12 @@ function setupEventListeners() {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${destParam}&travelmode=driving`, '_blank', 'noopener,noreferrer');
   });
 
-  // Botón Modo Timón (100% Pantalla Completa Cero Scroll y Sin Barra Inferior)
+  // Botón Modo Timón (100% Pantalla Completa Cero Scroll y Botones Grandes)
   const btnRideMode = document.getElementById('btn-obd-ride-mode');
   if (btnRideMode) {
     btnRideMode.addEventListener('click', async () => {
       const isRide = document.body.classList.toggle('ecu-ride-mode');
-      btnRideMode.textContent = isRide ? '↙ Salir Timón' : '⛶ Timón';
+      btnRideMode.textContent = isRide ? '↙ Salir' : '⛶ Timón';
       try {
         if (isRide && document.documentElement.requestFullscreen && !document.fullscreenElement) {
           await document.documentElement.requestFullscreen();
@@ -1023,7 +1117,7 @@ function setupEventListeners() {
       } catch (e) {}
       refreshLeafletSize();
       triggerHaptic(12);
-      showToast(isRide ? '🏍️ Modo Timón 100% Pantalla (Sin Scroll)' : 'Vista estándar restaurada');
+      showToast(isRide ? '🏍️ Modo Timón Activo (Botones para Guantes)' : 'Vista estándar restaurada');
     });
   }
 
@@ -1050,7 +1144,7 @@ function setupEventListeners() {
           recalculateWashFromLogs();
           saveState();
           renderAllMain();
-          renderObdLiveUI(liveEcuData);
+          renderObdLiveUI(liveEcuData, true);
           triggerHaptic(20);
           showToast(`✅ Odómetro actualizado a ${targetKm.toLocaleString('es-PE')} km`);
         }
@@ -1067,7 +1161,6 @@ function setupEventListeners() {
       return;
     }
 
-    // Píldoras de Autocompletado Rápido (Grifos y Talleres)
     const pickFuelBtn = e.target.closest('[data-pick-fuel]');
     if (pickFuelBtn) {
       const val = pickFuelBtn.getAttribute('data-pick-fuel');
@@ -1094,7 +1187,6 @@ function setupEventListeners() {
       return;
     }
 
-    // Agendar Mantenimiento directo en Google Calendar
     const calMaintBtn = e.target.closest('[data-cal-maint]');
     if (calMaintBtn) {
       const title = calMaintBtn.getAttribute('data-cal-maint');
@@ -1326,7 +1418,6 @@ function setupEventListeners() {
   setupDrawer('btn-toggle-spa-logs', 'drawer-spa-logs', 'spa-saved-arrow');
   setupDrawer('btn-toggle-expense-logs', 'drawer-expense-logs', 'expense-saved-arrow');
 
-  // Buscadores Instantáneos en Bitácoras (Taller y Grifo)
   const maintSearchInp = document.getElementById('maint-search-input');
   if (maintSearchInp) {
     maintSearchInp.addEventListener('input', (e) => {
@@ -1343,7 +1434,6 @@ function setupEventListeners() {
     });
   }
 
-  // Botón de Modo Préstamo
   const loanToggleBtn = document.getElementById('btn-toggle-loan-mode');
   if (loanToggleBtn) {
     loanToggleBtn.addEventListener('click', () => {
@@ -1485,7 +1575,6 @@ function setupEventListeners() {
     showToast('Checklist reiniciado');
   });
 
-  // Selector de Periodo exclusivo de la Pestaña Grifo
   document.querySelectorAll('.period-btn[data-period]').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.period-btn[data-period]').forEach((b) => b.classList.remove('active'));
@@ -1495,7 +1584,6 @@ function setupEventListeners() {
     });
   });
 
-  // Filtro por Periodo en Pestaña Finanzas + Exportar Excel CSV
   document.querySelectorAll('#fin-period-picker .period-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#fin-period-picker .period-btn').forEach((b) => b.classList.remove('active'));
@@ -1533,7 +1621,7 @@ function setupEventListeners() {
     });
   });
 
-  // Modal Odómetro (Con soporte limpio para corregir hacia abajo con alerta)
+  // Modal Odómetro
   const inputNewKm = document.getElementById('input-new-km');
   const closeKm = () => closeModalById('modal-km');
 
@@ -1566,7 +1654,6 @@ function setupEventListeners() {
     };
 
     if (val < appState.currentKm) {
-      // Cierra modal-km sin llamar a history.back() para que no cierre el modal de confirmación
       closeModalById('modal-km', true);
       openCustomConfirm({
         title: '¿Corregir Odómetro hacia abajo?',
@@ -1665,9 +1752,12 @@ function setupEventListeners() {
     showToast(editingSpaId ? 'Lavado actualizado' : `Lavado registrado (S/ ${cost.toFixed(2)})`);
   });
 
-  // Modal Mantenimiento
+  // Modal Mantenimiento (Con soporte de auditoría de cadena)
   document.querySelectorAll('#custom-service-picker .service-option').forEach((card) => {
     card.addEventListener('click', () => selectServiceInModal(card.getAttribute('data-value')));
+  });
+  document.querySelectorAll('#chain-action-picker .compound-pill').forEach((pill) => {
+    pill.addEventListener('click', () => selectChainActionPill(pill.getAttribute('data-chainact')));
   });
   document.getElementById('log-parts-cost').addEventListener('input', syncMaintTotalCost);
   document.getElementById('log-labor-cost').addEventListener('input', syncMaintTotalCost);
@@ -1686,13 +1776,14 @@ function setupEventListeners() {
     const date = document.getElementById('log-date').value || getLocalISODate();
     const workshop = (document.getElementById('log-workshop')?.value || '').trim();
     const notes = document.getElementById('log-notes').value.trim();
+    const chainAction = selectedServiceType === 'chain_lube' ? selectedChainAction : '';
 
     if (km > appState.currentKm) appState.currentKm = km;
 
     if (editingLogId) {
       appState.logs = appState.logs.map((l) =>
         String(l.id) === String(editingLogId)
-          ? { ...l, typeId: selectedServiceType, title: selectedServiceTitle, km, partsCost, laborCost, cost, date, workshop, notes }
+          ? { ...l, typeId: selectedServiceType, title: selectedServiceTitle, km, partsCost, laborCost, cost, date, workshop, notes, chainAction }
           : l
       );
     } else {
@@ -1706,7 +1797,8 @@ function setupEventListeners() {
         cost,
         date,
         workshop,
-        notes
+        notes,
+        chainAction
       });
     }
 
@@ -1833,7 +1925,7 @@ function setupEventListeners() {
     showToast(editingExpenseId ? 'Gasto actualizado' : 'Gasto registrado');
   });
 
-  // Modal Llantas
+  // Modal Llantas (Con lectura física de milímetros de cocada)
   const closeTireModal = () => closeModalById('modal-tire');
 
   document.getElementById('btn-close-tire-x').addEventListener('click', closeTireModal);
@@ -1864,6 +1956,8 @@ function setupEventListeners() {
     const lifeKm = parseInt(document.getElementById('tire-life-km').value, 10) || 16000;
     const cost = parseFloat(document.getElementById('tire-cost').value) || 0;
     const dot = document.getElementById('tire-dot').value.trim();
+    const rawTread = document.getElementById('tire-tread-mm')?.value;
+    const treadMm = rawTread !== '' && !isNaN(parseFloat(rawTread)) ? parseFloat(rawTread) : null;
     const date = document.getElementById('tire-date').value || getLocalISODate();
 
     if (!brand) {
@@ -1900,6 +1994,7 @@ function setupEventListeners() {
       lifeKm,
       cost,
       dot,
+      treadMm,
       date
     };
 
@@ -1907,7 +2002,7 @@ function setupEventListeners() {
     renderAllMain();
     closeTireModal();
     triggerHaptic(15);
-    showToast(selectedTireAction === 'replace' ? 'Llanta nueva montada y anterior archivada' : 'Datos de llanta actualizados');
+    showToast(selectedTireAction === 'replace' ? 'Llanta nueva montada y anterior archivada' : 'Datos y cocada de llanta actualizados');
   });
 
   // Modal Accesorios / Mods
@@ -1986,7 +2081,7 @@ function setupEventListeners() {
     showToast(editingModId ? 'Accesorio actualizado' : 'Accesorio agregado a tu Garaje');
   });
 
-  // Modal Guantera Digital (Con enlace directo a Google Calendar)
+  // Modal Guantera Digital
   const closeDocs = () => closeModalById('modal-docs');
 
   document.getElementById('btn-open-docs-modal').addEventListener('click', () => {
@@ -1997,6 +2092,8 @@ function setupEventListeners() {
     document.getElementById('doc-soat-exp').value = d.soatExp || '';
     document.getElementById('doc-license-exp').value = d.licenseExp || '';
     document.getElementById('doc-vin').value = d.vin || '';
+    const sosInp = document.getElementById('doc-sos-phone');
+    if (sosInp) sosInp.value = d.sosPhone || '';
     checkDocsStatusUI();
     openModalById('modal-docs');
   });
@@ -2040,7 +2137,8 @@ function setupEventListeners() {
       soatCost: parseFloat(document.getElementById('doc-soat-cost').value) || 0,
       soatExp: document.getElementById('doc-soat-exp').value,
       licenseExp: document.getElementById('doc-license-exp').value,
-      vin: document.getElementById('doc-vin').value.trim().toUpperCase()
+      vin: document.getElementById('doc-vin').value.trim().toUpperCase(),
+      sosPhone: (document.getElementById('doc-sos-phone')?.value || '').trim()
     };
     saveState();
     renderAllMain();
@@ -2048,7 +2146,7 @@ function setupEventListeners() {
     showToast('Guantera Digital actualizada');
   });
 
-  // Selector de Color de la Moto (Azul, Roja, Negra y Blanca)
+  // Selector de Color de la Moto
   document.querySelectorAll('.theme-pill').forEach((pill) => {
     pill.addEventListener('click', (e) => {
       e.preventDefault();
@@ -2164,6 +2262,7 @@ function setupEventListeners() {
         onConfirm: () => {
           replaceFullState(cloudData);
           applyBikeTheme(appState.colorTheme || 'blue');
+          applySunlightMode(appState.sunlightMode);
           renderAllMain();
           showToast('✅ Datos restaurados de tu cuenta');
         }
@@ -2206,6 +2305,7 @@ function setupEventListeners() {
         }
         replaceFullState(imported);
         applyBikeTheme(appState.colorTheme || 'blue');
+        applySunlightMode(appState.sunlightMode);
         renderAllMain();
         closeBackup();
         showToast('Copia de seguridad restaurada');
@@ -2218,7 +2318,6 @@ function setupEventListeners() {
   });
 }
 
-// Ejecuta los Shortcuts de Pantalla de Inicio (?action=fuel | maint | spa)
 function handleAppShortcutActions() {
   if (!appState.onboarded) return;
   const params = new URLSearchParams(window.location.search);
@@ -2244,6 +2343,7 @@ function handleAppShortcutActions() {
 function initApp() {
   loadState();
   applyBikeTheme(appState.colorTheme || 'blue');
+  applySunlightMode(appState.sunlightMode);
   if (appState.onboarded) {
     showMainScreen();
   } else {

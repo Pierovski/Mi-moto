@@ -29,7 +29,6 @@ let app = null;
 let db = null;
 let auth = null;
 let currentUser = null;
-let syncTimer = null;
 
 export function isFirebaseConfigured() {
   return Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
@@ -109,21 +108,4 @@ export async function pullStateFromCloud() {
     return null;
   }
   return snap.data();
-}
-
-// Auto-guardado silencioso solo si el motero tiene sesión activa
-export function scheduleAutoCloudSync(stateObj, onStatusChange) {
-  if (!isFirebaseConfigured() || !navigator.onLine || !currentUser) return;
-
-  if (syncTimer) clearTimeout(syncTimer);
-  syncTimer = setTimeout(async () => {
-    try {
-      if (onStatusChange) onStatusChange('syncing');
-      await pushStateToCloud(stateObj);
-      if (onStatusChange) onStatusChange('ok');
-    } catch (err) {
-      console.warn('Auto-sync diferido:', err.message);
-      if (onStatusChange) onStatusChange('error');
-    }
-  }, 1500);
 }

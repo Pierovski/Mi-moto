@@ -1,5 +1,5 @@
 export const STORAGE_KEY = 'mi_moto_n160_data_v1';
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 export const TANK_CAPACITY_GAL = 3.7; // 14 Litros exactos de la Pulsar N160 FI
 
 export const MAINT_RULES = [
@@ -137,9 +137,9 @@ export const TECHNICAL_GUIDES = {
   },
   tire_dot_guide: {
     category: 'INGENIERÍA DE NEUMÁTICOS',
-    title: 'Código DOT (SSAA), Compuesto y TWI',
-    how: 'Revisa los 4 dígitos del código DOT en el flanco (ej. 1826 = semana 18 del año 2026) y los topes TWI dentro del surco (1.6 mm).',
-    why: 'A partir de los 4 años desde su fabricación el caucho se cristaliza y pierde adherencia en frenadas de emergencia aunque tenga dibujo.'
+    title: 'Código DOT (SSAA), Compuesto y TWI (1.6 mm)',
+    how: 'Revisa los 4 dígitos del código DOT en el flanco (ej. 1826 = semana 18 del año 2026) y mide la profundidad del surco central en milímetros (límite legal TWI: 1.6 mm).',
+    why: 'A partir de los 4 años el caucho se cristaliza, y por debajo de 1.6 mm de cocada pierdes evacuación de agua y tracción en frenadas ABS.'
   },
   elec_load_guide: {
     category: 'PROTECCIÓN DEL RAMAL FI',
@@ -156,8 +156,8 @@ export const TECHNICAL_GUIDES = {
   obd_ecu_guide: {
     category: 'TELEMETRÍA EN VIVO OBD2 (KONNWEI KW901)',
     title: 'Cockpit Dedicado ECU Bajaj N160 FI',
-    how: 'Conecta el cable de 6 pines bajo el asiento y enchufa tu KONNWEI KW901. Enciende el botón del escáner, abre contacto en la moto y toca "⚡ Conectar". Toca "⛶ Modo Timón" para usar toda la pantalla sin distracciones.',
-    why: 'Extrae en tiempo real los 14 parámetros internos del microcontrolador Bosch/Bajaj (RPM, Velocidad, Marcha, Temperatura, Voltaje, TPS, Carga, MAP, IAT, Chispa, Sonda Lambda y Códigos DTC) manteniendo la pantalla siempre encendida.'
+    how: 'Conecta el cable de 6 pines bajo el asiento y enchufa tu KONNWEI KW901. Enciende el botón del escáner, abre contacto en la moto y toca "⚡ Conectar". Toca "⛶ Timón" o "☀️ Sol" para máxima visibilidad en ruta.',
+    why: 'Extrae en tiempo real los 14 parámetros internos del microcontrolador Bosch/Bajaj con suavizado EMA de 60 FPS manteniendo la pantalla siempre encendida.'
   },
   obd_speed_info: {
     category: 'TELEMETRÍA DE VELOCIDAD (PID 010D)',
@@ -246,14 +246,14 @@ export const TECHNICAL_GUIDES = {
   nav_radar_guide: {
     category: 'NAVEGACIÓN TÁCTICA & TELEMETRÍA GPS',
     title: 'Mapa Radar, Alcance Seguro y Perfil de Elevación',
-    how: 'Selecciona un destino rápido o ingresa tu ruta (km y altitud meta). Toca "🛰️ Activar GPS" para rastrear tus coordenadas reales, altitud en msnm y mover el punto de tu moto a lo largo del trazado y de la curva topográfica.',
+    how: 'Selecciona un destino rápido o ingresa tu ruta (km y altitud meta). Toca "🛰️ GPS Vivo" para rastrear tus coordenadas reales, altitud en msnm y mover el punto de tu moto a lo largo del trazado.',
     why: 'Cruza la gasolina real que queda en tu tanque de 14L con la topografía de ascenso para dibujar el anillo verde de "Alcance Seguro", garantizando que tienes combustible suficiente para llegar y volver.'
   },
   nav_elev_guide: {
     category: 'TOPOGRAFÍA & SENSOR BAROMÉTRICO MAP',
     title: 'Curva de Elevación (msnm) y Compensación FI',
     how: 'El gráfico inferior derecho dibuja el perfil longitudinal de altitud desde tu punto de partida hasta la cima del destino y posiciona tu altitud actual (vía GPS o sensor MAP 010B de la ECU).',
-    why: 'Cada 1,000 metros de ascenso la presión atmosférica cae ~10 kPa. Si tu ruta supera los 2,000 msnm, recuerda apagar y encender la llave 5 segundos a mitad de subida para recalibrar la inyección.'
+    why: 'Cada 1,000 metros de ascenso la presión atmosférica cae ~10 kPa. Si subes más de 1,200 msnm, la app te avisará para apagar y encender la llave 5 segundos recalibrando la inyección.'
   },
   nav_speed_info: {
     category: 'VELOCIDAD DE NAVEGACIÓN EN RUTA',
@@ -277,7 +277,7 @@ export const TECHNICAL_GUIDES = {
     category: 'CAPACIDAD RESTANTE EN TANQUE (14 L)',
     title: 'Rango Alcanzable y Nivel de Combustible (%)',
     how: 'Muestra el porcentaje estimado de gasolina que queda físicamente dentro de los 14 litros del tanque junto con los kilómetros totales que puedes recorrer antes de quedar vacío.',
-    why: 'Evita rodar con menos del 15% de nivel ( ~2 litros ) de forma continua, ya que la bomba electrónica de inyección FI usa la propia gasolina para refrigerarse.'
+    why: 'Evita rodar con menos del 15% de nivel (~2 litros) de forma continua, ya que la bomba electrónica de inyección FI usa la propia gasolina para refrigerarse.'
   },
   nav_bot_eta_info: {
     category: 'PROYECCIÓN VIAL OSRM & PRESUPUESTO',
@@ -306,13 +306,13 @@ export const TECHNICAL_GUIDES = {
   obd_elec_test_info: {
     category: 'DIAGNÓSTICO ELÉCTRICO 3 ETAPAS (15 SEGUNDOS)',
     title: 'Test de Batería 4Ah, Caída de Arranque (CCA) y Estator',
-    how: 'Con el contacto abierto (motor apagado) toca "⚡ Test Eléctrico 15s". Durante los primeros 3s mide el reposo; luego arranca la moto cuando te lo indique para capturar la caída de tensión (Cranking Drop) y finalmente acelera a 3,500-4,000 RPM para auditar el regulador/estator.',
-    why: 'Una batería 4Ah saludable no debe caer de 9.8V en el milisegundo del chispazo de arranque, y el estator trifásico debe entregar entre 13.6V y 14.5V sin exceder 14.8V.'
+    how: 'Con el contacto abierto (motor apagado) toca "⚡ Test 15s". Durante los primeros 3s mide el reposo; luego arranca la moto cuando te lo indique para capturar la caída de tensión (Cranking Drop) y finalmente acelera a 3,500-4,000 RPM para auditar el regulador/estator.',
+    why: 'Una batería 4Ah saludable no debe caer de 9.6V en el milisegundo del chispazo de arranque, y el estator trifásico debe entregar entre 13.6V y 14.5V sin exceder 14.8V.'
   },
   obd_blackbox_info: {
     category: 'CAJA NEGRA DE TELEMETRÍA (BLACKBOX RECORDER)',
     title: 'Grabador de Ruta + Sensores ECU (.GPX y .CSV)',
-    how: 'Toca "🔴 Grabar Ruta" antes de rodar. Captura cada 3 segundos tu coordenada GPS, altitud msnm, RPM, velocidad real, temperatura EOT, voltaje 12V, apertura TPS, carga de motor y sonda O2. Al terminar, exporta tu archivo .GPX o .CSV.',
+    how: 'Toca "🔴 Grabar Ruta" antes de rodar. Captura cada 2.5 segundos tu coordenada GPS, altitud msnm, RPM, velocidad real, temperatura EOT, voltaje 12V, apertura TPS, carga de motor y sonda O2. Al terminar, exporta tu archivo .GPX o .CSV.',
     why: 'Permite auditar en qué subida o curva calentó más el motor, dónde exigiste más el acelerador TPS y revivir el trazado satelital con telemetría completa.'
   }
 };
@@ -351,6 +351,7 @@ export const DEFAULT_TIRES = {
     lifeKm: 18000,
     cost: 0,
     dot: '2026',
+    treadMm: null,
     date: ''
   },
   rear: {
@@ -363,6 +364,7 @@ export const DEFAULT_TIRES = {
     lifeKm: 16000,
     cost: 0,
     dot: '2026',
+    treadMm: null,
     date: ''
   }
 };

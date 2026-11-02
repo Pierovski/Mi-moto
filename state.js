@@ -140,6 +140,7 @@ export function createDefaultState() {
     onboarded: false,
     bikeModel: 'Bajaj Pulsar N160 FI',
     colorTheme: 'blue',
+    sunlightMode: false, // Nuevo modo de alto contraste solar para ruta
     bikePurchasePrice: 0,
     loanModeActive: false,
     initialKm: 0,
@@ -159,11 +160,12 @@ export function createDefaultState() {
       soatExp: '',
       soatCost: 0,
       licenseExp: '',
-      vin: ''
+      vin: '',
+      sosPhone: '' // Teléfono de emergencia o asistencia rápida
     },
     tires: {
-      front: { ...DEFAULT_TIRES.front },
-      rear: { ...DEFAULT_TIRES.rear },
+      front: { ...DEFAULT_TIRES.front, treadMm: null },
+      rear: { ...DEFAULT_TIRES.rear, treadMm: null },
       history: []
     },
     accessories: [],
@@ -253,7 +255,8 @@ export function migrateAndNormalizeState(raw) {
       partsCost,
       laborCost,
       cost: partsCost + laborCost > 0 ? partsCost + laborCost : totalCost,
-      workshop: l.workshop || ''
+      workshop: l.workshop || '',
+      chainAction: l.chainAction || (l.typeId === 'chain_lube' ? 'lube_only' : '')
     };
   });
 
@@ -270,6 +273,7 @@ export function migrateAndNormalizeState(raw) {
     ...raw,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     colorTheme: raw.colorTheme === 'grey' ? 'white' : (raw.colorTheme || 'blue'),
+    sunlightMode: Boolean(raw.sunlightMode),
     bikePurchasePrice: Math.max(0, Number(raw.bikePurchasePrice) || 0),
     loanModeActive: Boolean(raw.loanModeActive),
     initialKm: Math.max(0, inferredInitKm),
@@ -286,7 +290,8 @@ export function migrateAndNormalizeState(raw) {
     docs: {
       ...base.docs,
       ...(raw.docs || {}),
-      soatCost: Number(raw.docs?.soatCost) || 0
+      soatCost: Number(raw.docs?.soatCost) || 0,
+      sosPhone: raw.docs?.sosPhone || ''
     },
     tires: {
       front: { ...DEFAULT_TIRES.front, ...(raw.tires?.front || {}) },
@@ -349,14 +354,19 @@ export function saveState(triggerCloud = true) {
     console.error('Error guardando estado local:', e);
   }
 
-  // Auto-guardado silencioso en la nube (Debounce de 2.5 segundos, sin re-subir megabytes de fotos Base64 en cada cambio menor)
+  // Auto-guardado silencioso en la nube (Debounce de 2.5s enviando payload ligero para no saturar datos móviles en ruta)
   if (triggerCloud && getCurrentUser() && navigator.onLine) {
     if (autoSyncTimer) clearTimeout(autoSyncTimer);
     window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'syncing' }));
 
     autoSyncTimer = setTimeout(async () => {
       try {
-        await pushStateToCloud(appState);
+        const cloudPayload = {
+          ...appState,
+          logoBase64: appState.logoBase64 || localStorage.getItem(LOGO_STORAGE_KEY) || '',
+          bikePhotoBase64: appState.bikePhotoBase64 || localStorage.getItem(PHOTO_STORAGE_KEY) || ''
+        };
+        await pushStateToCloud(cloudPayload);
         window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'ok' }));
       } catch (err) {
         console.warn('Auto-sync postergado:', err);
