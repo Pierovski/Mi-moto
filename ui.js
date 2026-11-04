@@ -1,10 +1,9 @@
 import { TANK_CAPACITY_GAL, MAINT_RULES, TECHNICAL_GUIDES, DEFAULT_TIRES, ROUTE_PRESETS, DEFAULT_ORIGIN_COORDS } from './constants.js';
 import { BAJAJ_DTC_DICTIONARY, updateAltitudeDeltaCheck } from './obd.js';
-import { appState, escapeHTML, playN160IgnitionSound } from './state.js';
+import { appState, escapeHTML, playN160IgnitionSound, triggerHaptic } from './state.js';
 import {
   isWithinPeriod,
   getDaysElapsed,
-  getMonthsElapsed,
   getLastServiceRecord,
   computeMaintMemoryMap,
   computeChainHealth,
@@ -33,25 +32,74 @@ export const uiConfig = {
   routeMultiplier: 1,
   routeTerrainFactor: 1,
   activeEcuSubView: 'map',
-  activeRoutePresetId: 'samne',
+  activeRoutePresetId: 'standby',
   customRoute: (function () {
     try {
       const saved = localStorage.getItem('mi_moto_last_sat_route_v1');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.lat && parsed.lon && Number(parsed.distKm) > 0) {
+          return parsed;
+        }
+      }
     } catch (e) {}
     return { ...ROUTE_PRESETS[0] };
   })(),
   courseUpMode: true,
+  followLock: true,
   currentBearingDeg: 0,
   mapZoomScale: 1.0,
   gpsWatchId: null,
   liveGpsLat: null,
   liveGpsLon: null,
   liveGpsAlt: null,
-  liveGpsSpeedKmh: null
+  liveGpsSpeedKmh: null,
+  inspectedElevIdx: null
 };
 
-// ================= GESTOR NATIVO DE MODALES (CON SOPORTE PARA TRANSICIÓN LIMPIA) =================
+// Evalúa si existe una ruta activa real trazada en el navegador
+function isRouteActive(route) {
+  return Boolean(
+    route &&
+    route.id !== 'standby' &&
+    route.lat !== null &&
+    route.lon !== null &&
+    !isNaN(Number(route.lat)) &&
+    !isNaN(Number(route.lon)) &&
+    Number(route.distKm) > 0
+  );
+}
+
+// Evalúa si el usuario ya tiene datos reales de combustible o recorrido para mostrar nivel de tanque
+function getTankTelemetryState(tele, sessKm = 0) {
+  const hasFuelLogs = Array.isArray(appState.fuelLogs) && appState.fuelLogs.length > 0;
+  const totalOdoMoved = Math.max(0, (Number(appState.currentKm) || 0) - (Number(appState.initialKm) || 0)) + sessKm;
+
+  if (!hasFuelLogs && totalOdoMoved <= 0) {
+    return {
+      hasFuelData: false,
+      fullCapacityKm: Math.round(tele.avgKmPerGal * TANK_CAPACITY_GAL),
+      remKm: 0,
+      tankPct: 0
+    };
+  }
+
+  const fullCapacityKm = Math.round(tele.avgKmPerGal * TANK_CAPACITY_GAL);
+  const lastFuelSorted = [...appState.fuelLogs].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
+  const lastRefuelKm = lastFuelSorted.length > 0 ? Number(lastFuelSorted[0].km) : Number(appState.initialKm || 0);
+  const kmSinceRefuel = Math.max(0, (Number(appState.currentKm) + sessKm) - lastRefuelKm);
+  const remKm = Math.max(0, fullCapacityKm - Math.round(kmSinceRefuel));
+  const tankPct = Math.max(0, Math.min(100, Math.round((remKm / Math.max(1, fullCapacityKm)) * 100)));
+
+  return {
+    hasFuelData: true,
+    fullCapacityKm,
+    remKm,
+    tankPct
+  };
+}
+
+// ================= GESTOR NATIVO DE MODALES =================
 export function openModalById(modalId, pushHistory = true) {
   const el = document.getElementById(modalId);
   if (!el) return;
@@ -81,6 +129,7 @@ export function resetSweepFlag() {
 export function showToast(message) {
   const toast = document.getElementById('hud-toast');
   const text = document.getElementById('hud-toast-text');
+  if (!toast || !text) return;
   text.textContent = message;
   toast.classList.remove('hidden');
 
@@ -139,8 +188,8 @@ export function closeInfoGuide() {
 // Abre la Ficha SOS de Emergencia en Ruta con Coordenadas DMS + Decimales y Signos Vitales ECU
 export function openSosModal(ecuData = null) {
   const r = uiConfig.customRoute || ROUTE_PRESETS[0];
-  const lat = uiConfig.liveGpsLat ?? r.lat ?? DEFAULT_ORIGIN_COORDS.lat;
-  const lon = uiConfig.liveGpsLon ?? r.lon ?? DEFAULT_ORIGIN_COORDS.lon;
+  const lat = uiConfig.liveGpsLat ?? (isRouteActive(r) ? r.lat : DEFAULT_ORIGIN_COORDS.lat);
+  const lon = uiConfig.liveGpsLon ?? (isRouteActive(r) ? r.lon : DEFAULT_ORIGIN_COORDS.lon);
 
   const coordsEl = document.getElementById('sos-coords-display');
   if (coordsEl) {
@@ -320,7 +369,7 @@ export function renderSparkline(points) {
   `;
 }
 
-// Semáforo Ordenado por Urgencia + Auditoría Predictiva de Cadena O-Ring
+// Semáforo Ordenado por Urgencia (Con Barra 0% Garantizada cuando tienes 0 km recorridos)
 export function renderMaintenanceCards() {
   const grid = document.getElementById('maint-alerts-grid');
   grid.innerHTML = '';
@@ -343,6 +392,7 @@ export function renderMaintenanceCards() {
   let warnCount = 0;
 
   const evaluatedCards = [];
+  const totalOdoMoved = Math.max(0, (Number(appState.currentKm) || 0) - (Number(appState.initialKm) || 0));
 
   MAINT_RULES.forEach((rule, originalIdx) => {
     if (rule.onlyFirstTime && appState.lastServiceKm.breakin_500 !== null) return;
@@ -353,7 +403,8 @@ export function renderMaintenanceCards() {
     const kmRestantes = nextTargetKm - appState.currentKm;
     const kmRatio = kmRecorridos / rule.intervalKm;
 
-    const lastDateStr = appState.lastServiceDate?.[rule.id] || appState.firstUseDate || '';
+    const prevRec = getLastServiceRecord(rule.id);
+    const lastDateStr = appState.lastServiceDate?.[rule.id] || (totalOdoMoved > 0 ? appState.firstUseDate : '');
     let daysLeft = null;
     let timeRatio = 0;
 
@@ -364,8 +415,9 @@ export function renderMaintenanceCards() {
       timeRatio = elapsedDays / totalAllowedDays;
     }
 
-    const effectiveRatio = Math.max(kmRatio, timeRatio);
-    const pct = kmRecorridos === 0 && timeRatio < 0.03 ? 0 : Math.min(100, Math.round(effectiveRatio * 100));
+    // Si la moto tiene 0 km recorridos desde este servicio y no está vencido por tiempo, la barra se mantiene en 0%
+    const effectiveRatio = kmRecorridos === 0 && timeRatio < 0.85 ? 0 : Math.max(kmRatio, timeRatio);
+    const pct = kmRecorridos === 0 && timeRatio < 0.85 ? 0 : Math.min(100, Math.round(effectiveRatio * 100));
 
     let statusClass = 'status-ok';
     let statusText = 'AL DÍA';
@@ -403,7 +455,6 @@ export function renderMaintenanceCards() {
         ? `Faltan ${kmRestantes.toLocaleString('es-PE')} km${timeTextAddon}`
         : `Pasado ${Math.abs(kmRestantes).toLocaleString('es-PE')} km${timeTextAddon}`;
 
-    const prevRec = getLastServiceRecord(rule.id);
     const lastPriceHint = prevRec ? ` • Último: S/ ${Number(prevRec.cost).toFixed(0)}` : '';
     const chainExtraHint =
       rule.id === 'chain_lube' && chainHealth.tensionCount > 0
@@ -939,6 +990,11 @@ export function renderGarageSection() {
       ? treadInfo.lifeRemainingPct
       : Math.max(0, Math.min(100, Math.round((1 - wearRatio) * 100)));
 
+    // La barra representa el desgaste acumulado (0% cuando tienes 0 km recorridos)
+    const wearBarPct = kmRodados === 0 && !treadInfo.hasMeasurement
+      ? 0
+      : Math.max(0, Math.min(100, Math.round(wearRatio * 100)));
+
     const dotInfo = parseDotCode(tire.dot);
     let statusClass = 'status-ok';
     let statusText = `${lifeRemainingPct}% VIDA`;
@@ -970,6 +1026,10 @@ export function renderGarageSection() {
       : '';
 
     const psiLabel = posKey === 'front' ? 'DELANTERA (25 PSI)' : 'TRASERA (28 / 32 PSI)';
+    const tireFillStyle =
+      wearBarPct <= 0
+        ? 'width: 0%; opacity: 0; background: transparent;'
+        : `width: ${wearBarPct}%; background: ${barColor};`;
 
     const card = document.createElement('div');
     card.className = 'tire-card';
@@ -992,7 +1052,7 @@ export function renderGarageSection() {
       </div>
 
       <div class="progress-track" style="margin-top:9px;">
-        <div class="progress-fill" style="width: ${lifeRemainingPct}%; background: ${barColor};"></div>
+        <div class="progress-fill" style="${tireFillStyle}"></div>
       </div>
 
       <div class="tire-metrics-strip">
@@ -1154,10 +1214,37 @@ export function renderRouteAndTCO() {
   document.getElementById('pct-garage').textContent = `${fin.shares.garagePct}%`;
   document.getElementById('pct-admin').textContent = `${fin.shares.adminPct}%`;
 
-  document.getElementById('seg-fuel').style.width = `${Math.max(2, fin.shares.fuelPct)}%`;
-  document.getElementById('seg-maint').style.width = `${Math.max(2, fin.shares.maintPct + fin.shares.spaPct)}%`;
-  document.getElementById('seg-garage').style.width = `${Math.max(2, fin.shares.garagePct)}%`;
-  document.getElementById('seg-admin').style.width = `${Math.max(2, fin.shares.adminPct)}%`;
+  const segFuel = document.getElementById('seg-fuel');
+  const segMaint = document.getElementById('seg-maint');
+  const segGarage = document.getElementById('seg-garage');
+  const segAdmin = document.getElementById('seg-admin');
+
+  if (fin.opCostTotal <= 0) {
+    [segFuel, segMaint, segGarage, segAdmin].forEach((s) => {
+      if (s) {
+        s.style.width = '0%';
+        s.style.opacity = '0';
+      }
+    });
+  } else {
+    if (segFuel) {
+      segFuel.style.width = `${fin.shares.fuelPct}%`;
+      segFuel.style.opacity = fin.shares.fuelPct > 0 ? '1' : '0';
+    }
+    if (segMaint) {
+      const maintPlusSpa = fin.shares.maintPct + fin.shares.spaPct;
+      segMaint.style.width = `${maintPlusSpa}%`;
+      segMaint.style.opacity = maintPlusSpa > 0 ? '1' : '0';
+    }
+    if (segGarage) {
+      segGarage.style.width = `${fin.shares.garagePct}%`;
+      segGarage.style.opacity = fin.shares.garagePct > 0 ? '1' : '0';
+    }
+    if (segAdmin) {
+      segAdmin.style.width = `${fin.shares.adminPct}%`;
+      segAdmin.style.opacity = fin.shares.adminPct > 0 ? '1' : '0';
+    }
+  }
 
   document.getElementById('tracked-km-label').textContent = `${fin.trackedKm.toLocaleString('es-PE')} km medidos`;
   document.getElementById('tco-real-km').textContent = `S/ ${fin.realOpCostPerKm.toFixed(2)} / km`;
@@ -1241,14 +1328,30 @@ export function formatDmsCoord(lat, lon) {
   return `${toDms(lat, 'N', 'S')}<br>${toDms(lon, 'E', 'O')}`;
 }
 
-export function renderElevationProfileSVG(elevArray, progressRatio = 0.25) {
+// Perfil de Elevación Interactivo (Permite tocar cualquier punto y muestra estado limpio sin línea verde si no hay ruta)
+export function renderElevationProfileSVG(elevArray, progressRatio = 0, routeActive = true) {
   const wrap = document.getElementById('map-elevation-svg-wrap');
-  if (!wrap || !Array.isArray(elevArray) || elevArray.length < 2) return;
+  if (!wrap) return;
 
   const w = 165, h = 42, padLeft = 24, padRight = 6, padY = 5;
+
+  if (!routeActive || !Array.isArray(elevArray) || elevArray.length < 2) {
+    const baseAlt = Math.round(uiConfig.liveGpsAlt ?? 34);
+    wrap.innerHTML = `
+      <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">
+        <line x1="${padLeft}" y1="${padY}" x2="${w - padRight}" y2="${padY}" stroke="rgba(210,218,228,0.08)" stroke-dasharray="2 2" stroke-width="0.8"/>
+        <line x1="${padLeft}" y1="${(h / 2).toFixed(1)}" x2="${w - padRight}" y2="${(h / 2).toFixed(1)}" stroke="rgba(73,191,230,0.28)" stroke-dasharray="3 3" stroke-width="1.2"/>
+        <line x1="${padLeft}" y1="${h - padY}" x2="${w - padRight}" y2="${h - padY}" stroke="rgba(210,218,228,0.12)" stroke-width="0.8"/>
+        <text x="1" y="${(h / 2 + 2).toFixed(1)}" fill="#7C8B9E" font-size="6.8" font-weight="700">${baseAlt}m</text>
+        <text x="${((w + padLeft) / 2).toFixed(0)}" y="${(h / 2 - 4).toFixed(1)}" fill="#8E9BAE" font-size="6.8" font-weight="700" text-anchor="middle">Elige destino para ver perfil</text>
+      </svg>
+    `;
+    return;
+  }
+
   const minE = Math.min(...elevArray);
-  const maxE = Math.max(...elevArray, minE + 150);
-  const span = Math.max(100, maxE - minE);
+  const maxE = Math.max(...elevArray, minE + 120);
+  const span = Math.max(80, maxE - minE);
 
   const pts = elevArray.map((val, idx) => {
     const x = padLeft + (idx / (elevArray.length - 1)) * (w - padLeft - padRight);
@@ -1259,11 +1362,14 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0.25) {
   const polyStr = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const areaStr = `${pts[0].x.toFixed(1)},${h - 2} ${polyStr} ${pts[pts.length - 1].x.toFixed(1)},${h - 2}`;
 
-  const clampedProg = Math.max(0, Math.min(1, progressRatio));
-  const targetFloatIdx = clampedProg * (pts.length - 1);
-  const lowIdx = Math.floor(targetFloatIdx);
-  const highIdx = Math.min(pts.length - 1, Math.ceil(targetFloatIdx));
-  const frac = targetFloatIdx - lowIdx;
+  const activeFloatIdx =
+    uiConfig.inspectedElevIdx !== null
+      ? Math.max(0, Math.min(pts.length - 1, uiConfig.inspectedElevIdx))
+      : Math.max(0, Math.min(1, progressRatio)) * (pts.length - 1);
+
+  const lowIdx = Math.floor(activeFloatIdx);
+  const highIdx = Math.min(pts.length - 1, Math.ceil(activeFloatIdx));
+  const frac = activeFloatIdx - lowIdx;
 
   const dotX = pts[lowIdx].x + (pts[highIdx].x - pts[lowIdx].x) * frac;
   const dotY = pts[lowIdx].y + (pts[highIdx].y - pts[lowIdx].y) * frac;
@@ -1271,10 +1377,10 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0.25) {
   const midE = Math.round((minE + maxE) / 2);
 
   wrap.innerHTML = `
-    <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">
+    <svg id="elev-interactive-svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">
       <defs>
         <linearGradient id="elevFillGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#58E800" stop-opacity="0.42"/>
+          <stop offset="0%" stop-color="#58E800" stop-opacity="0.38"/>
           <stop offset="100%" stop-color="#58E800" stop-opacity="0.02"/>
         </linearGradient>
       </defs>
@@ -1286,11 +1392,27 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0.25) {
       <text x="1" y="${h - 2}" fill="#7C8B9E" font-size="6.8" font-weight="700">${Math.round(minE)}</text>
 
       <polygon points="${areaStr}" fill="url(#elevFillGrad)" />
-      <polyline fill="none" stroke="#58E800" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${polyStr}" />
-      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4.8" fill="rgba(88,232,0,0.35)" />
-      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="2.8" fill="#FFFFFF" stroke="#58E800" stroke-width="1.5" />
+      <polyline fill="none" stroke="#58E800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polyStr}" />
+      <line x1="${dotX.toFixed(1)}" y1="${padY}" x2="${dotX.toFixed(1)}" y2="${h - padY}" stroke="rgba(255,255,255,0.28)" stroke-dasharray="1.5 1.5" stroke-width="0.8"/>
+      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4.5" fill="rgba(88,232,0,0.32)" />
+      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="2.6" fill="#FFFFFF" stroke="#58E800" stroke-width="1.4" />
     </svg>
   `;
+
+  const svgEl = wrap.querySelector('#elev-interactive-svg');
+  if (svgEl) {
+    svgEl.onclick = (ev) => {
+      const rect = svgEl.getBoundingClientRect();
+      const relX = Math.max(0, Math.min(1, (ev.clientX - rect.left) / Math.max(1, rect.width)));
+      const idx = Math.round(relX * (elevArray.length - 1));
+      uiConfig.inspectedElevIdx = idx;
+      const pickedAlt = elevArray[idx];
+      const elevEl = document.getElementById('map-current-elev');
+      if (elevEl) elevEl.innerHTML = `${pickedAlt.toLocaleString('es-PE')} <small>m</small>`;
+      renderElevationProfileSVG(elevArray, progressRatio, true);
+      triggerHaptic(8);
+    };
+  }
 }
 
 let leafletMap = null;
@@ -1306,6 +1428,7 @@ let destLeafletMarker = null;
 let currentRoadLatLngs = [];
 let radarInnerRing = null;
 let radarOuterRing = null;
+let poiLayerGroup = null;
 
 export function calculateBearingDeg(lat1, lon1, lat2, lon2) {
   const toRad = (d) => (d * Math.PI) / 180;
@@ -1325,10 +1448,28 @@ export function getCardinalLabel(deg) {
   return dirs[Math.round(((deg % 360) / 45)) % 8];
 }
 
+function computeHaversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export function applyMapOrientationRotation(origLat, origLon, destLat, destLon) {
   const mapEl = document.getElementById('leaflet-sat-map');
   const needleEl = document.getElementById('map-compass-needle');
   const degTxtEl = document.getElementById('map-bearing-deg-txt');
+
+  if (destLat === null || destLon === null) {
+    uiConfig.currentBearingDeg = 0;
+    if (mapEl) mapEl.style.setProperty('--bike-pin-rot', '0deg');
+    if (needleEl) needleEl.style.transform = 'rotate(0deg)';
+    if (degTxtEl) degTxtEl.textContent = 'Modo Libre • 0° N';
+    return;
+  }
 
   const bearing = calculateBearingDeg(origLat, origLon, destLat, destLon);
   uiConfig.currentBearingDeg = bearing;
@@ -1351,13 +1492,67 @@ export function toggleCourseUpMode() {
   return true;
 }
 
+export function toggleFollowLockMode() {
+  uiConfig.followLock = !uiConfig.followLock;
+  const btn = document.getElementById('btn-map-follow-lock');
+  if (btn) {
+    btn.classList.toggle('active', uiConfig.followLock);
+    btn.textContent = uiConfig.followLock ? '🔒' : '🔓';
+  }
+  if (uiConfig.followLock) {
+    centerMapOnBike();
+  }
+  return uiConfig.followLock;
+}
+
+export function centerMapOnBike(zoomLevel = 14) {
+  if (!leafletMap) return;
+  const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
+  const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
+  leafletMap.setView([origLat, origLon], Math.max(leafletMap.getZoom(), zoomLevel), { animate: true });
+}
+
+function removeRouteLayersFromLeaflet() {
+  if (!leafletMap) return;
+  [routeShadowPolyline, routeNeonPolyline, destLeafletMarker, radarInnerRing, safeRangeCircle, radarOuterRing].forEach((layer) => {
+    if (layer && leafletMap.hasLayer(layer)) {
+      leafletMap.removeLayer(layer);
+    }
+  });
+  routeShadowPolyline = null;
+  routeNeonPolyline = null;
+  destLeafletMarker = null;
+  radarInnerRing = null;
+  safeRangeCircle = null;
+  radarOuterRing = null;
+  currentRoadLatLngs = [];
+}
+
+export function clearActiveRouteOnMap() {
+  uiConfig.customRoute = { ...ROUTE_PRESETS[0] };
+  uiConfig.activeRoutePresetId = 'standby';
+  uiConfig.inspectedElevIdx = null;
+  try {
+    localStorage.removeItem('mi_moto_last_sat_route_v1');
+  } catch (e) {}
+
+  removeRouteLayersFromLeaflet();
+  if (poiLayerGroup && leafletMap && leafletMap.hasLayer(poiLayerGroup)) {
+    poiLayerGroup.clearLayers();
+  }
+
+  document.querySelectorAll('#map-quick-presets .mo-preset-chip').forEach((c) => c.classList.remove('active'));
+  centerMapOnBike(12);
+  renderTacticalMapUI(null, false);
+}
+
 export function refreshLeafletSize() {
   if (leafletMap) {
     [60, 220, 450].forEach((ms) => {
       setTimeout(() => {
         leafletMap.invalidateSize({ animate: false });
         if (routeNeonPolyline && currentRoadLatLngs.length >= 2) {
-          leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [28, 28] });
+          leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [36, 36] });
         }
       }, ms);
     });
@@ -1378,7 +1573,7 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
 
   leafletMap = window.L.map('leaflet-sat-map', {
     center: [origLat, origLon],
-    zoom: 11,
+    zoom: 12,
     zoomControl: false,
     attributionControl: true
   });
@@ -1396,7 +1591,7 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
     {
       maxZoom: 19,
       subdomains: 'abcd',
-      opacity: 0.9
+      opacity: 0.92
     }
   );
 
@@ -1410,6 +1605,7 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
 
   satTileLayer.addTo(leafletMap);
   labelsTileLayer.addTo(leafletMap);
+  poiLayerGroup = window.L.layerGroup().addTo(leafletMap);
 
   if (typeof ResizeObserver !== 'undefined') {
     const ro = new ResizeObserver(() => {
@@ -1419,6 +1615,17 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
     });
     ro.observe(container);
   }
+
+  leafletMap.on('dragstart', () => {
+    if (uiConfig.followLock) {
+      uiConfig.followLock = false;
+      const btn = document.getElementById('btn-map-follow-lock');
+      if (btn) {
+        btn.classList.remove('active');
+        btn.textContent = '🔓';
+      }
+    }
+  });
 
   leafletMap.on('click', (ev) => {
     if (typeof onMapClickCallback === 'function') {
@@ -1453,24 +1660,26 @@ export function zoomLeafletMap(delta) {
 export function recenterLeafletRoute() {
   if (!leafletMap) return;
   if (routeNeonPolyline && currentRoadLatLngs.length >= 2) {
-    leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [24, 24] });
+    leafletMap.fitBounds(routeNeonPolyline.getBounds(), { padding: [36, 36] });
   } else {
-    const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
-    const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
-    leafletMap.setView([origLat, origLon], 11);
+    centerMapOnBike(13);
   }
 }
 
+// Buscador Nominatim enriquecido con Distancia Lineal y Rumbo Cardinal desde tu Moto
 export async function searchPlaceByName(query) {
   const clean = String(query || '').trim();
   if (!clean) return [];
 
-  const urlPe = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&countrycodes=pe&q=${encodeURIComponent(clean)}`;
+  const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
+  const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
+
+  const urlPe = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=pe&q=${encodeURIComponent(clean)}`;
   const res = await fetch(urlPe, { headers: { 'Accept-Language': 'es' } });
   let data = await res.json();
 
   if (!Array.isArray(data) || data.length === 0) {
-    const urlGlobal = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(clean)}`;
+    const urlGlobal = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&q=${encodeURIComponent(clean)}`;
     const resG = await fetch(urlGlobal, { headers: { 'Accept-Language': 'es' } });
     data = await resG.json();
   }
@@ -1479,13 +1688,87 @@ export async function searchPlaceByName(query) {
     const parts = String(item.display_name || '').split(',').map((s) => s.trim());
     const shortName = parts[0] || clean;
     const region = parts.slice(1, 3).join(' • ') || 'Ruta Satelital N160';
+    const lat = parseFloat(item.lat);
+    const lon = parseFloat(item.lon);
+    const approxRoadKm = Number((computeHaversineKm(origLat, origLon, lat, lon) * 1.25).toFixed(1));
+    const cardinal = getCardinalLabel(calculateBearingDeg(origLat, origLon, lat, lon));
+
     return {
       name: shortName,
       region,
-      lat: parseFloat(item.lat),
-      lon: parseFloat(item.lon)
+      lat,
+      lon,
+      approxRoadKm,
+      cardinal
     };
   });
+}
+
+// Busca Puntos de Interés (Grifos, Miradores, Talleres) cercanos y los planta en el mapa
+export async function searchAndPlotPoisOnMap(poiQuery, iconEmoji = '⛽') {
+  if (!leafletMap) {
+    initLeafletSatelliteMap();
+  }
+  const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
+  const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
+
+  const viewbox = `${(origLon - 0.35).toFixed(4)},${(origLat + 0.35).toFixed(4)},${(origLon + 0.35).toFixed(4)},${(origLat - 0.35).toFixed(4)}`;
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=8&countrycodes=pe&viewbox=${viewbox}&bounded=1&q=${encodeURIComponent(poiQuery)}`;
+
+  let results = [];
+  try {
+    const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+    results = await res.json();
+    if (!Array.isArray(results) || results.length === 0) {
+      results = await searchPlaceByName(`${poiQuery} Trujillo`);
+    } else {
+      results = results.map((item) => {
+        const parts = String(item.display_name || '').split(',').map((s) => s.trim());
+        return {
+          name: parts[0] || poiQuery,
+          region: parts.slice(1, 3).join(' • ') || 'PDI en Ruta',
+          lat: parseFloat(item.lat),
+          lon: parseFloat(item.lon)
+        };
+      });
+    }
+  } catch (e) {}
+
+  if (!results || results.length === 0) return 0;
+
+  if (poiLayerGroup) {
+    poiLayerGroup.clearLayers();
+  }
+
+  const boundsPts = [[origLat, origLon]];
+
+  results.forEach((poi) => {
+    boundsPts.push([poi.lat, poi.lon]);
+    const pinIcon = window.L.divIcon({
+      className: '',
+      html: `<div class="n160-poi-pin" title="${escapeHTML(poi.name)}">${iconEmoji}</div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
+    });
+
+    const marker = window.L.marker([poi.lat, poi.lon], { icon: pinIcon });
+    marker.on('click', () => {
+      triggerHaptic(15);
+      calculateRealRouteAndElevation({
+        destLat: poi.lat,
+        destLon: poi.lon,
+        name: poi.name,
+        region: poi.region
+      });
+      showToast(`🏁 Trazando ruta hacia ${poi.name}`);
+    });
+    if (poiLayerGroup) poiLayerGroup.addLayer(marker);
+  });
+
+  if (leafletMap && boundsPts.length >= 2) {
+    leafletMap.fitBounds(boundsPts, { padding: [42, 42] });
+  }
+  return results.length;
 }
 
 export async function calculateRealRouteAndElevation({ destLat, destLon, name, region }) {
@@ -1516,20 +1799,13 @@ export async function calculateRealRouteAndElevation({ destLat, destLon, name, r
       }
     }
   } catch (e) {
-    const R = 6371;
-    const dLat = ((destLat - origLat) * Math.PI) / 180;
-    const dLon = ((destLon - origLon) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((origLat * Math.PI) / 180) * Math.cos((destLat * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    distKm = Number((R * c * 1.28).toFixed(1));
+    distKm = Number((computeHaversineKm(origLat, origLon, destLat, destLon) * 1.28).toFixed(1));
     estMin = Math.max(5, Math.round(distKm * 1.25));
   }
 
   let elevProfile = [34, 250, 680, 1100, 1450];
-  let startAlt = 34;
-  let peakAlt = 1450;
+  let startAlt = Math.round(uiConfig.liveGpsAlt ?? 34);
+  let peakAlt = startAlt;
 
   try {
     const sampleCount = 10;
@@ -1565,6 +1841,7 @@ export async function calculateRealRouteAndElevation({ destLat, destLon, name, r
   }
 
   currentRoadLatLngs = roadLatLngs;
+  uiConfig.inspectedElevIdx = null;
 
   uiConfig.customRoute = {
     id: 'live',
@@ -1600,48 +1877,56 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   }
   const connBarFill = document.getElementById('mo-conn-bar-fill');
   if (connBarFill) {
-    connBarFill.style.background = ecuData?.connected ? '#58E800' : '#49BFE6';
-    connBarFill.style.width = ecuData?.connected ? '100%' : '35%';
+    connBarFill.style.background = ecuData?.connected ? '#58E800' : 'transparent';
+    connBarFill.style.width = ecuData?.connected ? '100%' : '0%';
   }
 
   const route = uiConfig.customRoute || ROUTE_PRESETS[0];
+  const hasActiveRoute = isRouteActive(route);
   const tele = computeFuelTelemetry();
-
-  const fullCapacityKm = Math.round(tele.avgKmPerGal * TANK_CAPACITY_GAL);
-  const lastFuelSorted = [...appState.fuelLogs].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
-  const lastRefuelKm = lastFuelSorted.length > 0 ? Number(lastFuelSorted[0].km) : Number(appState.initialKm || 0);
   const sessKm = Number(ecuData?.sessionKm) || 0;
-  const kmSinceRefuel = Math.max(0, (Number(appState.currentKm) + sessKm) - lastRefuelKm);
-  const remKm = Math.max(0, fullCapacityKm - Math.round(kmSinceRefuel));
-  const tankPct = Math.max(5, Math.min(100, Math.round((remKm / Math.max(1, fullCapacityKm)) * 100)));
+  const tankState = getTankTelemetryState(tele, sessKm);
 
-  let progressRatio = route.distKm > 0 ? Math.min(1, sessKm / route.distKm) : 0;
-  if (ecuData?.mode === 'sim') {
+  let progressRatio = hasActiveRoute && route.distKm > 0 ? Math.min(1, sessKm / route.distKm) : 0;
+  if (hasActiveRoute && ecuData?.mode === 'sim') {
     progressRatio = ((Date.now() / 1000) % 25) / 25;
   }
 
-  const remDistKm = Math.max(0, route.distKm * (1 - progressRatio));
-  const remMin = Math.max(1, Math.round(route.estMin * (1 - progressRatio)));
+  const remDistKm = hasActiveRoute ? Math.max(0, route.distKm * (1 - progressRatio)) : 0;
+  const remMin = hasActiveRoute ? Math.max(1, Math.round(route.estMin * (1 - progressRatio))) : 0;
 
   const etaDate = new Date(Date.now() + remMin * 60000);
-  const etaStr = etaDate.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const etaStr = hasActiveRoute
+    ? etaDate.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })
+    : '--:--';
 
   const effKmGal = tele.avgKmPerGal / (route.terrainFactor || 1.0);
-  const neededGal = effKmGal > 0 ? route.distKm / effKmGal : 0;
-  const neededSoles = route.distKm * tele.avgCostPerKm * (route.terrainFactor || 1.0);
+  const neededGal = hasActiveRoute && effKmGal > 0 ? route.distKm / effKmGal : 0;
+  const neededSoles = hasActiveRoute ? route.distKm * tele.avgCostPerKm * (route.terrainFactor || 1.0) : 0;
+
+  const liveRouteDot = document.querySelector('.mo-live-route-dot');
+  if (liveRouteDot) liveRouteDot.classList.toggle('active', hasActiveRoute);
+
+  const statusTag = document.getElementById('map-route-status-tag');
+  if (statusTag && !hasActiveRoute) {
+    statusTag.textContent = 'MODO EXPLORACIÓN LIBRE';
+  }
 
   const titleEl = document.getElementById('map-dest-title');
   if (titleEl) {
-    titleEl.textContent = route.name;
-    document.getElementById('map-dest-region').textContent = route.region;
-    document.getElementById('map-dest-dist').textContent = `${remDistKm.toFixed(1)} km`;
-    document.getElementById('map-dest-time').textContent = `${remMin} min`;
+    titleEl.textContent = hasActiveRoute ? route.name : 'Selecciona un destino';
+    document.getElementById('map-dest-region').textContent = hasActiveRoute
+      ? route.region
+      : 'Busca arriba, toca un chip rápido o marca el mapa';
+    document.getElementById('map-dest-dist').innerHTML = hasActiveRoute ? `${remDistKm.toFixed(1)} <small>km</small>` : `-- <small>km</small>`;
+    document.getElementById('map-dest-time').innerHTML = hasActiveRoute ? `${remMin} <small>min</small>` : `-- <small>min</small>`;
   }
 
   const mapPanel = document.getElementById('obd-map-panel');
   if (mapPanel && !mapPanel.classList.contains('hidden') && typeof window.L !== 'undefined') {
     if (!leafletMap) {
       initLeafletSatelliteMap((clickedLat, clickedLon) => {
+        triggerHaptic(12);
         calculateRealRouteAndElevation({
           destLat: clickedLat,
           destLon: clickedLon,
@@ -1654,120 +1939,110 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
     if (leafletMap) {
       const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
       const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
-      const destLat = route.lat ?? -8.0150;
-      const destLon = route.lon ?? -78.8500;
-      applyMapOrientationRotation(origLat, origLon, destLat, destLon);
-
-      const polyCoords =
-        currentRoadLatLngs && currentRoadLatLngs.length >= 2
-          ? currentRoadLatLngs
-          : [
-              [origLat, origLon],
-              [destLat, destLon]
-            ];
-
-      const targetIdx = Math.min(polyCoords.length - 1, Math.floor(progressRatio * (polyCoords.length - 1)));
-      const bikeLatLng = uiConfig.gpsWatchId !== null && uiConfig.liveGpsLat !== null
-        ? [uiConfig.liveGpsLat, uiConfig.liveGpsLon]
-        : polyCoords[targetIdx];
-
-      if (!routeShadowPolyline) {
-        routeShadowPolyline = window.L.polyline(polyCoords, {
-          color: '#05090F',
-          weight: 8,
-          opacity: 0.75
-        }).addTo(leafletMap);
-      } else {
-        routeShadowPolyline.setLatLngs(polyCoords);
-      }
-
-      if (!routeNeonPolyline) {
-        routeNeonPolyline = window.L.polyline(polyCoords, {
-          color: '#58E800',
-          weight: 4,
-          opacity: 1.0
-        }).addTo(leafletMap);
-      } else {
-        routeNeonPolyline.setLatLngs(polyCoords);
-      }
-
-      const routeSpanMeters = Math.max(3000, (route.distKm || 20) * 1000);
-      const rInner = Math.round(routeSpanMeters * 0.33);
-      const rMid = Math.round(routeSpanMeters * 0.68);
-      const rOuter = Math.round(routeSpanMeters * 1.05);
-      const ringColor = remKm >= route.distKm * 2 ? '#58E800' : (remKm >= route.distKm ? '#FF9F0A' : '#FF453A');
-
-      if (!radarInnerRing) {
-        radarInnerRing = window.L.circle(bikeLatLng, {
-          radius: rInner,
-          color: ringColor,
-          weight: 1,
-          dashArray: '4, 6',
-          fillOpacity: 0
-        }).addTo(leafletMap);
-      } else {
-        radarInnerRing.setLatLng(bikeLatLng);
-        radarInnerRing.setRadius(rInner);
-        radarInnerRing.setStyle({ color: ringColor });
-      }
-
-      if (!safeRangeCircle) {
-        safeRangeCircle = window.L.circle(bikeLatLng, {
-          radius: rMid,
-          color: ringColor,
-          weight: 1.6,
-          dashArray: '6, 5',
-          fillColor: ringColor,
-          fillOpacity: 0.09
-        }).addTo(leafletMap);
-      } else {
-        safeRangeCircle.setLatLng(bikeLatLng);
-        safeRangeCircle.setRadius(rMid);
-        safeRangeCircle.setStyle({ color: ringColor, fillColor: ringColor });
-      }
-
-      if (!radarOuterRing) {
-        radarOuterRing = window.L.circle(bikeLatLng, {
-          radius: rOuter,
-          color: '#49BFE6',
-          weight: 1,
-          dashArray: '3, 7',
-          fillOpacity: 0
-        }).addTo(leafletMap);
-      } else {
-        radarOuterRing.setLatLng(bikeLatLng);
-        radarOuterRing.setRadius(rOuter);
-      }
 
       const bikeIcon = window.L.divIcon({
         className: '',
         html: `<div class="n160-bike-pin" title="Mi Pulsar N160">▲</div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
-      });
-
-      const destIcon = window.L.divIcon({
-        className: '',
-        html: `<div class="n160-dest-pin" title="${escapeHTML(route.name)}">🏁</div>`,
         iconSize: [26, 26],
         iconAnchor: [13, 13]
       });
 
-      if (!bikeLeafletMarker) {
-        bikeLeafletMarker = window.L.marker(bikeLatLng, { icon: bikeIcon }).addTo(leafletMap);
+      if (!hasActiveRoute) {
+        removeRouteLayersFromLeaflet();
+        applyMapOrientationRotation(origLat, origLon, null, null);
+        if (!bikeLeafletMarker) {
+          bikeLeafletMarker = window.L.marker([origLat, origLon], { icon: bikeIcon }).addTo(leafletMap);
+        } else {
+          bikeLeafletMarker.setLatLng([origLat, origLon]);
+        }
+        if (uiConfig.followLock && uiConfig.gpsWatchId !== null) {
+          leafletMap.panTo([origLat, origLon], { animate: true });
+        }
       } else {
-        bikeLeafletMarker.setLatLng(bikeLatLng);
-      }
+        const destLat = Number(route.lat);
+        const destLon = Number(route.lon);
+        applyMapOrientationRotation(origLat, origLon, destLat, destLon);
 
-      const endCoord = polyCoords[polyCoords.length - 1];
-      if (!destLeafletMarker) {
-        destLeafletMarker = window.L.marker(endCoord, { icon: destIcon }).addTo(leafletMap);
-      } else {
-        destLeafletMarker.setLatLng(endCoord);
-      }
+        const polyCoords =
+          currentRoadLatLngs && currentRoadLatLngs.length >= 2
+            ? currentRoadLatLngs
+            : [
+                [origLat, origLon],
+                [destLat, destLon]
+              ];
 
-      if (fitMapBounds && routeNeonPolyline) {
-        refreshLeafletSize();
+        const targetIdx = Math.min(polyCoords.length - 1, Math.floor(progressRatio * (polyCoords.length - 1)));
+        const bikeLatLng =
+          uiConfig.gpsWatchId !== null && uiConfig.liveGpsLat !== null
+            ? [uiConfig.liveGpsLat, uiConfig.liveGpsLon]
+            : polyCoords[targetIdx];
+
+        if (!routeShadowPolyline) {
+          routeShadowPolyline = window.L.polyline(polyCoords, {
+            color: '#05090F',
+            weight: 8,
+            opacity: 0.78
+          }).addTo(leafletMap);
+        } else {
+          routeShadowPolyline.setLatLngs(polyCoords);
+        }
+
+        if (!routeNeonPolyline) {
+          routeNeonPolyline = window.L.polyline(polyCoords, {
+            color: '#58E800',
+            weight: 4.2,
+            opacity: 1.0
+          }).addTo(leafletMap);
+        } else {
+          routeNeonPolyline.setLatLngs(polyCoords);
+        }
+
+        if (!bikeLeafletMarker) {
+          bikeLeafletMarker = window.L.marker(bikeLatLng, { icon: bikeIcon }).addTo(leafletMap);
+        } else {
+          bikeLeafletMarker.setLatLng(bikeLatLng);
+        }
+
+        const destIcon = window.L.divIcon({
+          className: '',
+          html: `<div class="n160-dest-pin" title="${escapeHTML(route.name)}">🏁</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+
+        const endCoord = polyCoords[polyCoords.length - 1];
+        if (!destLeafletMarker) {
+          destLeafletMarker = window.L.marker(endCoord, { icon: destIcon }).addTo(leafletMap);
+        } else {
+          destLeafletMarker.setLatLng(endCoord);
+        }
+
+        if (tankState.hasFuelData) {
+          const routeSpanMeters = Math.max(3000, (route.distKm || 20) * 1000);
+          const rMid = Math.round(routeSpanMeters * 0.68);
+          const ringColor = tankState.remKm >= route.distKm * 2 ? '#58E800' : (tankState.remKm >= route.distKm ? '#FF9F0A' : '#FF453A');
+
+          if (!safeRangeCircle) {
+            safeRangeCircle = window.L.circle(bikeLatLng, {
+              radius: rMid,
+              color: ringColor,
+              weight: 1.5,
+              dashArray: '6, 5',
+              fillColor: ringColor,
+              fillOpacity: 0.07
+            }).addTo(leafletMap);
+          } else {
+            safeRangeCircle.setLatLng(bikeLatLng);
+            safeRangeCircle.setRadius(rMid);
+            safeRangeCircle.setStyle({ color: ringColor, fillColor: ringColor });
+          }
+        }
+
+        if (fitMapBounds && routeNeonPolyline) {
+          refreshLeafletSize();
+        } else if (uiConfig.followLock && (uiConfig.gpsWatchId !== null || ecuData?.mode === 'sim')) {
+          leafletMap.panTo(bikeLatLng, { animate: true });
+        }
       }
     }
   }
@@ -1785,24 +2060,40 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   const kmlEl = document.getElementById('map-avg-kml');
   const kmgalEl = document.getElementById('map-avg-kmgal');
   if (kmlEl) kmlEl.innerHTML = `${avgKmL.toFixed(1)} <small>km/L</small>`;
-  if (kmgalEl) kmgalEl.textContent = `${tele.avgKmPerGal.toFixed(1)} km/gal • Histórico FI`;
+  if (kmgalEl) kmgalEl.textContent = `${tele.avgKmPerGal.toFixed(1)} km/gal • Base FI`;
 
   const safeRangeEl = document.getElementById('map-safe-range');
   const safeBarEl = document.getElementById('map-safe-bar');
   const safePctEl = document.getElementById('map-safe-pct');
-  if (safeRangeEl) safeRangeEl.innerHTML = `⛽ ~${remKm} <small>km</small>`;
-  if (safeBarEl) safeBarEl.style.width = `${tankPct}%`;
+  if (safeRangeEl) {
+    safeRangeEl.innerHTML = tankState.hasFuelData
+      ? `⛽ ~${tankState.remKm} <small>km</small>`
+      : `⛽ -- <small>km</small>`;
+  }
+  if (safeBarEl) {
+    safeBarEl.style.width = `${tankState.tankPct}%`;
+  }
   if (safePctEl) {
-    const canRoundTrip = remKm >= route.distKm * 2;
-    safePctEl.textContent = canRoundTrip ? `${tankPct}% • Alcanza Ida y Vuelta ✓` : `${tankPct}% • Abastecer en ruta`;
+    if (!tankState.hasFuelData) {
+      safePctEl.textContent = '0% • Registra carga en Grifo';
+    } else if (!hasActiveRoute) {
+      safePctEl.textContent = `${tankState.tankPct}% de tanque disponible`;
+    } else {
+      const canRoundTrip = tankState.remKm >= route.distKm * 2;
+      safePctEl.textContent = canRoundTrip
+        ? `${tankState.tankPct}% • Ida y Vuelta ✓`
+        : `${tankState.tankPct}% • Abastecer en ruta`;
+    }
   }
 
-  const elevArr = Array.isArray(route.elevProfile) && route.elevProfile.length >= 2 ? route.elevProfile : [34, 450, 950, 1450];
+  const elevArr = Array.isArray(route.elevProfile) && route.elevProfile.length >= 2 ? route.elevProfile : [34, 34];
   const floatIdx = progressRatio * (elevArr.length - 1);
-  const interpAlt = Math.round(
-    elevArr[Math.floor(floatIdx)] +
-      (elevArr[Math.min(elevArr.length - 1, Math.ceil(floatIdx))] - elevArr[Math.floor(floatIdx)]) * (floatIdx - Math.floor(floatIdx))
-  );
+  const interpAlt = hasActiveRoute
+    ? Math.round(
+        elevArr[Math.floor(floatIdx)] +
+          (elevArr[Math.min(elevArr.length - 1, Math.ceil(floatIdx))] - elevArr[Math.floor(floatIdx)]) * (floatIdx - Math.floor(floatIdx))
+      )
+    : Math.round(uiConfig.liveGpsAlt ?? 34);
 
   const currentAlt =
     uiConfig.liveGpsAlt !== null
@@ -1816,27 +2107,37 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   const elevEl = document.getElementById('map-current-elev');
   if (elevEl) elevEl.innerHTML = `${currentAlt.toLocaleString('es-PE')} <small>m</small>`;
 
-  renderElevationProfileSVG(elevArr, progressRatio);
+  renderElevationProfileSVG(elevArr, progressRatio, hasActiveRoute);
 
   const botRange = document.getElementById('map-bot-range');
   if (botRange) {
-    botRange.textContent = `~${remKm} km`;
-    document.getElementById('map-bot-fuel-bar').style.width = `${tankPct}%`;
-    document.getElementById('map-bot-fuel-txt').textContent = `${tankPct}% Combustible actual`;
-    document.getElementById('map-bot-dist').textContent = `${remDistKm.toFixed(1)} km`;
-    document.getElementById('map-bot-eta').textContent = `${remMin} min • ETA ${etaStr}`;
-    document.getElementById('map-bot-needgal').textContent = `Req: ${neededGal.toFixed(2)} gal (S/ ${neededSoles.toFixed(2)})`;
-    document.getElementById('map-bot-routename').textContent = route.name;
-    const extraPct = Math.round(((route.terrainFactor || 1) - 1) * 100);
-    document.getElementById('map-bot-terrain').textContent = extraPct > 0 ? `Ascenso (+${extraPct}% FI)` : 'Costa / Plano (0%)';
-    document.getElementById('map-bot-diff').textContent = route.difficulty || 'Media';
+    botRange.innerHTML = tankState.hasFuelData ? `~${tankState.remKm} <small>km</small>` : `0 <small>km</small>`;
+    document.getElementById('map-bot-fuel-bar').style.width = `${tankState.tankPct}%`;
+    document.getElementById('map-bot-fuel-txt').textContent = tankState.hasFuelData
+      ? `${tankState.tankPct}% Combustible actual`
+      : 'Sin lecturas de grifo (0%)';
 
-    const lat = uiConfig.liveGpsLat ?? route.lat ?? -8.1116;
-    const lon = uiConfig.liveGpsLon ?? route.lon ?? -79.0287;
+    document.getElementById('map-bot-dist').innerHTML = hasActiveRoute ? `${remDistKm.toFixed(1)} <small>km</small>` : `-- <small>km</small>`;
+    document.getElementById('map-bot-eta').textContent = hasActiveRoute ? `${remMin} min • ETA ${etaStr}` : 'Elige destino arriba';
+    document.getElementById('map-bot-needgal').textContent = hasActiveRoute
+      ? `Req: ${neededGal.toFixed(2)} gal (S/ ${neededSoles.toFixed(2)})`
+      : 'Req: 0.00 gal (S/ 0.00)';
+
+    document.getElementById('map-bot-routename').textContent = hasActiveRoute ? route.name : 'Exploración Libre';
+    const extraPct = Math.round(((route.terrainFactor || 1) - 1) * 100);
+    document.getElementById('map-bot-terrain').textContent = hasActiveRoute
+      ? (extraPct > 0 ? `Ascenso (+${extraPct}% FI)` : 'Costa / Plano (0%)')
+      : 'Terreno sin trazar';
+    document.getElementById('map-bot-diff').textContent = hasActiveRoute ? (route.difficulty || 'Media') : 'Listo para navegar';
+
+    const lat = uiConfig.liveGpsLat ?? (hasActiveRoute ? route.lat : DEFAULT_ORIGIN_COORDS.lat);
+    const lon = uiConfig.liveGpsLon ?? (hasActiveRoute ? route.lon : DEFAULT_ORIGIN_COORDS.lon);
     document.getElementById('map-bot-coords').innerHTML = formatDmsCoord(lat, lon);
     document.getElementById('map-bot-gps-status').textContent =
-      uiConfig.gpsWatchId !== null ? '🛰️ GPS Satelital Activo' : '🛰️ Satélite Esri + OSRM';
-    document.getElementById('map-bot-peak-alt').textContent = `Cima: ${Number(route.peakAlt || 0).toLocaleString('es-PE')} msnm`;
+      uiConfig.gpsWatchId !== null ? '🟢 GPS Satelital Activo' : '🛰️ Satélite Esri + OSRM';
+    document.getElementById('map-bot-peak-alt').textContent = hasActiveRoute
+      ? `Cima: ${Number(route.peakAlt || 0).toLocaleString('es-PE')} msnm`
+      : `Alt base: ${currentAlt} msnm`;
   }
 }
 
@@ -1867,37 +2168,41 @@ export function renderObdLiveUI(data, forceMap = false) {
   if (!card || !panel) return;
 
   const tele = computeFuelTelemetry();
-  const fullCapacityKm = Math.round(tele.avgKmPerGal * TANK_CAPACITY_GAL);
-  const lastFuelSorted = [...appState.fuelLogs].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
-  const lastRefuelKm = lastFuelSorted.length > 0 ? Number(lastFuelSorted[0].km) : Number(appState.initialKm || 0);
   const sessKm = Number(data?.sessionKm) || 0;
-  const kmSinceRefuel = Math.max(0, (Number(appState.currentKm) + sessKm) - lastRefuelKm);
-  const remKm = Math.max(0, fullCapacityKm - Math.round(kmSinceRefuel));
-  const tankPct = Math.max(5, Math.min(100, Math.round((remKm / Math.max(1, fullCapacityKm)) * 100)));
+  const tankState = getTankTelemetryState(tele, sessKm);
 
   const footerFuelPct = document.getElementById('obd-footer-fuel-pct');
   const footerRange = document.getElementById('obd-footer-range');
   const footerOdo = document.getElementById('obd-footer-odo');
   const barTank = document.getElementById('obd-bar-tank');
 
-  if (footerFuelPct) footerFuelPct.textContent = `~${tankPct}%`;
-  if (footerRange) footerRange.textContent = `~${remKm} km`;
+  if (footerFuelPct) footerFuelPct.textContent = tankState.hasFuelData ? `~${tankState.tankPct}%` : '0%';
+  if (footerRange) footerRange.textContent = tankState.hasFuelData ? `~${tankState.remKm} km` : '0 km';
   if (footerOdo) footerOdo.textContent = `${Math.round(Number(appState.currentKm) + sessKm).toLocaleString('es-PE')} km`;
   if (barTank) {
-    barTank.style.width = `${tankPct}%`;
-    barTank.style.backgroundColor = tankPct <= 20 ? 'var(--red-danger)' : (tankPct <= 35 ? 'var(--amber-warn)' : 'var(--neon-lime)');
+    barTank.style.width = `${tankState.tankPct}%`;
+    barTank.style.backgroundColor =
+      tankState.tankPct <= 20
+        ? 'var(--red-danger)'
+        : tankState.tankPct <= 35
+        ? 'var(--amber-warn)'
+        : 'var(--neon-lime)';
   }
 
   if (!data || !data.connected) {
     card.classList.remove('obd-active', 'obd-shift-alert');
     statusPill.textContent = 'OFFLINE';
     statusPill.className = 'status-pill status-ok';
-    if (btnConnect) btnConnect.textContent = '⚡ Conectar';
+    if (btnConnect) btnConnect.textContent = '⚡ ECU';
     if (btnSim) btnSim.textContent = 'Demo';
     document.getElementById('obd-speed-val').textContent = '0';
     document.getElementById('obd-gear-val').textContent = 'N';
     document.getElementById('obd-rpm-val').textContent = '0';
     document.getElementById('obd-rpm-bar').style.width = '0%';
+    ['obd-bar-temp', 'obd-bar-volt', 'obd-bar-tps', 'obd-bar-econ'].forEach((id) => {
+      const b = document.getElementById(id);
+      if (b) b.style.width = '0%';
+    });
     const rpmArcOff = document.getElementById('obd-rpm-arc');
     const spdArcOff = document.getElementById('obd-speed-arc');
     if (rpmArcOff) rpmArcOff.setAttribute('stroke-dashoffset', '100');
@@ -1911,7 +2216,7 @@ export function renderObdLiveUI(data, forceMap = false) {
     statusPill.textContent = 'DEMO ACTIVO';
     statusPill.className = 'status-pill status-warn';
     if (btnSim) btnSim.textContent = '⏹ Salir';
-    if (btnConnect) btnConnect.textContent = '⚡ Conectar';
+    if (btnConnect) btnConnect.textContent = '⚡ ECU';
   } else {
     statusPill.textContent = 'CONECTADO';
     statusPill.className = 'status-pill status-ok';
@@ -1985,7 +2290,7 @@ export function renderObdLiveUI(data, forceMap = false) {
   const barTemp = document.getElementById('obd-bar-temp');
   tempEl.innerHTML = `${tempC} <small>°C</small>`;
 
-  const tempPct = Math.max(5, Math.min(100, Math.round(((tempC - 20) / 105) * 100)));
+  const tempPct = tempC > 0 ? Math.max(0, Math.min(100, Math.round(((tempC - 20) / 105) * 100))) : 0;
   if (barTemp) barTemp.style.width = `${tempPct}%`;
 
   if (tempC < 45) {
@@ -2012,7 +2317,7 @@ export function renderObdLiveUI(data, forceMap = false) {
   const barVolt = document.getElementById('obd-bar-volt');
   voltEl.innerHTML = `${volt > 0 ? volt.toFixed(1) : '--'} <small>V</small>`;
 
-  const voltPct = volt > 0 ? Math.max(5, Math.min(100, Math.round(((volt - 11.0) / 4.0) * 100))) : 0;
+  const voltPct = volt > 0 ? Math.max(0, Math.min(100, Math.round(((volt - 11.0) / 4.0) * 100))) : 0;
   if (barVolt) barVolt.style.width = `${voltPct}%`;
 
   if (volt === 0) {

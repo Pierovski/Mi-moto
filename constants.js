@@ -202,7 +202,7 @@ export const TECHNICAL_GUIDES = {
     why: 'Si ves la Carga al 90% pero las RPM son bajas (ej. subiendo una cuesta en 4ta o 5ta marcha), estás forzando la biela y provocando cascabeleo; debes bajar un cambio de inmediato.'
   },
   obd_map_info: {
-    category: 'SENSOR BAROMÉTRICO Y VACÍO (PID 010B)',
+    category: 'SENSOR BAROMÉICO Y VACÍO (PID 010B)',
     title: 'Presión de Admisión (kPa) y Altímetro (msnm)',
     how: 'A nivel del mar con contacto puesto marca ~101 kPa (0 msnm). Al subir hacia la sierra la presión cae (~75 kPa a 2,500 msnm) y la app calcula tu altitud.',
     why: 'La ECU usa este sensor para saber cuánto oxígeno hay en el aire y recortar gasolina en altura para que la moto no se ahogue al subir de la costa a la sierra.'
@@ -245,14 +245,14 @@ export const TECHNICAL_GUIDES = {
   },
   nav_radar_guide: {
     category: 'NAVEGACIÓN TÁCTICA & TELEMETRÍA GPS',
-    title: 'Mapa Radar, Alcance Seguro y Perfil de Elevación',
-    how: 'Selecciona un destino rápido o ingresa tu ruta (km y altitud meta). Toca "🛰️ GPS Vivo" para rastrear tus coordenadas reales, altitud en msnm y mover el punto de tu moto a lo largo del trazado.',
-    why: 'Cruza la gasolina real que queda en tu tanque de 14L con la topografía de ascenso para dibujar el anillo verde de "Alcance Seguro", garantizando que tienes combustible suficiente para llegar y volver.'
+    title: 'Mapa Radar, Buscador OSRM y Perfil de Elevación',
+    how: 'Usa el buscador superior, elige un destino rápido de la barra o toca cualquier punto del mapa satelital. Activa "🛰️ GPS" y "🔒 Seguir" para que la cámara acompañe tu avance en tiempo real.',
+    why: 'Traza la geometría real de la carretera vía OSRM y consulta las cotas topográficas DEM para calcular cuánto combustible exacto requerirá el ascenso.'
   },
   nav_elev_guide: {
     category: 'TOPOGRAFÍA & SENSOR BAROMÉTRICO MAP',
     title: 'Curva de Elevación (msnm) y Compensación FI',
-    how: 'El gráfico inferior derecho dibuja el perfil longitudinal de altitud desde tu punto de partida hasta la cima del destino y posiciona tu altitud actual (vía GPS o sensor MAP 010B de la ECU).',
+    how: 'El gráfico dibuja el perfil longitudinal de altitud desde tu punto de partida hasta la cima del destino y posiciona tu altitud actual (vía GPS o sensor MAP 010B de la ECU).',
     why: 'Cada 1,000 metros de ascenso la presión atmosférica cae ~10 kPa. Si subes más de 1,200 msnm, la app te avisará para apagar y encender la llave 5 segundos recalibrando la inyección.'
   },
   nav_speed_info: {
@@ -271,7 +271,7 @@ export const TECHNICAL_GUIDES = {
     category: 'RADAR DE AUTONOMÍA & RESERVA',
     title: 'Autonomía Segura y Anillo de Alcance',
     how: 'Resta los kilómetros que has rodado desde tu última tanqueada a la capacidad total de tu tanque de 14 Litros (3.70 galones) y dibuja en el mapa el radio de alcance real.',
-    why: 'Si el indicador está en verde ("Alcanza Ida y Vuelta ✓"), tienes combustible garantizado para ir al destino y regresar sin depender de grifos en ruta.'
+    why: 'Si el indicador está en verde ("Ida y Vuelta ✓"), tienes combustible garantizado para ir al destino y regresar sin depender de grifos en ruta.'
   },
   nav_bot_range_info: {
     category: 'CAPACIDAD RESTANTE EN TANQUE (14 L)',
@@ -320,23 +320,93 @@ export const TECHNICAL_GUIDES = {
 export const DEFAULT_ORIGIN_COORDS = {
   lat: -8.1116,
   lon: -79.0287,
-  name: 'Mi Ubicación'
+  name: 'Trujillo'
 };
 
 export const ROUTE_PRESETS = [
   {
-    id: 'default_route',
-    name: 'Selecciona o busca un destino',
-    region: 'Toca cualquier punto del mapa satelital o usa el buscador',
-    distKm: 25.0,
-    estMin: 32,
+    id: 'standby',
+    name: 'Sin ruta activa (Modo Libre)',
+    region: 'Busca un destino arriba, elige un preset o toca el mapa',
+    distKm: 0,
+    estMin: 0,
     startAlt: 34,
-    peakAlt: 650,
+    peakAlt: 34,
+    terrainFactor: 1.0,
+    difficulty: 'Exploración Libre',
+    lat: null,
+    lon: null,
+    elevProfile: [34, 34]
+  },
+  {
+    id: 'samne',
+    name: 'Samne',
+    region: 'Valle Santa Catalina • Laredo - Otuzco',
+    distKm: 42.5,
+    estMin: 52,
+    startAlt: 34,
+    peakAlt: 1450,
+    terrainFactor: 1.10,
+    difficulty: 'Media • Ascenso (1,450m)',
+    lat: -7.9912,
+    lon: -78.6854,
+    elevProfile: [34, 120, 290, 540, 860, 1180, 1450]
+  },
+  {
+    id: 'otuzco',
+    name: 'Otuzco',
+    region: 'Sierra de La Libertad • Ascenso Andino',
+    distKm: 74.0,
+    estMin: 95,
+    startAlt: 34,
+    peakAlt: 2641,
+    terrainFactor: 1.18,
+    difficulty: 'Alta • Sierra (2,641m)',
+    lat: -7.9025,
+    lon: -78.5636,
+    elevProfile: [34, 210, 620, 1380, 1950, 2380, 2641]
+  },
+  {
+    id: 'cachicadan',
+    name: 'Cachicadán',
+    region: 'Santiago de Chuco • Ruta Alta Montaña',
+    distKm: 182.0,
+    estMin: 245,
+    startAlt: 34,
+    peakAlt: 2880,
+    terrainFactor: 1.18,
+    difficulty: 'Alta • Sierra (2,880m)',
+    lat: -8.0950,
+    lon: -78.1510,
+    elevProfile: [34, 480, 1450, 2640, 3100, 2750, 2880]
+  },
+  {
+    id: 'simbal',
+    name: 'Simbal',
+    region: 'Ruta del Sol • Valle de Moche',
+    distKm: 32.0,
+    estMin: 40,
+    startAlt: 34,
+    peakAlt: 576,
     terrainFactor: 1.05,
-    difficulty: 'Ruta Satelital Activa',
-    lat: -8.0150,
-    lon: -78.8500,
-    elevProfile: [34, 95, 180, 310, 460, 580, 650]
+    difficulty: 'Baja • Valle (576m)',
+    lat: -7.9772,
+    lon: -78.8139,
+    elevProfile: [34, 85, 160, 250, 370, 480, 576]
+  },
+  {
+    id: 'huanchaco',
+    name: 'Huanchaco',
+    region: 'Circuito Costero • Nivel del Mar',
+    distKm: 13.5,
+    estMin: 22,
+    startAlt: 34,
+    peakAlt: 38,
+    terrainFactor: 1.0,
+    difficulty: 'Baja • Costa Plana',
+    lat: -8.0789,
+    lon: -79.1208,
+    elevProfile: [34, 28, 22, 18, 12, 8]
   }
 ];
 

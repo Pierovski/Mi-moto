@@ -53,10 +53,14 @@ import {
   renderTacticalMapUI,
   toggleMapBaseLayer,
   toggleCourseUpMode,
+  toggleFollowLockMode,
+  centerMapOnBike,
+  clearActiveRouteOnMap,
   refreshLeafletSize,
   zoomLeafletMap,
   recenterLeafletRoute,
   searchPlaceByName,
+  searchAndPlotPoisOnMap,
   calculateRealRouteAndElevation,
   renderAllMain
 } from './ui.js';
@@ -124,7 +128,6 @@ function applySunlightMode(enabled) {
   if (topBtn) topBtn.classList.toggle('sun-active', appState.sunlightMode);
   if (obdBtn) obdBtn.textContent = appState.sunlightMode ? '🌙 Oscuro' : '☀️ Sol';
 }
-
 
 function updateHeaderCloudIndicator(status = 'idle') {
   const pill = document.getElementById('cloud-live-indicator');
@@ -643,8 +646,8 @@ function setupEventListeners() {
 
   document.getElementById('btn-sos-copy')?.addEventListener('click', () => {
     const r = uiConfig.customRoute || ROUTE_PRESETS[0];
-    const lat = (uiConfig.liveGpsLat ?? r.lat ?? -8.1116).toFixed(6);
-    const lon = (uiConfig.liveGpsLon ?? r.lon ?? -79.0287).toFixed(6);
+    const lat = Number(uiConfig.liveGpsLat ?? r.lat ?? -8.1116).toFixed(6);
+    const lon = Number(uiConfig.liveGpsLon ?? r.lon ?? -79.0287).toFixed(6);
     const text = `🆘 SOS Ruta Pulsar N160 FI (${appState.docs?.plate || 'S/P'}) - Coordenadas: ${lat}, ${lon} (https://maps.google.com/?q=${lat},${lon})`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(() => showToast('📋 Coordenadas SOS copiadas'));
@@ -655,8 +658,8 @@ function setupEventListeners() {
 
   document.getElementById('btn-sos-whatsapp')?.addEventListener('click', () => {
     const r = uiConfig.customRoute || ROUTE_PRESETS[0];
-    const lat = (uiConfig.liveGpsLat ?? r.lat ?? -8.1116).toFixed(6);
-    const lon = (uiConfig.liveGpsLon ?? r.lon ?? -79.0287).toFixed(6);
+    const lat = Number(uiConfig.liveGpsLat ?? r.lat ?? -8.1116).toFixed(6);
+    const lon = Number(uiConfig.liveGpsLon ?? r.lon ?? -79.0287).toFixed(6);
     const plate = appState.docs?.plate || 'Pulsar N160 FI';
     const volt = liveEcuData.voltage > 0 ? `${liveEcuData.voltage.toFixed(1)}V` : 'S/D';
     const msg =
@@ -802,7 +805,7 @@ function setupEventListeners() {
     });
   }
 
-  // Selector de Vistas Machine Outdoors OS
+  // Selector de Vistas Machine Outdoors OS (Sin trazar rutas falsas en modo Standby)
   let hasLoadedInitialRoadRoute = false;
 
   function activateMachineOutdoorsSubView(view) {
@@ -820,20 +823,22 @@ function setupEventListeners() {
     if (mapPanel) mapPanel.classList.toggle('hidden', view !== 'map');
     if (diagPanel) diagPanel.classList.toggle('hidden', view !== 'diag');
 
-    const titleMap = { map: 'MAPA', dials: 'TABLERO', diag: 'DIAGNÓSTICO' };
-    if (crumbEl) crumbEl.textContent = titleMap[view] || 'MAPA';
+    const titleMap = { map: 'NAVEGADOR', dials: 'TELEMETRÍA', diag: 'DIAGNÓSTICO' };
+    if (crumbEl) crumbEl.textContent = titleMap[view] || 'NAVEGADOR';
 
     if (view === 'map') {
       renderTacticalMapUI(liveEcuData, true);
       if (!hasLoadedInitialRoadRoute) {
         hasLoadedInitialRoadRoute = true;
-        const r0 = uiConfig.customRoute || ROUTE_PRESETS[0];
-        calculateRealRouteAndElevation({
-          destLat: r0.lat,
-          destLon: r0.lon,
-          name: r0.name,
-          region: r0.region
-        });
+        const r0 = uiConfig.customRoute;
+        if (r0 && r0.id !== 'standby' && r0.lat !== null && r0.lon !== null && Number(r0.distKm) > 0) {
+          calculateRealRouteAndElevation({
+            destLat: Number(r0.lat),
+            destLon: Number(r0.lon),
+            name: r0.name,
+            region: r0.region
+          });
+        }
       }
     }
   }
@@ -859,84 +864,198 @@ function setupEventListeners() {
     triggerHaptic(8);
   });
 
-  // Buscador de Lugares en Vivo (OpenStreetMap Nominatim + OSRM Road Routing + Open-Meteo DEM Elevation)
+  // ================= BUSCADOR PROFESIONAL + AUTOCOMPLETADO + CHIPS DE DESTINOS Y PDI =================
   const searchInput = document.getElementById('map-place-search-input');
   const searchBtn = document.getElementById('btn-map-search-go');
+  const searchClearBtn = document.getElementById('btn-map-search-clear');
   const searchDropdown = document.getElementById('map-search-results');
+  let searchDebounceTimer = null;
 
-  async function executePlaceSearch() {
-    const q = (searchInput?.value || '').trim();
-    if (!q) {
-      showToast('⚠️ Escribe el nombre de un pueblo, distrito o lugar');
+  function syncClearSearchBtnVisibility() {
+    if (!searchClearBtn) return;
+    const hasText = Boolean((searchInput?.value || '').trim());
+    const hasRoute = Boolean(
+      uiConfig.customRoute &&
+      uiConfig.customRoute.id !== 'standby' &&
+      uiConfig.customRoute.lat !== null &&
+      Number(uiConfig.customRoute.distKm) > 0
+    );
+    searchClearBtn.classList.toggle('hidden', !hasText && !hasRoute);
+  }
+
+  function renderSearchDropdownItems(results) {
+    if (!searchDropdown) return;
+    if (!results || results.length === 0) {
+      searchDropdown.classList.add('hidden');
+      searchDropdown.innerHTML = '';
       return;
     }
-    showToast(`🔍 Buscando "${q}" en satélite...`);
+
+    searchDropdown.innerHTML = results
+      .map(
+        (r, idx) => `
+        <button type="button" class="map-search-item" data-sidx="${idx}">
+          <div style="min-width:0;flex:1;">
+            <strong>📍 ${escapeHTML(r.name)}</strong>
+            <small>${escapeHTML(r.region)}</small>
+          </div>
+          <span class="map-search-dist-pill">~${r.approxRoadKm || '--'} km • ${r.cardinal || 'N'}</span>
+        </button>`
+      )
+      .join('');
+    searchDropdown.classList.remove('hidden');
+
+    searchDropdown.querySelectorAll('.map-search-item').forEach((itemBtn) => {
+      itemBtn.addEventListener('click', async () => {
+        const idx = parseInt(itemBtn.getAttribute('data-sidx'), 10) || 0;
+        const picked = results[idx];
+        searchDropdown.classList.add('hidden');
+        if (searchInput) searchInput.value = picked.name;
+        document.querySelectorAll('#map-quick-presets .mo-preset-chip').forEach((c) => c.classList.remove('active'));
+        await calculateRealRouteAndElevation({
+          destLat: picked.lat,
+          destLon: picked.lon,
+          name: picked.name,
+          region: picked.region
+        });
+        syncClearSearchBtnVisibility();
+        triggerHaptic(15);
+        showToast(`🏁 Ruta trazada hacia ${picked.name}`);
+      });
+    });
+  }
+
+  async function executePlaceSearch(autoSelectSingle = true) {
+    const q = (searchInput?.value || '').trim();
+    if (!q) {
+      showToast('⚠️ Escribe un pueblo, distrito, grifo o lugar');
+      return;
+    }
+    if (autoSelectSingle) {
+      showToast(`🔍 Buscando "${q}" en satélite...`);
+    }
     try {
       const results = await searchPlaceByName(q);
       if (!results || results.length === 0) {
         if (searchDropdown) searchDropdown.classList.add('hidden');
-        showToast('⚠️ No se encontró ese lugar. Intenta agregando "La Libertad" o "Perú"');
+        if (autoSelectSingle) {
+          showToast('⚠️ No se encontró ese destino. Intenta agregando "La Libertad" o "Perú"');
+        }
         return;
       }
 
-      if (results.length === 1) {
+      if (autoSelectSingle && results.length === 1) {
         if (searchDropdown) searchDropdown.classList.add('hidden');
         const chosen = results[0];
+        document.querySelectorAll('#map-quick-presets .mo-preset-chip').forEach((c) => c.classList.remove('active'));
         await calculateRealRouteAndElevation({
           destLat: chosen.lat,
           destLon: chosen.lon,
           name: chosen.name,
           region: chosen.region
         });
-        showToast(`🏁 Ruta satelital y altitud trazadas hacia ${chosen.name}`);
+        syncClearSearchBtnVisibility();
+        showToast(`🏁 Ruta satelital trazada hacia ${chosen.name}`);
         return;
       }
 
-      if (searchDropdown) {
-        searchDropdown.innerHTML = results
-          .map(
-            (r, idx) => `
-            <button type="button" class="map-search-item" data-sidx="${idx}">
-              <strong>📍 ${escapeHTML(r.name)}</strong>
-              <small>${escapeHTML(r.region)} (${r.lat.toFixed(3)}, ${r.lon.toFixed(3)})</small>
-            </button>`
-          )
-          .join('');
-        searchDropdown.classList.remove('hidden');
-
-        searchDropdown.querySelectorAll('.map-search-item').forEach((itemBtn) => {
-          itemBtn.addEventListener('click', async () => {
-            const idx = parseInt(itemBtn.getAttribute('data-sidx'), 10) || 0;
-            const picked = results[idx];
-            searchDropdown.classList.add('hidden');
-            if (searchInput) searchInput.value = picked.name;
-            await calculateRealRouteAndElevation({
-              destLat: picked.lat,
-              destLon: picked.lon,
-              name: picked.name,
-              region: picked.region
-            });
-            triggerHaptic(15);
-            showToast(`🏁 Ruta satelital trazada: ${picked.name}`);
-          });
-        });
-      }
+      renderSearchDropdownItems(results);
     } catch (err) {
-      showToast('⚠️ Verifica tu conexión a internet para buscar destinos');
+      if (autoSelectSingle) {
+        showToast('⚠️ Verifica tu conexión a internet para buscar destinos');
+      }
     }
   }
 
   if (searchBtn) {
-    searchBtn.addEventListener('click', executePlaceSearch);
+    searchBtn.addEventListener('click', () => executePlaceSearch(true));
   }
+
   if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      syncClearSearchBtnVisibility();
+      const val = searchInput.value.trim();
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      if (val.length < 3) {
+        if (searchDropdown) searchDropdown.classList.add('hidden');
+        return;
+      }
+      searchDebounceTimer = setTimeout(() => {
+        executePlaceSearch(false);
+      }, 380);
+    });
+
     searchInput.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter') {
         ev.preventDefault();
-        executePlaceSearch();
+        if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+        executePlaceSearch(true);
       }
     });
   }
+
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', () => {
+      if (searchInput) searchInput.value = '';
+      if (searchDropdown) searchDropdown.classList.add('hidden');
+      clearActiveRouteOnMap();
+      syncClearSearchBtnVisibility();
+      triggerHaptic(10);
+      showToast('🗺️ Mapa en Modo Exploración Libre');
+    });
+  }
+
+  // Cerrar desplegable de búsqueda al tocar fuera
+  document.addEventListener('click', (e) => {
+    if (searchDropdown && !searchDropdown.classList.contains('hidden')) {
+      const insideHud = e.target.closest('.mo-map-top-search-hud');
+      if (!insideHud) {
+        searchDropdown.classList.add('hidden');
+      }
+    }
+  });
+
+  // Carrusel de Chips Rápidos (Destinos frecuentes y Radar de Grifos / Miradores)
+  document.querySelectorAll('#map-quick-presets .mo-preset-chip').forEach((chip) => {
+    chip.addEventListener('click', async () => {
+      document.querySelectorAll('#map-quick-presets .mo-preset-chip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      if (searchDropdown) searchDropdown.classList.add('hidden');
+      triggerHaptic(12);
+
+      const poiQuery = chip.getAttribute('data-poi-query');
+      if (poiQuery) {
+        const isFuel = poiQuery.toLowerCase().includes('grifo');
+        showToast(`🛰️ Escaneando ${isFuel ? 'grifos cercanos' : 'miradores'} en el mapa...`);
+        const count = await searchAndPlotPoisOnMap(poiQuery, isFuel ? '⛽' : '📸');
+        if (count > 0) {
+          showToast(`📍 ${count} punto(s) marcados en el mapa. Toca uno para trazar ruta.`);
+        } else {
+          showToast('⚠️ No se hallaron puntos cercanos en este radio');
+        }
+        syncClearSearchBtnVisibility();
+        return;
+      }
+
+      const lat = parseFloat(chip.getAttribute('data-preset-lat'));
+      const lon = parseFloat(chip.getAttribute('data-preset-lon'));
+      const name = chip.getAttribute('data-preset-name') || 'Destino Rápido';
+      const region = chip.getAttribute('data-preset-region') || 'Ruta Táctica N160';
+
+      if (!isNaN(lat) && !isNaN(lon)) {
+        if (searchInput) searchInput.value = name;
+        showToast(`🛰️ Trazando ruta y perfil DEM hacia ${name}...`);
+        await calculateRealRouteAndElevation({
+          destLat: lat,
+          destLon: lon,
+          name,
+          region
+        });
+        syncClearSearchBtnVisibility();
+        showToast(`🏁 Ruta activa: ${name}`);
+      }
+    });
+  });
 
   // Modal de Configuración de Ruta Manual
   let selectedRouteTerrainFactor = 1.10;
@@ -944,11 +1063,11 @@ function setupEventListeners() {
 
   function openRouteConfigModal() {
     const r = uiConfig.customRoute || ROUTE_PRESETS[0];
-    document.getElementById('cfg-route-name').value = r.name || '';
-    document.getElementById('cfg-route-region').value = r.region || '';
-    document.getElementById('cfg-route-km').value = r.distKm || 42.5;
-    document.getElementById('cfg-route-min').value = r.estMin || 55;
-    document.getElementById('cfg-route-alt').value = r.peakAlt || 1450;
+    document.getElementById('cfg-route-name').value = r.id === 'standby' ? '' : (r.name || '');
+    document.getElementById('cfg-route-region').value = r.id === 'standby' ? '' : (r.region || '');
+    document.getElementById('cfg-route-km').value = r.distKm > 0 ? r.distKm : 42.5;
+    document.getElementById('cfg-route-min').value = r.estMin > 0 ? r.estMin : 55;
+    document.getElementById('cfg-route-alt').value = r.peakAlt > 34 ? r.peakAlt : 1450;
     selectedRouteTerrainFactor = r.terrainFactor || 1.10;
     selectedRouteDiffLabel = r.difficulty || 'Media • Ascenso';
 
@@ -1001,18 +1120,21 @@ function setupEventListeners() {
       estMin,
       startAlt,
       peakAlt,
+      lat: uiConfig.customRoute?.lat ?? -7.9912,
+      lon: uiConfig.customRoute?.lon ?? -78.6854,
       terrainFactor: selectedRouteTerrainFactor,
       difficulty: selectedRouteDiffLabel,
       elevProfile
     };
 
+    syncClearSearchBtnVisibility();
     renderTacticalMapUI(liveEcuData, true);
     closeRouteCfg();
     triggerHaptic(15);
     showToast(`🏁 Ruta "${name}" (${distKm} km) actualizada`);
   });
 
-  // Botón de GPS Satelital en Vivo (Con detección de ascenso para recalibración de sensor MAP)
+  // Botón de GPS Satelital en Vivo
   const btnToggleGps = document.getElementById('btn-toggle-gps');
   if (btnToggleGps) {
     btnToggleGps.addEventListener('click', () => {
@@ -1025,7 +1147,7 @@ function setupEventListeners() {
         uiConfig.gpsWatchId = null;
         btnToggleGps.classList.remove('active');
         btnToggleGps.textContent = '🛰️ GPS Vivo';
-        renderTacticalMapUI(liveEcuData, true);
+        renderTacticalMapUI(liveEcuData, false);
         showToast('⏹ Rastreo GPS desactivado');
         return;
       }
@@ -1048,15 +1170,20 @@ function setupEventListeners() {
           }
           if (!recalculatedFromGpsOnce) {
             recalculatedFromGpsOnce = true;
-            const currR = uiConfig.customRoute || ROUTE_PRESETS[0];
-            calculateRealRouteAndElevation({
-              destLat: currR.lat,
-              destLon: currR.lon,
-              name: currR.name,
-              region: currR.region
-            });
+            const currR = uiConfig.customRoute;
+            if (currR && currR.id !== 'standby' && currR.lat !== null && currR.lon !== null && Number(currR.distKm) > 0) {
+              calculateRealRouteAndElevation({
+                destLat: Number(currR.lat),
+                destLon: Number(currR.lon),
+                name: currR.name,
+                region: currR.region
+              });
+            } else {
+              centerMapOnBike(14);
+              renderTacticalMapUI(liveEcuData, false);
+            }
           } else {
-            renderTacticalMapUI(liveEcuData, true);
+            renderTacticalMapUI(liveEcuData, false);
           }
         },
         () => {
@@ -1078,14 +1205,31 @@ function setupEventListeners() {
   }
 
   document.getElementById('btn-map-heading-mode')?.addEventListener('click', () => {
-    const isCourseUp = toggleCourseUpMode();
+    toggleCourseUpMode();
     triggerHaptic(12);
-    showToast(isCourseUp ? '▲ Ruta centrada en pantalla' : '🧭 Mapa actualizado');
+    showToast('▲ Vista de ruta centrada');
+  });
+
+  document.getElementById('btn-map-my-loc')?.addEventListener('click', () => {
+    centerMapOnBike(15);
+    triggerHaptic(10);
+    if (uiConfig.gpsWatchId === null) {
+      btnToggleGps?.click();
+    } else {
+      showToast('📍 Centrado en tu posición GPS');
+    }
+  });
+
+  document.getElementById('btn-map-follow-lock')?.addEventListener('click', () => {
+    const locked = toggleFollowLockMode();
+    triggerHaptic(10);
+    showToast(locked ? '🔒 Seguimiento automático de moto activado' : '🔓 Mapa libre (puedes explorar arrastrando)');
   });
 
   document.getElementById('btn-map-recenter')?.addEventListener('click', () => {
     recenterLeafletRoute();
     triggerHaptic(10);
+    showToast('🎯 Encuadre de ruta ajustado');
   });
 
   document.getElementById('btn-map-zoom-in')?.addEventListener('click', () => {
@@ -1098,8 +1242,13 @@ function setupEventListeners() {
 
   document.getElementById('btn-map-open-gmaps')?.addEventListener('click', () => {
     const r = uiConfig.customRoute || ROUTE_PRESETS[0];
-    const destParam = r.lat && r.lon ? `${r.lat},${r.lon}` : encodeURIComponent(`${r.name}, Peru`);
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destParam}&travelmode=driving`, '_blank', 'noopener,noreferrer');
+    if (r && r.id !== 'standby' && r.lat && r.lon) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lon}&travelmode=driving`, '_blank', 'noopener,noreferrer');
+    } else {
+      const lat = uiConfig.liveGpsLat ?? -8.1116;
+      const lon = uiConfig.liveGpsLon ?? -79.0287;
+      window.open(`https://www.google.com/maps/@${lat},${lon},14z`, '_blank', 'noopener,noreferrer');
+    }
   });
 
   // Botón Modo Timón (100% Pantalla Completa Cero Scroll y Botones Grandes)
@@ -2316,6 +2465,8 @@ function setupEventListeners() {
     reader.readAsText(file);
     e.target.value = '';
   });
+
+  syncClearSearchBtnVisibility();
 }
 
 function handleAppShortcutActions() {

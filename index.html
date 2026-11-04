@@ -37,7 +37,7 @@
       </div>
 
       <div class="brand-emblem-wrap">
-        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA V3.0</span>
+        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA V3.5</span>
         <h1 class="pulsar-script-logo">pulsar</h1>
         <span class="n160-fi-sub">N160 FI • DUAL CHANNEL ABS</span>
       </div>
@@ -121,16 +121,13 @@
         </div>
       </div>
       <div class="header-actions">
-        <!-- Botón de Alto Contraste Solar (Ruta a Mediodía) -->
         <button type="button" id="btn-toggle-sunlight" class="btn-icon-sleek" title="Modo Alto Contraste Solar (Ruta)">
           ☀️
         </button>
-        <!-- Indicador de Nube Dinámico -->
         <button type="button" id="cloud-live-indicator" class="cloud-live-pill" title="Cuenta y sincronización en la nube">
           <span class="cloud-live-dot" id="cloud-live-dot"></span>
           <span id="cloud-live-text">Local</span>
         </button>
-        <!-- Configuración y Respaldo Unificados -->
         <button id="btn-open-backup-modal" class="btn-icon-sleek" title="Ajustes, Tema, Cuenta y Respaldo">
           <span id="docs-alert-dot" class="notif-dot hidden"></span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -174,7 +171,7 @@
       </button>
     </div>
 
-    <!-- Barra de Navegación Inferior Fija (5 Botones Amplios Especiales para Guantes) -->
+    <!-- Barra de Navegación Inferior Fija -->
     <nav class="tabs-nav-5" aria-label="Navegación Principal">
       <button class="tab-btn active" data-tab="tab-maint">
         <span class="nav-ico">🔧</span>
@@ -208,12 +205,10 @@
         </div>
       </div>
 
-      <!-- Alerta Predictiva de Estiramiento de Cadena O-Ring -->
       <div id="chain-stretch-alert-banner" class="diag-alert-box hidden"></div>
 
       <div id="maint-alerts-grid" class="alerts-grid"></div>
 
-      <!-- Ranking de Talleres y Ahorro Hecho en Casa -->
       <div class="progressive-drawer-card" style="margin-top: 12px;">
         <div class="drawer-summary-row">
           <div>
@@ -229,7 +224,6 @@
         </div>
       </div>
 
-      <!-- Resumen Financiero Compacto + Bitácora Desplegable con Buscador y Filtro -->
       <div class="progressive-drawer-card" style="margin-top: 10px;">
         <div class="drawer-summary-row">
           <div class="fin-mini-pair">
@@ -264,7 +258,6 @@
         <button class="period-btn" data-period="year">Año</button>
       </div>
 
-      <!-- Interruptor de Modo Préstamo (Aislamiento de Telemetría) -->
       <div class="loan-mode-strip" id="loan-mode-banner">
         <div class="loan-left">
           <span>🤝</span>
@@ -289,14 +282,13 @@
         </div>
       </div>
 
-      <!-- Meta Mensual de Combustible -->
       <div class="budget-bar-card">
         <div class="budget-top-row">
           <span class="budget-title">META MENSUAL GRIFO: <strong id="budget-limit-label">S/ 150</strong></span>
           <button type="button" id="btn-edit-budget" class="btn-link-mini">Editar tope</button>
         </div>
         <div class="progress-track" style="margin: 5px 0;">
-          <div id="budget-progress-fill" class="progress-fill" style="width: 0%; background: var(--neon-lime);"></div>
+          <div id="budget-progress-fill" class="progress-fill" style="width: 0%; opacity: 0; background: var(--neon-lime);"></div>
         </div>
         <div class="budget-foot-row">
           <span id="budget-status-text">Disponible este mes: S/ 150.00</span>
@@ -335,10 +327,8 @@
         </div>
       </div>
 
-      <!-- Diagnóstico Preventivo de Inyección FI -->
       <div id="fi-diagnostic-banner" class="diag-alert-box hidden"></div>
 
-      <!-- Curva Sparkline -->
       <div id="sparkline-card" class="sparkline-box hidden">
         <div class="sparkline-header">
           <span class="sparkline-title">EVOLUCIÓN DE RENDIMIENTO (KM/GAL)</span>
@@ -351,7 +341,6 @@
         Registra tu primera carga hoy con tu kilometraje actual para activar la telemetría.
       </div>
 
-      <!-- Detector de Grifo Más Barato y Rentable -->
       <div class="progressive-drawer-card" style="margin-top: 10px;">
         <div class="drawer-summary-row">
           <div>
@@ -367,7 +356,6 @@
         </div>
       </div>
 
-      <!-- Cajón Desplegable del Historial de Cargas con Buscador -->
       <div class="progressive-drawer-card" style="margin-top: 10px;">
         <div class="drawer-summary-row">
           <span class="section-title-sleek">HISTORIAL DE TANQUEADAS</span>
@@ -382,10 +370,9 @@
       </div>
     </div>
 
-    <!-- ================= PESTAÑA 3: GARAJE (GUANTERA, LAVADO, LLANTAS Y MODS) ================= -->
+    <!-- ================= PESTAÑA 3: GARAJE ================= -->
     <div id="tab-garage" class="tab-content hidden">
       
-      <!-- Tarjeta de Guantera Digital -->
       <div class="maint-card docs-garage-card" id="docs-garage-widget">
         <div class="maint-top">
           <div>
@@ -400,7 +387,6 @@
         </div>
       </div>
 
-      <!-- Tarjeta de Lavado y Cuidado -->
       <div class="maint-card" id="spa-widget-card" style="margin-bottom: 11px;">
         <div class="maint-top">
           <div>
@@ -440,7 +426,6 @@
         </button>
       </div>
 
-      <!-- SUB-VISTA 3A: LLANTAS -->
       <div id="sub-garage-tires" class="garage-panel">
         <div class="section-header-row">
           <div class="title-with-info">
@@ -452,7 +437,6 @@
 
         <div id="tires-status-grid" class="tires-grid"></div>
 
-        <!-- Desplegable de Llantas Anteriores -->
         <div class="progressive-drawer-card" style="margin-top: 10px;">
           <div class="drawer-summary-row">
             <span class="section-title-sleek">JUEGOS DE LLANTAS ANTERIORES</span>
@@ -466,7 +450,6 @@
         </div>
       </div>
 
-      <!-- SUB-VISTA 3B: ACCESORIOS Y MODS -->
       <div id="sub-garage-mods" class="garage-panel hidden">
         <div class="finance-strip">
           <div class="fin-box">
@@ -509,7 +492,6 @@
         </button>
       </div>
 
-      <!-- SUB-VISTA 4A: PANEL FINANCIERO MAESTRO (CAPEX vs OPEX) + GASTOS EXTRA -->
       <div id="sub-route-fin" class="route-panel">
         <div class="section-header-row" style="margin-bottom: 8px; gap: 6px;">
           <div class="period-selector" id="fin-period-picker" style="margin-bottom: 0; flex: 1;">
@@ -612,7 +594,6 @@
         </div>
       </div>
 
-      <!-- SUB-VISTA 4B: SIMULADOR DE RUTA -->
       <div id="sub-route-calc" class="route-panel hidden">
         <div class="route-calc-card">
           <div class="route-header">
@@ -658,7 +639,6 @@
         </div>
       </div>
 
-      <!-- SUB-VISTA 4C: CHECKLIST PRE-VIAJE -->
       <div id="sub-route-check" class="route-panel hidden">
         <div class="route-calc-card">
           <div class="route-header">
@@ -732,7 +712,7 @@
       </div>
     </div>
 
-    <!-- ================= PESTAÑA 5: FICHA TÉCNICA + OEM + TORQUES (ACCESO DESDE TALLER) ================= -->
+    <!-- ================= PESTAÑA 5: FICHA TÉCNICA + OEM + TORQUES ================= -->
     <div id="tab-specs" class="tab-content hidden">
       <div class="section-header-row" style="margin-bottom:8px;">
         <span class="section-title-sleek">MANUAL TÉCNICO, OEM & TORQUES N160 FI</span>
@@ -877,15 +857,15 @@
       </div>
     </div>
 
-    <!-- ================= PESTAÑA 6: MACHINE OUTDOORS OS COCKPIT ================= -->
+    <!-- ================= PESTAÑA 6: MACHINE OUTDOORS OS COCKPIT (REDISEÑADO PRO) ================= -->
     <div id="tab-ecu" class="tab-content hidden">
       <div id="obd-cockpit-card" class="machine-os-shell obd-live-card">
         
-        <!-- 1. COLUMNA LATERAL IZQUIERDA (MACHINE OUTDOORS SIDEBAR) -->
+        <!-- 1. BARRA LATERAL / SUPERIOR DE NAVEGACIÓN MACHINE OUTDOORS -->
         <aside class="mo-sidebar">
           <div class="mo-brand-block">
             <strong class="mo-brand-title">MACHINE</strong>
-            <span class="mo-brand-sub">OUTDOORS</span>
+            <span class="mo-brand-sub">OUTDOORS OS</span>
           </div>
 
           <nav class="mo-side-nav" aria-label="Menú Machine Outdoors">
@@ -893,21 +873,21 @@
               <span class="mo-nav-ico">⌂</span>
               <span class="mo-nav-lbl">INICIO</span>
             </button>
-            <button type="button" class="mo-nav-item" data-ecuview="dials">
-              <span class="mo-nav-ico">🎛️</span>
-              <span class="mo-nav-lbl">TABLERO</span>
-            </button>
             <button type="button" class="mo-nav-item active" data-ecuview="map">
               <span class="mo-nav-ico">🗺️</span>
-              <span class="mo-nav-lbl">MAPA</span>
+              <span class="mo-nav-lbl">NAVEGADOR</span>
+            </button>
+            <button type="button" class="mo-nav-item" data-ecuview="dials">
+              <span class="mo-nav-ico">🎛️</span>
+              <span class="mo-nav-lbl">TELEMETRÍA</span>
             </button>
             <button type="button" class="mo-nav-item" data-ecuview="diag">
               <span class="mo-nav-ico">🔧</span>
               <span class="mo-nav-lbl">DIAGNÓSTICO</span>
             </button>
-            <button type="button" class="mo-nav-item" id="btn-mo-open-sos" title="Ficha SOS y Coordenadas de Emergencia">
+            <button type="button" class="mo-nav-item sos-nav" id="btn-mo-open-sos" title="Ficha SOS y Coordenadas de Emergencia">
               <span class="mo-nav-ico">🆘</span>
-              <span class="mo-nav-lbl">SOS RUTA</span>
+              <span class="mo-nav-lbl">SOS</span>
             </button>
           </nav>
 
@@ -916,47 +896,47 @@
             <div class="mo-vehicle-sub">DUAL CHANNEL ABS</div>
             <div class="mo-conn-indicator">
               <span id="obd-live-status" class="mo-conn-text">OFFLINE</span>
-              <div class="mo-conn-bar"><div id="mo-conn-bar-fill" class="mo-conn-bar-fill"></div></div>
+              <div class="mo-conn-bar"><div id="mo-conn-bar-fill" class="mo-conn-bar-fill" style="width: 0%;"></div></div>
             </div>
           </div>
         </aside>
 
-        <!-- 2. ÁREA PRINCIPAL DEL SISTEMA -->
+        <!-- 2. ESCENARIO PRINCIPAL DEL SISTEMA -->
         <div class="mo-main-stage">
           
-          <!-- Barra de Estado Superior Automotriz (Con Botones aptos para Guantes) -->
+          <!-- Barra de Estado Automotriz -->
           <header class="mo-statusbar">
             <div class="mo-status-left">
               <strong id="mo-live-clock" class="mo-clock-txt">09:41</strong>
-              <span id="mo-active-view-title" class="mo-section-crumb">MAPA</span>
+              <span id="mo-active-view-title" class="mo-section-crumb">NAVEGADOR</span>
               <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_ecu_guide" title="Guía del Cockpit">ⓘ</button>
             </div>
 
             <div class="mo-status-center-actions">
               <button type="button" id="btn-obd-sunlight" class="mo-top-pill" title="Alto Contraste Solar">☀️ Sol</button>
               <button type="button" id="btn-obd-rotate" class="mo-top-pill" title="Rotar Horizontal / Vertical">🔄 Giro</button>
-              <button type="button" id="btn-obd-ride-mode" class="mo-top-pill" title="Modo Timón Alto Contraste">⛶ Timón</button>
+              <button type="button" id="btn-obd-ride-mode" class="mo-top-pill" title="Modo Timón Pantalla Completa">⛶ Timón</button>
               <button type="button" id="btn-obd-rec-toggle" class="mo-top-pill rec" title="Grabar Caja Negra de Telemetría">🔴 REC</button>
               <button type="button" id="btn-obd-sim" class="mo-top-pill" title="Simulación en vivo">Demo</button>
-              <button type="button" id="btn-obd-connect" class="mo-top-pill connect">⚡ Conectar</button>
+              <button type="button" id="btn-obd-connect" class="mo-top-pill connect">⚡ ECU</button>
             </div>
 
             <div class="mo-status-right">
-              <span id="mo-top-gps-ico" title="Estado GPS">📍</span>
+              <span id="mo-top-gps-ico" title="Estado GPS">🛰️</span>
               <strong id="mo-top-temp-txt" class="mo-temp-readout">24°C</strong>
             </div>
           </header>
 
-          <!-- Banner Inteligente de Recalibración Barométrica (Se activa solo al subir >1,200 msnm en ruta) -->
+          <!-- Banner Inteligente de Recalibración Barométrica -->
           <div id="mo-map-altitude-alert" class="mo-altitude-alert-strip hidden">
             <span>⛰️ <strong>Ascenso +1,200m detectado:</strong> En tu próxima parada apaga la llave 5 seg para recalibrar el sensor MAP de la inyección FI.</span>
             <button type="button" id="btn-ack-map-reset" class="btn-quick-done">✓ Hecho</button>
           </div>
 
-          <!-- ================= VISTA A: TABLERO DE RELOJES Y 14 SENSORES ================= -->
+          <!-- ================= VISTA A: TABLERO DE RELOJES Y 14 SENSORES (OPTIMIZADO VERTICAL Y HORIZONTAL) ================= -->
           <div id="obd-live-panel" class="mo-stage-panel hidden">
             <div class="obd-machine-dials-grid">
-              <!-- Reloj Circular Izquierdo: TACÓMETRO RPM -->
+              <!-- Reloj Izquierdo: TACÓMETRO RPM -->
               <div class="obd-dial-card">
                 <div class="obd-box-head">
                   <span class="obd-hero-tag">TACÓMETRO ECU</span>
@@ -992,7 +972,7 @@
                 </div>
               </div>
 
-              <!-- Reloj Circular Derecho: VELOCÍMETRO ECU -->
+              <!-- Reloj Derecho: VELOCÍMETRO ECU -->
               <div class="obd-dial-card">
                 <div class="obd-box-head">
                   <span class="obd-hero-tag">VELOCIDAD</span>
@@ -1138,15 +1118,15 @@
                   <span class="micro-lbl">⛽ TANQUE (14L)</span>
                   <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_tank_footer_info">ⓘ</button>
                 </div>
-                <strong id="obd-footer-fuel-pct">~85%</strong>
-                <div class="machine-bar-track" style="margin-top:3px;"><div id="obd-bar-tank" class="machine-bar-fill" style="width:85%"></div></div>
+                <strong id="obd-footer-fuel-pct">0%</strong>
+                <div class="machine-bar-track" style="margin-top:3px;"><div id="obd-bar-tank" class="machine-bar-fill" style="width:0%"></div></div>
               </div>
               <div class="obd-footer-stat">
                 <div class="obd-box-head">
                   <span class="micro-lbl">🛣️ RANGO EST.</span>
                   <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_safe_range_info">ⓘ</button>
                 </div>
-                <strong id="obd-footer-range">~440 km</strong>
+                <strong id="obd-footer-range">0 km</strong>
                 <small>Autonomía rest.</small>
               </div>
               <div class="obd-footer-stat">
@@ -1163,133 +1143,147 @@
             </div>
           </div>
 
-          <!-- ================= VISTA B: MAPA SATELITAL MACHINE OUTDOORS ================= -->
+          <!-- ================= VISTA B: NAVEGADOR TÁCTICO PRO (MACHINE OUTDOORS) ================= -->
           <div id="obd-map-panel" class="mo-stage-panel">
             <div class="mo-map-master-grid">
               
-              <!-- ZONA CENTRAL: LIENZO DE MAPA + BARRA INFERIOR DE 4 COLUMNAS -->
+              <!-- ZONA PRINCIPAL: LIENZO DE MAPA CON HUD SUPERIOR E INFERIOR -->
               <div class="mo-map-center-column">
                 <div class="machine-map-canvas-box">
                   <div id="leaflet-sat-map" class="leaflet-sat-container"></div>
 
-                  <!-- Tarjeta Flotante Superior Izquierda "DESTINO" -->
-                  <div id="mo-floating-dest-card" class="mo-dest-overlay-card">
-                    <div class="mo-dest-card-head">
-                      <div class="title-with-info">
-                        <span class="micro-lbl" id="map-route-status-tag">DESTINO</span>
-                        <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_radar_guide">ⓘ</button>
-                      </div>
-                      <button type="button" id="btn-toggle-dest-card" class="mo-card-collapse-btn" title="Minimizar / Mostrar tarjeta">−</button>
+                  <!-- 1. HUD SUPERIOR DE BÚSQUEDA + DESTINOS RÁPIDOS + PDI MOTEROS -->
+                  <div class="mo-map-top-search-hud">
+                    <div class="mo-pro-search-bar">
+                      <span class="mo-search-icon">🔍</span>
+                      <input type="search" id="map-place-search-input" class="mo-pro-search-inp" placeholder="Buscar destino, pueblo, grifo o ruta..." autocomplete="off">
+                      <button type="button" id="btn-map-search-clear" class="mo-search-clear-btn hidden" title="Limpiar búsqueda">✕</button>
+                      <button type="button" id="btn-map-search-go" class="mo-pro-search-btn">Ir</button>
                     </div>
 
-                    <div id="mo-dest-card-body">
-                      <strong id="map-dest-title" class="mo-dest-title">Mirador El Cóndor</strong>
-                      <small id="map-dest-region" class="mo-dest-sub">Busca un lugar o toca un punto en el mapa</small>
+                    <!-- Resultados Desplegables con Distancia y Rumbo -->
+                    <div id="map-search-results" class="map-search-dropdown hidden"></div>
 
-                      <div class="mo-inline-search-row">
-                        <input type="search" id="map-place-search-input" class="mo-inline-search-inp" placeholder="🔍 Buscar lugar...">
-                        <button type="button" id="btn-map-search-go" class="mo-inline-search-btn">Ir</button>
-                      </div>
-                      <div id="map-search-results" class="map-search-dropdown hidden"></div>
-
-                      <div class="mo-dest-stats-pair">
-                        <div>
-                          <strong id="map-dest-dist">25.0 <small>km</small></strong>
-                          <span>DISTANCIA</span>
-                        </div>
-                        <div>
-                          <strong id="map-dest-time">32 <small>min</small></strong>
-                          <span>TIEMPO ESTIMADO</span>
-                        </div>
-                      </div>
-
-                      <button type="button" id="btn-open-route-cfg" class="mo-btn-route-details">CONFIGURAR RUTA</button>
-
-                      <div class="mo-dest-mini-pills">
-                        <button type="button" id="btn-toggle-gps" class="mo-mini-action gps">🛰️ GPS Vivo</button>
-                        <button type="button" id="btn-map-layer-toggle" class="mo-mini-action">🌍 Satélite</button>
-                      </div>
+                    <!-- Carrusel Horizontal de Destinos Rápidos y PDI en 1 Toque -->
+                    <div class="mo-quick-presets-strip" id="map-quick-presets">
+                      <button type="button" class="mo-preset-chip" data-preset-lat="-7.9865" data-preset-lon="-78.6852" data-preset-name="Samne (Otuzco)" data-preset-region="Valle Moche • Ascenso Sierra">⛰️ Samne</button>
+                      <button type="button" class="mo-preset-chip" data-preset-lat="-8.0782" data-preset-lon="-79.1205" data-preset-name="Huanchaco" data-preset-region="Ruta Costera Nivel del Mar">🌊 Huanchaco</button>
+                      <button type="button" class="mo-preset-chip" data-preset-lat="-7.9719" data-preset-lon="-78.8142" data-preset-name="Simbal" data-preset-region="Ruta de Sol y Montaña">☀️ Simbal</button>
+                      <button type="button" class="mo-preset-chip" data-preset-lat="-7.9038" data-preset-lon="-78.5636" data-preset-name="Otuzco" data-preset-region="Capital de la Fe • 2,640 msnm">🏔️ Otuzco</button>
+                      <button type="button" class="mo-preset-chip" data-preset-lat="-8.0950" data-preset-lon="-78.1585" data-preset-name="Cachicadán" data-preset-region="Aguas Termales • Santiago de Chuco">♨️ Cachicadán</button>
+                      <button type="button" class="mo-preset-chip poi" data-poi-query="Grifo Primax Repsol">⛽ Grifos</button>
+                      <button type="button" class="mo-preset-chip poi" data-poi-query="Mirador Turístico">📸 Miradores</button>
                     </div>
                   </div>
 
-                  <!-- Controles Flotantes Derecha -->
+                  <!-- 2. DOCK DE CONTROLES TÁCTICOS A LA DERECHA (PARA GUANTES) -->
                   <div class="mo-map-right-controls">
-                    <button type="button" id="btn-map-heading-mode" class="mo-compass-circle" title="Rumbo al destino">
+                    <button type="button" id="btn-map-heading-mode" class="mo-compass-circle" title="Rumbo al destino / Centrar Ruta">
                       <span id="map-compass-needle" class="mo-compass-arrow">▲</span>
                       <strong id="map-compass-label">N</strong>
                     </button>
 
                     <div class="mo-zoom-pill-group">
-                      <button type="button" id="btn-map-zoom-in" title="Acercar">+</button>
+                      <button type="button" id="btn-map-zoom-in" title="Acercar mapa">+</button>
                       <div class="mo-zoom-divider"></div>
-                      <button type="button" id="btn-map-zoom-out" title="Alejar">−</button>
+                      <button type="button" id="btn-map-zoom-out" title="Alejar mapa">−</button>
                     </div>
 
-                    <button type="button" id="btn-map-recenter" class="mo-compass-circle" title="Centrar ruta completa">🎯</button>
-                    <button type="button" id="btn-map-open-gmaps" class="mo-compass-circle" title="Abrir en Google Maps">🧭</button>
+                    <button type="button" id="btn-map-my-loc" class="mo-compass-circle" title="Ir a mi ubicación GPS actual">📍</button>
+                    <button type="button" id="btn-map-follow-lock" class="mo-compass-circle active" title="Auto-Seguir Moto en Ruta">🔒</button>
+                    <button type="button" id="btn-map-recenter" class="mo-compass-circle" title="Encuadrar toda la ruta">🎯</button>
+                    <button type="button" id="btn-map-open-gmaps" class="mo-compass-circle" title="Abrir navegación voz en Google Maps">🧭</button>
                     <button type="button" id="btn-map-quick-sos" class="mo-compass-circle sos-btn" title="Emergencia SOS en Ruta">🆘</button>
                   </div>
 
-                  <!-- Escala Gráfica Inferior Izquierda -->
-                  <div class="mo-scale-overlay">
-                    <div class="scale-ticks"><span>0</span><span>1 km</span><span>2 km</span><span>3 km</span></div>
-                    <div class="scale-line"></div>
+                  <!-- 3. TARJETA FLOTANTE INFERIOR DE RUTA ACTIVA (COMPACTA Y COLAPSABLE) -->
+                  <div id="mo-floating-dest-card" class="mo-dest-overlay-card">
+                    <div class="mo-dest-card-head">
+                      <div class="title-with-info" style="min-width:0;">
+                        <span class="mo-live-route-dot"></span>
+                        <span class="micro-lbl" id="map-route-status-tag">RUTA ACTIVA</span>
+                        <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_radar_guide">ⓘ</button>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:4px;">
+                        <button type="button" id="btn-toggle-gps" class="mo-mini-action gps">🛰️ GPS Vivo</button>
+                        <button type="button" id="btn-map-layer-toggle" class="mo-mini-action">🌍 Satélite</button>
+                        <button type="button" id="btn-open-route-cfg" class="mo-mini-action" title="Configurar distancia o altitud manual">⚙️</button>
+                        <button type="button" id="btn-toggle-dest-card" class="mo-card-collapse-btn" title="Minimizar / Expandir panel">−</button>
+                      </div>
+                    </div>
+
+                    <div id="mo-dest-card-body" class="mo-dest-body-horizontal">
+                      <div class="mo-dest-main-info">
+                        <strong id="map-dest-title" class="mo-dest-title">Selecciona un destino</strong>
+                        <small id="map-dest-region" class="mo-dest-sub">Toca cualquier punto del mapa o elige un destino arriba</small>
+                      </div>
+                      <div class="mo-dest-stats-pair">
+                        <div class="mo-stat-pill-box">
+                          <strong id="map-dest-dist">25.0 <small>km</small></strong>
+                          <span>DISTANCIA</span>
+                        </div>
+                        <div class="mo-stat-pill-box">
+                          <strong id="map-dest-time">32 <small>min</small></strong>
+                          <span>TIEMPO EST.</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <!-- Texto Verde "ALCANCE SEGURO" -->
+                  <!-- Escala y Rumbo Discretos -->
                   <div class="mo-safe-label-overlay">
-                    <span id="map-orientation-badge">ALCANCE<br>SEGURO</span>
-                    <small id="map-bearing-deg-txt" style="display:block;font-size:7px;color:var(--alloy-silver);margin-top:1px;">Rumbo 0° N</small>
+                    <span id="map-orientation-badge">ALCANCE SEGURO</span>
+                    <small id="map-bearing-deg-txt">Rumbo 0° N</small>
                   </div>
                 </div>
 
-                <!-- Barra Inferior de 4 Columnas -->
+                <!-- Barra Inferior de 4 Indicadores de Viaje -->
                 <div class="mo-bottom-4col-strip">
                   <div class="mo-bot-cell">
                     <div class="obd-box-head">
-                      <span class="micro-lbl">RANGO ALCANZABLE ⛽</span>
+                      <span class="micro-lbl">RANGO TANQUE ⛽</span>
                       <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_range_info">ⓘ</button>
                     </div>
-                    <strong id="map-bot-range" class="mo-bot-big">320 <small>km</small></strong>
+                    <strong id="map-bot-range" class="mo-bot-big">0 <small>km</small></strong>
                     <div class="machine-bar-track" style="margin:3px 0;height:4px;">
-                      <div id="map-bot-fuel-bar" class="machine-bar-fill" style="width:85%"></div>
+                      <div id="map-bot-fuel-bar" class="machine-bar-fill" style="width:0%"></div>
                     </div>
-                    <small id="map-bot-fuel-txt" class="mo-bot-sub">85% Combustible actual</small>
+                    <small id="map-bot-fuel-txt" class="mo-bot-sub">Sin lecturas de grifo</small>
                   </div>
 
                   <div class="mo-bot-cell">
                     <div class="obd-box-head">
-                      <span class="micro-lbl">DISTANCIA A DESTINO</span>
+                      <span class="micro-lbl">META Y PRESUPUESTO</span>
                       <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_eta_info">ⓘ</button>
                     </div>
                     <strong id="map-bot-dist" class="mo-bot-big">25.0 <small>km</small></strong>
-                    <small id="map-bot-eta" class="mo-bot-sub">32 min &nbsp; ETA 10:33</small>
+                    <small id="map-bot-eta" class="mo-bot-sub">32 min • ETA --:--</small>
                     <small id="map-bot-needgal" class="mo-bot-sub" style="color:var(--neon-lime);">Req: 0.18 gal</small>
                   </div>
 
                   <div class="mo-bot-cell">
                     <div class="obd-box-head">
-                      <span class="micro-lbl">RUTA</span>
+                      <span class="micro-lbl">TOPOGRAFÍA FI</span>
                       <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_topo_info">ⓘ</button>
                     </div>
-                    <strong id="map-bot-routename" class="mo-bot-route-title">Camino de los Pioneros</strong>
+                    <strong id="map-bot-routename" class="mo-bot-route-title">Ruta Satelital</strong>
                     <small id="map-bot-terrain" class="mo-bot-sub">Terreno mixto</small>
                     <small id="map-bot-diff" class="mo-bot-sub">Dificultad media</small>
                   </div>
 
                   <div class="mo-bot-cell">
                     <div class="obd-box-head">
-                      <span class="micro-lbl">POSICIÓN</span>
+                      <span class="micro-lbl">COORDENADAS</span>
                       <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_gps_info">ⓘ</button>
                     </div>
                     <strong id="map-bot-coords" class="mo-bot-coords-txt">8° 06' 42" S<br>79° 01' 43" O</strong>
-                    <small id="map-bot-gps-status" class="mo-bot-sub" style="color:var(--neon-lime);">GPS 📶</small>
-                    <small id="map-bot-peak-alt" class="mo-bot-sub" style="display:none;">Cima: 650m</small>
+                    <small id="map-bot-gps-status" class="mo-bot-sub" style="color:var(--neon-lime);">GPS Listo</small>
+                    <small id="map-bot-peak-alt" class="mo-bot-sub">Cima: 650m</small>
                   </div>
                 </div>
               </div>
 
-              <!-- COLUMNA DERECHA DE 4 TARJETAS VERTICALES APILADAS -->
+              <!-- COLUMNA / GRILLA DE 4 TARJETAS TÁCTICAS (VELOCIDAD, CONSUMO, ALCANCE Y PERFIL DE ELEVACIÓN INTERACTIVO) -->
               <div class="mo-right-4cards-stack">
                 <div class="mo-side-metric-card speed-card">
                   <div class="obd-box-head center">
@@ -1313,7 +1307,7 @@
                     <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_avg_econ_info">ⓘ</button>
                   </div>
                   <strong class="mo-card-primary-val" id="map-avg-kml">37.0 <small>km/L</small></strong>
-                  <small id="map-avg-kmgal" class="mo-card-sub-lbl">ÚLTIMOS 50 km</small>
+                  <small id="map-avg-kmgal" class="mo-card-sub-lbl">140 km/gal • Base FI</small>
                 </div>
 
                 <div class="mo-side-metric-card">
@@ -1321,23 +1315,21 @@
                     <span class="micro-lbl">AUTONOMÍA SEGURA</span>
                     <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_safe_range_info">ⓘ</button>
                   </div>
-                  <strong class="mo-card-primary-val" id="map-safe-range">⛽ 320 <small>km</small></strong>
-                  <small class="mo-card-sub-lbl">ALCANCE SEGURO</small>
+                  <strong class="mo-card-primary-val" id="map-safe-range">⛽ 0 <small>km</small></strong>
                   <div class="machine-bar-track" style="margin:4px 0;height:4.5px;">
-                    <div id="map-safe-bar" class="machine-bar-fill" style="width:85%;"></div>
+                    <div id="map-safe-bar" class="machine-bar-fill" style="width:0%;"></div>
                   </div>
-                  <small id="map-safe-pct" class="mo-card-sub-lbl">85%</small>
+                  <small id="map-safe-pct" class="mo-card-sub-lbl">Registra grifo o km</small>
                 </div>
 
-                <div class="mo-side-metric-card elev-card">
+                <div class="mo-side-metric-card elev-card" title="Toca la curva para inspeccionar altitud">
                   <div class="obd-box-head">
-                    <span class="micro-lbl">ELEVACIÓN</span>
+                    <span class="micro-lbl">PERFIL DE ALTURA</span>
                     <div style="display:flex;align-items:center;gap:4px;">
-                      <span style="font-size:11px;color:var(--alloy-silver);">⛰️</span>
+                      <strong id="map-current-elev" style="font-family:var(--font-speed);font-size:12px;color:var(--neon-lime);">34 m</strong>
                       <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_elev_guide">ⓘ</button>
                     </div>
                   </div>
-                  <strong class="mo-card-primary-val" id="map-current-elev">34 <small>m</small></strong>
                   <div id="map-elevation-svg-wrap" class="mo-elev-chart-container"></div>
                 </div>
               </div>
@@ -1349,7 +1341,6 @@
           <div id="obd-diag-panel" class="mo-stage-panel hidden" style="overflow-y:auto;">
             <div class="obd-diag-master-grid">
               
-              <!-- BLOQUE 1: TEST AUTOMÁTICO DE SALUD ELÉCTRICA 15 SEGUNDOS -->
               <div class="obd-dtc-strip elec-test-card" id="elec-test-card">
                 <div class="obd-dtc-top">
                   <div>
@@ -1387,7 +1378,6 @@
                 </div>
               </div>
 
-              <!-- BLOQUE 2: GRABADOR DE CAJA NEGRA (BLACKBOX TELEMETRY LOGGER) -->
               <div class="obd-dtc-strip blackbox-card">
                 <div class="obd-dtc-top">
                   <div>
@@ -1422,7 +1412,6 @@
                 </div>
               </div>
 
-              <!-- BLOQUE 3: ESCÁNER DE FALLAS CHECK ENGINE (MODOS 03 Y 04) -->
               <div class="obd-dtc-strip">
                 <div class="obd-dtc-top">
                   <div>
@@ -1465,7 +1454,6 @@
     </div>
   </div>
 
-  <!-- MODAL PRECIO DE COMPRA DE LA MOTO (CAPEX) -->
   <div id="modal-bike-price" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -1484,7 +1472,6 @@
     </div>
   </div>
 
-  <!-- MODAL META PRESUPUESTO MENSUAL -->
   <div id="modal-budget" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -1500,7 +1487,6 @@
     </div>
   </div>
 
-  <!-- MODAL REGISTRAR / EDITAR LAVADO -->
   <div id="modal-spa" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1543,7 +1529,6 @@
     </div>
   </div>
 
-  <!-- MODAL REGISTRAR / EDITAR MANTENIMIENTO (CON SELECTOR INTELIGENTE DE CADENA O-RING) -->
   <div id="modal-log" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1586,7 +1571,6 @@
         </div>
       </div>
 
-      <!-- Sub-selector exclusivo cuando se elige "Kit de Cadena" -->
       <div id="chain-action-picker-wrap" class="hidden" style="margin-bottom: 6px;">
         <label class="modal-label">ACCIÓN EN CADENA 428 O-RING (AUDITORÍA DE ESTIRAMIENTO):</label>
         <div class="fuel-type-pills-3" id="chain-action-picker">
@@ -1624,7 +1608,6 @@
     </div>
   </div>
 
-  <!-- MODAL REGISTRAR / EDITAR COMBUSTIBLE -->
   <div id="modal-fuel" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1670,7 +1653,6 @@
     </div>
   </div>
 
-  <!-- MODAL REGISTRAR / EDITAR OTRO GASTO -->
   <div id="modal-expense" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1705,7 +1687,6 @@
     </div>
   </div>
 
-  <!-- MODAL AJUSTES, CUENTA DE PILOTO Y COPIA DE SEGURIDAD -->
   <div id="modal-backup" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1778,7 +1759,6 @@
     </div>
   </div>
 
-  <!-- MODAL CONFIRMACIÓN PERSONALIZADA -->
   <div id="modal-confirm" class="modal-backdrop hidden" style="z-index: 1100;">
     <div class="modal-card confirm-box">
       <div class="confirm-icon-wrap" id="confirm-icon-badge">⚡</div>
@@ -1791,7 +1771,6 @@
     </div>
   </div>
 
-  <!-- MODAL FICHA EXPLICATIVA CONTEXTUAL (ⓘ) -->
   <div id="modal-info-guide" class="modal-backdrop hidden" style="z-index: 1050;">
     <div class="modal-card">
       <div class="modal-header">
@@ -1817,7 +1796,6 @@
     </div>
   </div>
 
-  <!-- MODAL GUANTERA DIGITAL (CON TELÉFONO DE AUXILIO Y GOOGLE CALENDAR) -->
   <div id="modal-docs" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1867,7 +1845,6 @@
     </div>
   </div>
 
-  <!-- MODAL LLANTA (CON MEDICIÓN FÍSICA DE COCADA EN MILÍMETROS) -->
   <div id="modal-tire" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1923,7 +1900,6 @@
     </div>
   </div>
 
-  <!-- MODAL ACCESORIO / MOD -->
   <div id="modal-mod" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -1969,7 +1945,6 @@
     </div>
   </div>
 
-  <!-- MODAL CONFIGURAR RUTA TÁCTICA Y ELEVACIÓN -->
   <div id="modal-route-cfg" class="modal-backdrop hidden">
     <div class="modal-card modal-wide">
       <div class="modal-header">
@@ -2020,7 +1995,6 @@
     </div>
   </div>
 
-  <!-- MODAL SOS EMERGENCIA Y TELEMETRÍA DE RESCATE EN RUTA -->
   <div id="modal-sos" class="modal-backdrop hidden" style="z-index: 1150;">
     <div class="modal-card modal-wide">
       <div class="modal-header">
