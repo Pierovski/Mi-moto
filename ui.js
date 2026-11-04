@@ -70,12 +70,11 @@ function isRouteActive(route) {
   );
 }
 
-// Evalúa si el usuario ya tiene datos reales de combustible o recorrido para mostrar nivel de tanque
+// Exige al menos 1 carga real en Grifo para encender la barra de tanque (Evita el falso 99% con 1 km)
 function getTankTelemetryState(tele, sessKm = 0) {
   const hasFuelLogs = Array.isArray(appState.fuelLogs) && appState.fuelLogs.length > 0;
-  const totalOdoMoved = Math.max(0, (Number(appState.currentKm) || 0) - (Number(appState.initialKm) || 0)) + sessKm;
 
-  if (!hasFuelLogs && totalOdoMoved <= 0) {
+  if (!hasFuelLogs) {
     return {
       hasFuelData: false,
       fullCapacityKm: Math.round(tele.avgKmPerGal * TANK_CAPACITY_GAL),
@@ -86,7 +85,7 @@ function getTankTelemetryState(tele, sessKm = 0) {
 
   const fullCapacityKm = Math.round(tele.avgKmPerGal * TANK_CAPACITY_GAL);
   const lastFuelSorted = [...appState.fuelLogs].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
-  const lastRefuelKm = lastFuelSorted.length > 0 ? Number(lastFuelSorted[0].km) : Number(appState.initialKm || 0);
+  const lastRefuelKm = Number(lastFuelSorted[0].km) || 0;
   const kmSinceRefuel = Math.max(0, (Number(appState.currentKm) + sessKm) - lastRefuelKm);
   const remKm = Math.max(0, fullCapacityKm - Math.round(kmSinceRefuel));
   const tankPct = Math.max(0, Math.min(100, Math.round((remKm / Math.max(1, fullCapacityKm)) * 100)));
@@ -369,7 +368,7 @@ export function renderSparkline(points) {
   `;
 }
 
-// Semáforo Ordenado por Urgencia (Con Barra 0% Garantizada cuando tienes 0 km recorridos)
+// Semáforo de Mantenimientos (Barra física 100% proporcional a los KM reales recorridos)
 export function renderMaintenanceCards() {
   const grid = document.getElementById('maint-alerts-grid');
   grid.innerHTML = '';
@@ -392,7 +391,6 @@ export function renderMaintenanceCards() {
   let warnCount = 0;
 
   const evaluatedCards = [];
-  const totalOdoMoved = Math.max(0, (Number(appState.currentKm) || 0) - (Number(appState.initialKm) || 0));
 
   MAINT_RULES.forEach((rule, originalIdx) => {
     if (rule.onlyFirstTime && appState.lastServiceKm.breakin_500 !== null) return;
@@ -403,8 +401,8 @@ export function renderMaintenanceCards() {
     const kmRestantes = nextTargetKm - appState.currentKm;
     const kmRatio = kmRecorridos / rule.intervalKm;
 
-    const prevRec = getLastServiceRecord(rule.id);
-    const lastDateStr = appState.lastServiceDate?.[rule.id] || (totalOdoMoved > 0 ? appState.firstUseDate : '');
+    // Solo calculamos vencimiento por tiempo si ya existe un servicio registrado de este tipo
+    const lastDateStr = appState.lastServiceDate?.[rule.id] || '';
     let daysLeft = null;
     let timeRatio = 0;
 
@@ -415,9 +413,9 @@ export function renderMaintenanceCards() {
       timeRatio = elapsedDays / totalAllowedDays;
     }
 
-    // Si la moto tiene 0 km recorridos desde este servicio y no está vencido por tiempo, la barra se mantiene en 0%
-    const effectiveRatio = kmRecorridos === 0 && timeRatio < 0.85 ? 0 : Math.max(kmRatio, timeRatio);
-    const pct = kmRecorridos === 0 && timeRatio < 0.85 ? 0 : Math.min(100, Math.round(effectiveRatio * 100));
+    // La barra visual mide exclusivamente el avance en kilómetros (con 1 km de 500 km es 0%)
+    const pct = Math.min(100, Math.floor(kmRatio * 100));
+    const effectiveRatio = Math.max(kmRatio, timeRatio >= 1 ? timeRatio : 0);
 
     let statusClass = 'status-ok';
     let statusText = 'AL DÍA';
@@ -432,7 +430,7 @@ export function renderMaintenanceCards() {
       overdueCount++;
       showCalBtn = true;
       urgencyWeight = 2;
-    } else if (effectiveRatio >= 0.85) {
+    } else if (kmRatio >= 0.85) {
       statusClass = 'status-warn';
       statusText = 'PRÓXIMO';
       barColor = 'var(--amber-warn)';
@@ -455,6 +453,7 @@ export function renderMaintenanceCards() {
         ? `Faltan ${kmRestantes.toLocaleString('es-PE')} km${timeTextAddon}`
         : `Pasado ${Math.abs(kmRestantes).toLocaleString('es-PE')} km${timeTextAddon}`;
 
+    const prevRec = getLastServiceRecord(rule.id);
     const lastPriceHint = prevRec ? ` • Último: S/ ${Number(prevRec.cost).toFixed(0)}` : '';
     const chainExtraHint =
       rule.id === 'chain_lube' && chainHealth.tensionCount > 0
@@ -472,7 +471,7 @@ export function renderMaintenanceCards() {
 
     evaluatedCards.push({
       urgencyWeight,
-      effectiveRatio,
+      effectiveRatio: kmRatio,
       originalIdx,
       html: `
         <div class="maint-top">
@@ -990,10 +989,10 @@ export function renderGarageSection() {
       ? treadInfo.lifeRemainingPct
       : Math.max(0, Math.min(100, Math.round((1 - wearRatio) * 100)));
 
-    // La barra representa el desgaste acumulado (0% cuando tienes 0 km recorridos)
-    const wearBarPct = kmRodados === 0 && !treadInfo.hasMeasurement
+    // Barra de desgaste: 0% cuando la llanta está nueva / pocos km
+    const wearBarPct = kmRodados < 50 && !treadInfo.hasMeasurement
       ? 0
-      : Math.max(0, Math.min(100, Math.round(wearRatio * 100)));
+      : Math.max(0, Math.min(100, Math.floor(wearRatio * 100)));
 
     const dotInfo = parseDotCode(tire.dot);
     let statusClass = 'status-ok';
@@ -1328,7 +1327,7 @@ export function formatDmsCoord(lat, lon) {
   return `${toDms(lat, 'N', 'S')}<br>${toDms(lon, 'E', 'O')}`;
 }
 
-// Perfil de Elevación Interactivo (Permite tocar cualquier punto y muestra estado limpio sin línea verde si no hay ruta)
+// Perfil de Elevación Interactivo
 export function renderElevationProfileSVG(elevArray, progressRatio = 0, routeActive = true) {
   const wrap = document.getElementById('map-elevation-svg-wrap');
   if (!wrap) return;
@@ -1343,7 +1342,7 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0, routeAct
         <line x1="${padLeft}" y1="${(h / 2).toFixed(1)}" x2="${w - padRight}" y2="${(h / 2).toFixed(1)}" stroke="rgba(73,191,230,0.28)" stroke-dasharray="3 3" stroke-width="1.2"/>
         <line x1="${padLeft}" y1="${h - padY}" x2="${w - padRight}" y2="${h - padY}" stroke="rgba(210,218,228,0.12)" stroke-width="0.8"/>
         <text x="1" y="${(h / 2 + 2).toFixed(1)}" fill="#7C8B9E" font-size="6.8" font-weight="700">${baseAlt}m</text>
-        <text x="${((w + padLeft) / 2).toFixed(0)}" y="${(h / 2 - 4).toFixed(1)}" fill="#8E9BAE" font-size="6.8" font-weight="700" text-anchor="middle">Elige destino para ver perfil</text>
+        <text x="${((w + padLeft) / 2).toFixed(0)}" y="${(h / 2 - 4).toFixed(1)}" fill="#8E9BAE" font-size="6.8" font-weight="700" text-anchor="middle">Sin ruta trazada</text>
       </svg>
     `;
     return;
@@ -1426,8 +1425,6 @@ let safeRangeCircle = null;
 let bikeLeafletMarker = null;
 let destLeafletMarker = null;
 let currentRoadLatLngs = [];
-let radarInnerRing = null;
-let radarOuterRing = null;
 let poiLayerGroup = null;
 
 export function calculateBearingDeg(lat1, lon1, lat2, lon2) {
@@ -1467,7 +1464,7 @@ export function applyMapOrientationRotation(origLat, origLon, destLat, destLon) 
     uiConfig.currentBearingDeg = 0;
     if (mapEl) mapEl.style.setProperty('--bike-pin-rot', '0deg');
     if (needleEl) needleEl.style.transform = 'rotate(0deg)';
-    if (degTxtEl) degTxtEl.textContent = 'Modo Libre • 0° N';
+    if (degTxtEl) degTxtEl.textContent = '0° N';
     return;
   }
 
@@ -1483,7 +1480,7 @@ export function applyMapOrientationRotation(origLat, origLon, destLat, destLon) 
   }
 
   if (degTxtEl) {
-    degTxtEl.textContent = `Rumbo ${Math.round(bearing)}° ${getCardinalLabel(bearing)}`;
+    degTxtEl.textContent = `${Math.round(bearing)}° ${getCardinalLabel(bearing)}`;
   }
 }
 
@@ -1514,7 +1511,7 @@ export function centerMapOnBike(zoomLevel = 14) {
 
 function removeRouteLayersFromLeaflet() {
   if (!leafletMap) return;
-  [routeShadowPolyline, routeNeonPolyline, destLeafletMarker, radarInnerRing, safeRangeCircle, radarOuterRing].forEach((layer) => {
+  [routeShadowPolyline, routeNeonPolyline, destLeafletMarker, safeRangeCircle].forEach((layer) => {
     if (layer && leafletMap.hasLayer(layer)) {
       leafletMap.removeLayer(layer);
     }
@@ -1522,9 +1519,7 @@ function removeRouteLayersFromLeaflet() {
   routeShadowPolyline = null;
   routeNeonPolyline = null;
   destLeafletMarker = null;
-  radarInnerRing = null;
   safeRangeCircle = null;
-  radarOuterRing = null;
   currentRoadLatLngs = [];
 }
 
@@ -1542,6 +1537,9 @@ export function clearActiveRouteOnMap() {
   }
 
   document.querySelectorAll('#map-quick-presets .mo-preset-chip').forEach((c) => c.classList.remove('active'));
+  const presetsStrip = document.getElementById('map-quick-presets');
+  if (presetsStrip) presetsStrip.classList.remove('chips-collapsed');
+
   centerMapOnBike(12);
   renderTacticalMapUI(null, false);
 }
@@ -1586,11 +1584,11 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
     }
   );
 
+  // Capa oficial Esri World Boundaries and Places (100% libre de marcas de agua "API KEY REQUIRED")
   labelsTileLayer = window.L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
+    'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
     {
-      maxZoom: 19,
-      subdomains: 'abcd',
+      maxZoom: 18,
       opacity: 0.92
     }
   );
@@ -1666,7 +1664,6 @@ export function recenterLeafletRoute() {
   }
 }
 
-// Buscador Nominatim enriquecido con Distancia Lineal y Rumbo Cardinal desde tu Moto
 export async function searchPlaceByName(query) {
   const clean = String(query || '').trim();
   if (!clean) return [];
@@ -1704,7 +1701,6 @@ export async function searchPlaceByName(query) {
   });
 }
 
-// Busca Puntos de Interés (Grifos, Miradores, Talleres) cercanos y los planta en el mapa
 export async function searchAndPlotPoisOnMap(poiQuery, iconEmoji = '⛽') {
   if (!leafletMap) {
     initLeafletSatelliteMap();
@@ -1773,7 +1769,7 @@ export async function searchAndPlotPoisOnMap(poiQuery, iconEmoji = '⛽') {
 
 export async function calculateRealRouteAndElevation({ destLat, destLon, name, region }) {
   const statusTag = document.getElementById('map-route-status-tag');
-  if (statusTag) statusTag.textContent = '🔄 CALCULANDO CARRETERA Y ALTITUD...';
+  if (statusTag) statusTag.textContent = 'CALCULANDO...';
 
   const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
   const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
@@ -1861,7 +1857,6 @@ export async function calculateRealRouteAndElevation({ destLat, destLon, name, r
   try {
     localStorage.setItem('mi_moto_last_sat_route_v1', JSON.stringify(uiConfig.customRoute));
   } catch (e) {}
-  if (statusTag) statusTag.textContent = '🛰️ RUTA SATELITAL & ELEVACIÓN REAL';
   renderTacticalMapUI(null, true);
 }
 
@@ -1875,17 +1870,22 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
     const iatOrMotor = ecuData?.connected && ecuData?.iatC > 0 ? ecuData.iatC : 24;
     topTempEl.textContent = `${iatOrMotor}°C`;
   }
-  const connBarFill = document.getElementById('mo-conn-bar-fill');
-  if (connBarFill) {
-    connBarFill.style.background = ecuData?.connected ? '#58E800' : 'transparent';
-    connBarFill.style.width = ecuData?.connected ? '100%' : '0%';
-  }
 
   const route = uiConfig.customRoute || ROUTE_PRESETS[0];
   const hasActiveRoute = isRouteActive(route);
   const tele = computeFuelTelemetry();
   const sessKm = Number(ecuData?.sessionKm) || 0;
   const tankState = getTankTelemetryState(tele, sessKm);
+
+  // Pliega los chips rápidos cuando hay ruta activa para despejar el mapa
+  const presetsStrip = document.getElementById('map-quick-presets');
+  if (presetsStrip) {
+    presetsStrip.classList.toggle('chips-collapsed', hasActiveRoute);
+  }
+  const clearSearchBtn = document.getElementById('btn-map-search-clear');
+  if (clearSearchBtn && hasActiveRoute) {
+    clearSearchBtn.classList.remove('hidden');
+  }
 
   let progressRatio = hasActiveRoute && route.distKm > 0 ? Math.min(1, sessKm / route.distKm) : 0;
   if (hasActiveRoute && ecuData?.mode === 'sim') {
@@ -1907,19 +1907,14 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   const liveRouteDot = document.querySelector('.mo-live-route-dot');
   if (liveRouteDot) liveRouteDot.classList.toggle('active', hasActiveRoute);
 
-  const statusTag = document.getElementById('map-route-status-tag');
-  if (statusTag && !hasActiveRoute) {
-    statusTag.textContent = 'MODO EXPLORACIÓN LIBRE';
-  }
-
   const titleEl = document.getElementById('map-dest-title');
   if (titleEl) {
-    titleEl.textContent = hasActiveRoute ? route.name : 'Selecciona un destino';
+    titleEl.textContent = hasActiveRoute ? route.name : 'Exploración Libre';
     document.getElementById('map-dest-region').textContent = hasActiveRoute
       ? route.region
-      : 'Busca arriba, toca un chip rápido o marca el mapa';
-    document.getElementById('map-dest-dist').innerHTML = hasActiveRoute ? `${remDistKm.toFixed(1)} <small>km</small>` : `-- <small>km</small>`;
-    document.getElementById('map-dest-time').innerHTML = hasActiveRoute ? `${remMin} <small>min</small>` : `-- <small>min</small>`;
+      : 'Elige destino arriba o toca el mapa';
+    document.getElementById('map-dest-dist').textContent = hasActiveRoute ? `${remDistKm.toFixed(1)} km` : '-- km';
+    document.getElementById('map-dest-time').textContent = hasActiveRoute ? `${remMin} min` : '-- min';
   }
 
   const mapPanel = document.getElementById('obd-map-panel');
@@ -1930,8 +1925,8 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
         calculateRealRouteAndElevation({
           destLat: clickedLat,
           destLon: clickedLon,
-          name: `Punto Táctico (${clickedLat.toFixed(3)}, ${clickedLon.toFixed(3)})`,
-          region: 'Coordenada marcada en Mapa Satelital'
+          name: `Punto (${clickedLat.toFixed(3)}, ${clickedLon.toFixed(3)})`,
+          region: 'Marcado en Mapa Satelital'
         });
       });
     }
@@ -2026,10 +2021,10 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
             safeRangeCircle = window.L.circle(bikeLatLng, {
               radius: rMid,
               color: ringColor,
-              weight: 1.5,
+              weight: 1.4,
               dashArray: '6, 5',
               fillColor: ringColor,
-              fillOpacity: 0.07
+              fillOpacity: 0.06
             }).addTo(leafletMap);
           } else {
             safeRangeCircle.setLatLng(bikeLatLng);
@@ -2047,20 +2042,19 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
     }
   }
 
+  // Actualización de las 4 Tarjetas HUD Unificadas
   const liveSpd = Number(ecuData?.speedKmh) || Number(uiConfig.liveGpsSpeedKmh) || 0;
   const spdEl = document.getElementById('map-live-speed');
-  const spdBar = document.getElementById('map-live-speed-bar');
   const spdArc = document.getElementById('map-live-speed-arc');
   const spdPct = Math.min(100, Math.round((liveSpd / 130) * 100));
   if (spdEl) spdEl.textContent = Math.round(liveSpd);
-  if (spdBar) spdBar.style.width = `${spdPct}%`;
   if (spdArc) spdArc.setAttribute('stroke-dashoffset', String(100 - spdPct));
 
   const avgKmL = tele.avgKmPerGal / 3.78541;
   const kmlEl = document.getElementById('map-avg-kml');
   const kmgalEl = document.getElementById('map-avg-kmgal');
-  if (kmlEl) kmlEl.innerHTML = `${avgKmL.toFixed(1)} <small>km/L</small>`;
-  if (kmgalEl) kmgalEl.textContent = `${tele.avgKmPerGal.toFixed(1)} km/gal • Base FI`;
+  if (kmlEl) kmlEl.textContent = `${avgKmL.toFixed(1)} km/L`;
+  if (kmgalEl) kmgalEl.textContent = `${tele.avgKmPerGal.toFixed(0)} km/gal`;
 
   const safeRangeEl = document.getElementById('map-safe-range');
   const safeBarEl = document.getElementById('map-safe-bar');
@@ -2068,22 +2062,46 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   if (safeRangeEl) {
     safeRangeEl.innerHTML = tankState.hasFuelData
       ? `⛽ ~${tankState.remKm} <small>km</small>`
-      : `⛽ -- <small>km</small>`;
+      : `⛽ 0 <small>km</small>`;
   }
   if (safeBarEl) {
     safeBarEl.style.width = `${tankState.tankPct}%`;
   }
   if (safePctEl) {
     if (!tankState.hasFuelData) {
-      safePctEl.textContent = '0% • Registra carga en Grifo';
+      safePctEl.textContent = '0% • Sin carga en Grifo';
     } else if (!hasActiveRoute) {
-      safePctEl.textContent = `${tankState.tankPct}% de tanque disponible`;
+      safePctEl.textContent = `${tankState.tankPct}% de tanque disp.`;
     } else {
       const canRoundTrip = tankState.remKm >= route.distKm * 2;
       safePctEl.textContent = canRoundTrip
         ? `${tankState.tankPct}% • Ida y Vuelta ✓`
-        : `${tankState.tankPct}% • Abastecer en ruta`;
+        : `${tankState.tankPct}% • Recargar en ruta`;
     }
+  }
+
+  const distEl = document.getElementById('map-bot-dist');
+  const etaEl = document.getElementById('map-bot-eta');
+  const needGalEl = document.getElementById('map-bot-needgal');
+  const terrainEl = document.getElementById('map-bot-terrain');
+
+  if (distEl) {
+    distEl.innerHTML = hasActiveRoute ? `${remDistKm.toFixed(1)} <small>km</small>` : `-- <small>km</small>`;
+  }
+  if (etaEl) {
+    etaEl.textContent = hasActiveRoute ? `${remMin}m • ${etaStr}` : 'ETA --:--';
+  }
+  if (needGalEl) {
+    needGalEl.textContent = hasActiveRoute
+      ? `Req: ${neededGal.toFixed(2)} gal (S/ ${neededSoles.toFixed(2)})`
+      : 'Elige destino para cotizar';
+  }
+  if (terrainEl) {
+    const extraPct = Math.round(((route.terrainFactor || 1) - 1) * 100);
+    const gpsTxt = uiConfig.gpsWatchId !== null ? '🟢 GPS Vivo' : '🛰️ Satélite';
+    terrainEl.textContent = hasActiveRoute
+      ? `${extraPct > 0 ? `Ascenso (+${extraPct}% FI)` : 'Costa (0%)'} • ${gpsTxt}`
+      : `Modo Libre • ${gpsTxt}`;
   }
 
   const elevArr = Array.isArray(route.elevProfile) && route.elevProfile.length >= 2 ? route.elevProfile : [34, 34];
@@ -2105,40 +2123,16 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   }
 
   const elevEl = document.getElementById('map-current-elev');
-  if (elevEl) elevEl.innerHTML = `${currentAlt.toLocaleString('es-PE')} <small>m</small>`;
+  if (elevEl) elevEl.textContent = `${currentAlt.toLocaleString('es-PE')} m`;
+
+  const peakAltEl = document.getElementById('map-bot-peak-alt');
+  if (peakAltEl) {
+    peakAltEl.textContent = hasActiveRoute
+      ? `• Cima ${Number(route.peakAlt || 0).toLocaleString('es-PE')}m`
+      : `• Base ${currentAlt}m`;
+  }
 
   renderElevationProfileSVG(elevArr, progressRatio, hasActiveRoute);
-
-  const botRange = document.getElementById('map-bot-range');
-  if (botRange) {
-    botRange.innerHTML = tankState.hasFuelData ? `~${tankState.remKm} <small>km</small>` : `0 <small>km</small>`;
-    document.getElementById('map-bot-fuel-bar').style.width = `${tankState.tankPct}%`;
-    document.getElementById('map-bot-fuel-txt').textContent = tankState.hasFuelData
-      ? `${tankState.tankPct}% Combustible actual`
-      : 'Sin lecturas de grifo (0%)';
-
-    document.getElementById('map-bot-dist').innerHTML = hasActiveRoute ? `${remDistKm.toFixed(1)} <small>km</small>` : `-- <small>km</small>`;
-    document.getElementById('map-bot-eta').textContent = hasActiveRoute ? `${remMin} min • ETA ${etaStr}` : 'Elige destino arriba';
-    document.getElementById('map-bot-needgal').textContent = hasActiveRoute
-      ? `Req: ${neededGal.toFixed(2)} gal (S/ ${neededSoles.toFixed(2)})`
-      : 'Req: 0.00 gal (S/ 0.00)';
-
-    document.getElementById('map-bot-routename').textContent = hasActiveRoute ? route.name : 'Exploración Libre';
-    const extraPct = Math.round(((route.terrainFactor || 1) - 1) * 100);
-    document.getElementById('map-bot-terrain').textContent = hasActiveRoute
-      ? (extraPct > 0 ? `Ascenso (+${extraPct}% FI)` : 'Costa / Plano (0%)')
-      : 'Terreno sin trazar';
-    document.getElementById('map-bot-diff').textContent = hasActiveRoute ? (route.difficulty || 'Media') : 'Listo para navegar';
-
-    const lat = uiConfig.liveGpsLat ?? (hasActiveRoute ? route.lat : DEFAULT_ORIGIN_COORDS.lat);
-    const lon = uiConfig.liveGpsLon ?? (hasActiveRoute ? route.lon : DEFAULT_ORIGIN_COORDS.lon);
-    document.getElementById('map-bot-coords').innerHTML = formatDmsCoord(lat, lon);
-    document.getElementById('map-bot-gps-status').textContent =
-      uiConfig.gpsWatchId !== null ? '🟢 GPS Satelital Activo' : '🛰️ Satélite Esri + OSRM';
-    document.getElementById('map-bot-peak-alt').textContent = hasActiveRoute
-      ? `Cima: ${Number(route.peakAlt || 0).toLocaleString('es-PE')} msnm`
-      : `Alt base: ${currentAlt} msnm`;
-  }
 }
 
 export function renderObdLiveUI(data, forceMap = false) {
@@ -2213,12 +2207,12 @@ export function renderObdLiveUI(data, forceMap = false) {
   card.classList.add('obd-active');
 
   if (data.mode === 'sim') {
-    statusPill.textContent = 'DEMO ACTIVO';
+    statusPill.textContent = 'DEMO';
     statusPill.className = 'status-pill status-warn';
     if (btnSim) btnSim.textContent = '⏹ Salir';
     if (btnConnect) btnConnect.textContent = '⚡ ECU';
   } else {
-    statusPill.textContent = 'CONECTADO';
+    statusPill.textContent = 'ONLINE';
     statusPill.className = 'status-pill status-ok';
     if (btnConnect) btnConnect.textContent = '⏹ Cortar';
     if (btnSim) btnSim.textContent = 'Demo';

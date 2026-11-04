@@ -544,7 +544,7 @@ input:focus { border-color: var(--caribbean-bright); }
   cursor: pointer;
 }
 
-/* ================= DOCK DE 5 MÓDULOS AMPLIOS (ZONA DEL PULGAR CON GUANTES) ================= */
+/* ================= DOCK DE 5 MÓDULOS AMPLIOS ================= */
 .tabs-nav-5 {
   position: fixed;
   bottom: 0;
@@ -732,7 +732,7 @@ input:focus { border-color: var(--caribbean-bright); }
 .status-danger { background: rgba(255, 69, 58, 0.16); color: var(--red-danger); }
 
 .progress-track { width: 100%; height: 4.5px; background: #05080C; border-radius: 99px; overflow: hidden; margin: 7px 0; }
-.progress-fill { height: 100%; border-radius: 99px; transition: width 0.45s ease; }
+.progress-fill { height: 100%; width: 0%; border-radius: 99px; transition: width 0.45s ease; }
 .maint-footer { display: flex; justify-content: space-between; font-size: 10px; color: var(--alloy-silver); }
 
 .finance-strip {
@@ -1212,215 +1212,7 @@ body[data-theme="white"] {
 .docs-garage-card.docs-alert { border-left-color: var(--amber-warn); }
 .docs-garage-card.docs-danger { border-left-color: var(--red-danger); }
 
-/* ================= COCKPIT MACHINE OUTDOORS & TELEMETRÍA OBD2 ================= */
-.obd-live-card {
-  margin-bottom: 11px;
-  border-left: 3px solid var(--caribbean-bright);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
-  overflow: hidden;
-}
-
-.obd-live-card.obd-active {
-  border-left-color: var(--neon-lime);
-  box-shadow: 0 8px 26px rgba(88, 232, 0, 0.14);
-}
-
-.obd-live-card.obd-shift-alert {
-  border-color: var(--red-danger) !important;
-  box-shadow: 0 0 22px rgba(255, 69, 58, 0.55) !important;
-}
-
-.obd-btn-group { display: flex; align-items: center; gap: 5px; }
-
-.obd-machine-dials-grid {
-  display: grid;
-  grid-template-columns: 1.18fr 0.74fr 1.18fr;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.obd-dial-card,
-.obd-hero-gear-box {
-  background: linear-gradient(165deg, #070C14 0%, #0C1522 100%);
-  border: 1px solid rgba(73, 191, 230, 0.22);
-  border-radius: 12px;
-  padding: 7px 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.obd-hero-gear-box {
-  align-items: center;
-  text-align: center;
-  border-color: rgba(88, 232, 0, 0.35);
-  background: radial-gradient(circle at 50% 40%, rgba(88, 232, 0, 0.14) 0%, #070C14 85%);
-}
-
-.obd-svg-dial-wrap {
-  position: relative;
-  width: 100%;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 2px 0;
-}
-
-.obd-dial-svg {
-  width: 100%;
-  height: 100%;
-  max-width: 118px;
-  overflow: visible;
-}
-
-#obd-rpm-arc,
-#obd-speed-arc {
-  transition: stroke-dashoffset 0.18s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.2s ease, filter 0.2s ease;
-}
-
-#obd-rpm-arc.torque-glow {
-  filter: drop-shadow(0 0 8px rgba(88, 232, 0, 0.85));
-}
-
-.obd-dial-center-txt {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-top: 12px;
-  pointer-events: none;
-}
-
-#obd-rpm-val,
-#obd-speed-val {
-  font-family: var(--font-speed);
-  font-size: 24px;
-  font-weight: 900;
-  line-height: 0.95;
-  color: #FFFFFF;
-  font-variant-numeric: tabular-nums;
-}
-
-#obd-rpm-val { color: var(--neon-lime); }
-
-.obd-dial-center-txt small {
-  font-size: 8.5px;
-  font-weight: 800;
-  color: var(--alloy-muted);
-  text-transform: uppercase;
-  margin-top: 2px;
-}
-
-.obd-dial-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 8px;
-  color: var(--alloy-silver);
-  border-top: 1px solid rgba(210, 218, 228, 0.07);
-  padding-top: 3px;
-}
-
-.obd-hero-tag { font-size: 8px; font-weight: 800; letter-spacing: 0.5px; color: var(--alloy-muted); }
-.obd-gear-number { font-family: var(--font-speed); font-size: 34px; font-weight: 900; line-height: 0.95; color: var(--neon-lime); margin: 2px 0; }
-.obd-guard-pill { font-size: 7.5px; font-weight: 800; padding: 2px 5px; border-radius: 4px; background: rgba(88, 232, 0, 0.15); color: var(--neon-lime); white-space: nowrap; }
-.rpm-scale-danger { color: var(--red-danger); font-weight: 700; }
-
-.obd-vitals-grid-4 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.obd-vital-card {
-  background: #070C14;
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 7px 9px;
-}
-
-.obd-vital-val {
-  display: block;
-  font-family: var(--font-speed);
-  font-size: 18px;
-  font-weight: 800;
-  color: #FFFFFF;
-  margin: 2px 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.obd-vital-val small { font-size: 10px; color: var(--alloy-silver); }
-
-.machine-bar-row { display: flex; align-items: center; gap: 5px; margin: 3px 0 4px; }
-.machine-bar-row small { font-size: 7.5px; font-weight: 800; color: var(--alloy-muted); }
-.machine-bar-track { flex: 1; height: 4px; background: #121D2B; border-radius: 99px; overflow: hidden; }
-.machine-bar-fill { height: 100%; width: 0%; background: var(--neon-lime); border-radius: 99px; transition: width 0.25s ease, background-color 0.25s ease; }
-
-.obd-micro-grid-6 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
-  margin-bottom: 8px;
-}
-
-.obd-micro-cell {
-  background: #05080D;
-  border: 1px solid rgba(210, 218, 228, 0.12);
-  border-radius: 8px;
-  padding: 5px 7px;
-}
-
-.micro-lbl { display: block; font-size: 7.5px; font-weight: 800; letter-spacing: 0.4px; color: var(--alloy-muted); }
-.obd-micro-cell strong { display: block; font-family: var(--font-speed); font-size: 12.5px; font-weight: 800; color: #FFFFFF; margin: 1px 0; font-variant-numeric: tabular-nums; }
-.obd-micro-cell small { display: block; font-size: 8px; color: var(--alloy-silver); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.obd-machine-footer-strip {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr 1.1fr auto;
-  align-items: center;
-  gap: 6px;
-  background: #060B12;
-  border: 1px solid rgba(73, 191, 230, 0.22);
-  border-radius: 9px;
-  padding: 6px 8px;
-  margin-bottom: 4px;
-}
-
-.obd-footer-stat strong { display: block; font-family: var(--font-speed); font-size: 12px; font-weight: 800; color: #FFFFFF; }
-.obd-footer-stat small { display: block; font-size: 7.5px; color: var(--alloy-silver); }
-
-.obd-dtc-strip { background: #05090F; border: 1px solid var(--border-subtle); border-radius: 9px; padding: 8px 10px; }
-.obd-dtc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.obd-dtc-status-txt { font-size: 10px; font-weight: 700; color: var(--neon-lime); margin-top: 1px; }
-.obd-dtc-list { display: flex; flex-direction: column; gap: 4px; margin-top: 7px; padding-top: 6px; border-top: 1px solid rgba(255, 69, 58, 0.25); }
-.obd-dtc-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 69, 58, 0.1); border: 1px solid rgba(255, 69, 58, 0.35); border-radius: 6px; padding: 5px 8px; font-size: 10px; }
-.obd-dtc-code { font-family: var(--font-speed); font-weight: 900; color: var(--red-danger); margin-right: 6px; }
-
-.obd-box-head { display: flex; justify-content: space-between; align-items: center; gap: 4px; width: 100%; }
-.obd-box-head.center { justify-content: center; gap: 5px; }
-.obd-mini-info { width: 16px !important; height: 16px !important; font-size: 9px !important; }
-.obd-micro-info { width: 14px !important; height: 14px !important; font-size: 8px !important; }
-
-/* Banner de Alerta de Recalibración Barométrica (Sensor MAP en Sierra) */
-.mo-altitude-alert-strip {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 159, 10, 0.18);
-  border: 1px solid var(--amber-warn);
-  border-radius: 8px;
-  padding: 5px 9px;
-  font-size: 9.5px;
-  color: #FFFFFF;
-  flex-shrink: 0;
-}
-
-/* ================= SISTEMA OPERATIVO "MACHINE OUTDOORS" PRO ================= */
+/* ================= REDISEÑO TOTAL: MACHINE OUTDOORS OS (ZŪMO / CONNECTEDRIDE EDITION) ================= */
 #obd-live-panel.hidden,
 #obd-map-panel.hidden,
 #obd-diag-panel.hidden {
@@ -1434,7 +1226,7 @@ body.ecu-ride-mode {
   overflow: hidden !important;
   padding: 0 !important;
   margin: 0 !important;
-  background: #06090D !important;
+  background: #05080C !important;
 }
 
 body.ecu-tab-active .app-header,
@@ -1471,108 +1263,124 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   padding: 0 !important;
   border-radius: 0 !important;
   border: none !important;
-  background: #070B10 !important;
+  background: #060A0F !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
 }
 
-/* 1. Barra de Navegación Machine Outdoors */
-.mo-sidebar {
-  background: linear-gradient(180deg, #0D141E 0%, #090D14 100%);
-  border-bottom: 1px solid rgba(73, 191, 230, 0.16);
+/* 1. Cabecera Unificada de 1 sola línea (Reemplaza Sidebar + Statusbar) */
+.mo-unified-topbar {
+  background: linear-gradient(180deg, #0D1520 0%, #080D14 100%);
+  border-bottom: 1px solid rgba(73, 191, 230, 0.18);
   padding: 6px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
-}
-
-.mo-brand-block { display: flex; flex-direction: column; line-height: 1; flex-shrink: 0; }
-.mo-brand-title { font-family: var(--font-speed); font-size: 13px; font-weight: 900; letter-spacing: 1.4px; color: #FFFFFF; }
-.mo-brand-sub { font-size: 6.5px; font-weight: 800; letter-spacing: 1.8px; color: var(--caribbean-bright); margin-top: 2px; }
-
-.mo-side-nav {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   overflow-x: auto;
   scrollbar-width: none;
 }
-.mo-side-nav::-webkit-scrollbar { display: none; }
+.mo-unified-topbar::-webkit-scrollbar { display: none; }
 
-.mo-nav-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
-  border-radius: 8px;
-  padding: 6px 9px;
+.mo-top-brand {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.4px;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.mo-home-back-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(30, 136, 168, 0.16);
+  border: 1px solid rgba(73, 191, 230, 0.35);
+  color: var(--caribbean-bright);
+  font-size: 14px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.18s ease;
+  flex-shrink: 0;
 }
 
-.mo-nav-item.active {
-  background: linear-gradient(135deg, rgba(30, 136, 168, 0.28), rgba(12, 70, 92, 0.35));
-  border-color: var(--caribbean-bright);
-  color: #FFFFFF;
-  box-shadow: 0 2px 10px rgba(73, 191, 230, 0.22);
-}
-
-.mo-nav-item.sos-nav {
-  border-color: rgba(255, 69, 58, 0.35);
-  color: #FF6961;
-}
-
-.mo-nav-ico { font-size: 12px; line-height: 1; }
-.mo-sidebar-vehicle-foot { display: none; }
-.mo-vehicle-name { font-size: 9px; font-weight: 800; color: #D2DAE4; letter-spacing: 0.5px; }
-.mo-vehicle-sub { font-size: 7.5px; color: #7C8B9E; margin-bottom: 6px; }
-.mo-conn-text { display: block; font-size: 8px; font-weight: 800; color: var(--alloy-muted); letter-spacing: 0.6px; margin-bottom: 3px; }
-.mo-conn-bar { width: 100%; height: 3.5px; background: rgba(255, 255, 255, 0.08); border-radius: 99px; overflow: hidden; }
-.mo-conn-bar-fill { width: 0%; height: 100%; background: var(--neon-lime); transition: width 0.3s ease, background-color 0.3s ease; }
-
-/* 2. Escenario Principal y Barra de Estado */
-.mo-main-stage {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
+.mo-brand-txt-wrap {
   display: flex;
   flex-direction: column;
-  padding: 6px 10px;
-  gap: 6px;
-  overflow: hidden;
+  line-height: 1.05;
 }
 
-.mo-statusbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  flex-shrink: 0;
+.mo-brand-title {
+  font-family: var(--font-speed);
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  color: #FFFFFF;
 }
 
-.mo-status-left { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
-.mo-clock-txt { font-family: var(--font-speed); font-size: 12px; font-weight: 800; color: var(--caribbean-bright); font-variant-numeric: tabular-nums; }
-.mo-section-crumb { font-size: 11px; font-weight: 800; letter-spacing: 0.8px; color: #FFFFFF; }
+.mo-brand-sub {
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #8E9BAE;
+  margin-top: 2px;
+}
 
-.mo-status-center-actions {
+.mo-brand-sub strong {
+  color: var(--caribbean-bright);
+  font-family: var(--font-speed);
+}
+
+/* Píldoras de Navegación Centrales */
+.mo-mode-switcher {
   display: flex;
   align-items: center;
   gap: 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  background: #04070B;
+  padding: 3px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
-.mo-status-center-actions::-webkit-scrollbar { display: none; }
+
+.mo-mode-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94A3B8;
+  border-radius: 6px;
+  padding: 5px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.mo-mode-tab.active {
+  background: linear-gradient(135deg, var(--caribbean-primary), var(--caribbean-deep));
+  border-color: rgba(73, 191, 230, 0.45);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(30, 136, 168, 0.35);
+}
+
+.mo-mode-tab.sos {
+  border-color: rgba(255, 69, 58, 0.35);
+  background: rgba(255, 69, 58, 0.1);
+}
+
+/* Acciones Rápidas Derecha */
+.mo-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
 
 .mo-top-pill {
   background: rgba(255, 255, 255, 0.06);
@@ -1580,11 +1388,10 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   color: #D2DAE4;
   font-size: 9.5px;
   font-weight: 800;
-  padding: 5px 8.5px;
+  padding: 5px 8px;
   border-radius: 7px;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
 }
 
 .mo-top-pill.connect {
@@ -1610,47 +1417,48 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   to { box-shadow: 0 0 12px rgba(255, 69, 58, 0.95); }
 }
 
-.mo-status-right { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #B0BCCB; flex-shrink: 0; }
-.mo-temp-readout { font-family: var(--font-speed); font-size: 11.5px; font-weight: 800; color: #FFFFFF; }
+/* 2. Escenario Principal y Workspace */
+.mo-main-stage {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 7px 9px;
+  gap: 7px;
+  overflow: hidden;
+}
 
-/* 3. Paneles del Escenario (Optimizado para Vertical y Horizontal) */
 .mo-stage-panel:not(.hidden) {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
 }
 
-.mo-map-master-grid {
+.mo-nav-workspace {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
-.mo-map-center-column {
-  flex: 1;
-  min-height: 245px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
+/* Lienzo del Mapa Protagonista */
 .machine-map-canvas-box {
   position: relative;
   flex: 1;
   width: 100%;
-  min-height: 230px;
+  min-height: 265px;
   background: #060B0E;
-  border: 1px solid rgba(73, 191, 230, 0.22);
-  border-radius: 12px;
+  border: 1px solid rgba(73, 191, 230, 0.24);
+  border-radius: 13px;
   overflow: hidden;
-  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 .leaflet-sat-container {
@@ -1662,12 +1470,13 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   z-index: 1;
 }
 
-/* ================= HUD SUPERIOR: BUSCADOR PROFESIONAL & CHIPS DE DESTINOS ================= */
+/* Buscador Flotante Compacto */
 .mo-map-top-search-hud {
   position: absolute;
   top: 8px;
   left: 8px;
-  right: 48px;
+  right: 46px;
+  max-width: 440px;
   z-index: 650;
   display: flex;
   flex-direction: column;
@@ -1680,26 +1489,20 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(8, 13, 21, 0.92);
+  background: rgba(7, 12, 19, 0.90);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(73, 191, 230, 0.38);
+  border: 1px solid rgba(73, 191, 230, 0.36);
   border-radius: 10px;
-  padding: 4px 6px 4px 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 3.5px 5px 3.5px 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
 }
 
 .mo-pro-search-bar:focus-within {
   border-color: var(--neon-lime);
-  box-shadow: 0 8px 26px rgba(88, 232, 0, 0.22);
 }
 
-.mo-search-icon {
-  font-size: 12px;
-  opacity: 0.85;
-  flex-shrink: 0;
-}
+.mo-search-icon { font-size: 11px; opacity: 0.85; flex-shrink: 0; }
 
 .mo-pro-search-inp {
   flex: 1;
@@ -1709,21 +1512,18 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   color: #FFFFFF !important;
   font-size: 11.5px !important;
   font-weight: 600 !important;
-  padding: 4px 2px !important;
+  padding: 3px 2px !important;
   outline: none !important;
 }
 
-.mo-pro-search-inp::placeholder {
-  color: #8E9BAE;
-  font-weight: 500;
-}
+.mo-pro-search-inp::placeholder { color: #8E9BAE; font-weight: 500; }
 
 .mo-search-clear-btn {
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: #D2DAE4;
   font-size: 10px;
   font-weight: 800;
@@ -1735,36 +1535,34 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .mo-pro-search-btn {
-  background: linear-gradient(135deg, var(--neon-lime), #42B800);
+  background: var(--neon-lime);
   color: #05090D;
   border: none;
   border-radius: 7px;
-  padding: 5px 11px;
+  padding: 4.5px 10px;
   font-family: var(--font-speed);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 900;
-  letter-spacing: 0.4px;
   cursor: pointer;
   flex-shrink: 0;
 }
 
-/* Lista Desplegable de Resultados con Distancia y Rumbo */
+/* Resultados Desplegables */
 .map-search-dropdown {
   pointer-events: auto;
   background: rgba(8, 13, 21, 0.97);
   backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--caribbean-bright);
   border-radius: 10px;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.88);
-  max-height: 210px;
+  max-height: 195px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
 .map-search-item {
-  padding: 8px 11px;
+  padding: 7px 10px;
   border-bottom: 1px solid rgba(210, 218, 228, 0.08);
   cursor: pointer;
   text-align: left;
@@ -1777,73 +1575,65 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  transition: background 0.15s ease;
 }
 
-.map-search-item:last-child { border-bottom: none; }
 .map-search-item:hover, .map-search-item:active { background: rgba(30, 136, 168, 0.26); }
-.map-search-item strong { display: block; color: var(--neon-lime); font-size: 11.5px; }
-.map-search-item small { display: block; color: var(--alloy-silver); font-size: 9.5px; margin-top: 1px; }
+.map-search-item strong { display: block; color: var(--neon-lime); font-size: 11px; }
+.map-search-item small { display: block; color: var(--alloy-silver); font-size: 9px; margin-top: 1px; }
 .map-search-dist-pill {
   font-family: var(--font-speed);
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
   color: var(--caribbean-bright);
   background: rgba(30, 136, 168, 0.18);
   border: 1px solid rgba(73, 191, 230, 0.3);
-  padding: 2.5px 7px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-/* Carrusel Horizontal de Destinos Rápidos y PDI */
+/* Carrusel de Chips Rápidos (Se oculta cuando hay ruta activa para limpiar el mapa) */
 .mo-quick-presets-strip {
   pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
+  transition: opacity 0.2s ease, max-height 0.2s ease;
 }
 .mo-quick-presets-strip::-webkit-scrollbar { display: none; }
 
+.mo-quick-presets-strip.chips-collapsed {
+  display: none !important;
+}
+
 .mo-preset-chip {
-  background: rgba(10, 16, 25, 0.88);
+  background: rgba(8, 14, 22, 0.86);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #E2E8F0;
-  padding: 4.5px 9px;
+  padding: 4px 8.5px;
   border-radius: 99px;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
-  transition: all 0.15s ease;
 }
 
-.mo-preset-chip:active,
 .mo-preset-chip.active {
-  background: rgba(30, 136, 168, 0.38);
+  background: rgba(30, 136, 168, 0.42);
   border-color: var(--neon-lime);
   color: #FFFFFF;
-  transform: scale(0.96);
 }
 
 .mo-preset-chip.poi {
-  border-color: rgba(73, 191, 230, 0.4);
+  border-color: rgba(73, 191, 230, 0.42);
   color: var(--caribbean-bright);
 }
 
-.mo-preset-chip.clear-chip {
-  border-color: rgba(255, 69, 58, 0.45);
-  color: #FF6961;
-}
-
-/* ================= DOCK DERECHO DE CONTROLES TÁCTICOS ================= */
+/* Dock Derecho de Botones de Mapa */
 .mo-map-right-controls {
   position: absolute;
   top: 8px;
@@ -1851,15 +1641,15 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   z-index: 600;
 }
 
 .mo-compass-circle {
-  width: 33px;
-  height: 33px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: rgba(10, 15, 22, 0.92);
+  background: rgba(9, 14, 21, 0.90);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #FFFFFF;
@@ -1867,16 +1657,14 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-  transition: all 0.15s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
 }
 
 .mo-compass-circle.active {
   border-color: var(--neon-lime);
   background: rgba(88, 232, 0, 0.18);
-  box-shadow: 0 0 12px rgba(88, 232, 0, 0.35);
 }
 
 .mo-compass-circle.sos-btn {
@@ -1884,73 +1672,69 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   background: rgba(45, 10, 14, 0.92);
 }
 
-.mo-compass-arrow { font-size: 7px; color: #FF453A; line-height: 1; transition: transform 0.3s ease; }
-.mo-compass-circle strong { font-size: 8.5px; line-height: 1; }
+.mo-compass-arrow { font-size: 6.5px; color: #FF453A; line-height: 1; transition: transform 0.3s ease; }
+.mo-compass-circle strong { font-size: 8px; line-height: 1; }
 
 .mo-zoom-pill-group {
-  background: rgba(10, 15, 22, 0.92);
+  background: rgba(9, 14, 21, 0.90);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 99px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 .mo-zoom-pill-group button {
-  width: 33px;
-  height: 27px;
+  width: 30px;
+  height: 24px;
   background: transparent;
   border: none;
   color: #FFFFFF;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
 }
 
-.mo-zoom-divider { height: 1px; width: 18px; margin: 0 auto; background: rgba(255, 255, 255, 0.14); }
+.mo-zoom-divider { height: 1px; width: 16px; margin: 0 auto; background: rgba(255, 255, 255, 0.14); }
 
-/* ================= TARJETA FLOTANTE INFERIOR DE RUTA ACTIVA ================= */
+/* Píldora Inferior Ultracompacta de Estado de Ruta */
 .mo-dest-overlay-card {
   position: absolute;
   bottom: 8px;
   left: 8px;
-  right: 48px;
-  top: auto;
-  width: auto;
-  background: rgba(10, 15, 23, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  right: 46px;
+  background: rgba(8, 13, 20, 0.90);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(73, 191, 230, 0.28);
-  border-radius: 11px;
-  padding: 7px 10px;
+  border-radius: 10px;
+  padding: 5.5px 9px;
   z-index: 550;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.75);
-  transition: all 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
 }
 
 .mo-dest-overlay-card.collapsed {
   right: auto;
-  width: auto;
-  padding: 5px 9px;
 }
 
-.mo-dest-overlay-card.collapsed #mo-dest-card-body {
+.mo-dest-overlay-card.collapsed #mo-dest-card-body,
+.mo-dest-overlay-card.collapsed .mo-dest-sub {
   display: none !important;
 }
 
 .mo-dest-card-head {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .mo-live-route-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--caribbean-bright);
+  background: var(--alloy-muted);
   display: inline-block;
   flex-shrink: 0;
 }
@@ -1960,37 +1744,8 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   box-shadow: 0 0 8px var(--neon-lime);
 }
 
-.mo-card-collapse-btn {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #D2DAE4;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.mo-dest-body-horizontal {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-top: 5px;
-  padding-top: 5px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.mo-dest-main-info {
-  flex: 1;
-  min-width: 0;
-}
-
 .mo-dest-title {
-  display: block;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: #FFFFFF;
   white-space: nowrap;
@@ -1999,51 +1754,38 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .mo-dest-sub {
-  display: block;
   font-size: 8.5px;
   color: #94A3B8;
-  margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 160px;
 }
 
-.mo-dest-stats-pair {
+.mo-dest-inline-badges {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
-.mo-stat-pill-box {
-  background: rgba(5, 9, 14, 0.75);
-  border: 1px solid rgba(73, 191, 230, 0.2);
-  border-radius: 7px;
-  padding: 3.5px 8px;
-  text-align: center;
-}
-
-.mo-stat-pill-box strong {
-  display: block;
-  font-family: var(--font-speed);
-  font-size: 12.5px;
-  font-weight: 800;
+.mo-route-chip {
+  background: rgba(88, 232, 0, 0.12);
+  border: 1px solid rgba(88, 232, 0, 0.35);
   color: var(--neon-lime);
-  line-height: 1.05;
-}
-
-.mo-stat-pill-box strong small {
-  font-size: 8.5px;
-  color: #D2DAE4;
-}
-
-.mo-stat-pill-box span {
-  display: block;
-  font-size: 6.5px;
+  font-family: var(--font-speed);
+  font-size: 10.5px;
   font-weight: 800;
-  color: #7C8B9E;
-  letter-spacing: 0.4px;
-  margin-top: 1px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.mo-dest-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .mo-mini-action {
@@ -2052,8 +1794,8 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   color: #D2DAE4;
   font-size: 8.5px;
   font-weight: 700;
-  padding: 4px 6.5px;
-  border-radius: 6px;
+  padding: 3.5px 6px;
+  border-radius: 5px;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -2064,33 +1806,153 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   color: #58E800;
 }
 
-/* Indicador de Rumbo Flotante Discreto */
-.mo-safe-label-overlay {
-  position: absolute;
-  bottom: 84px;
-  left: 10px;
-  z-index: 500;
-  background: rgba(6, 10, 15, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 3px 7px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 8px;
+.mo-card-collapse-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #D2DAE4;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.5px;
-  color: var(--caribbean-bright);
-  pointer-events: none;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.mo-safe-label-overlay small {
-  color: #FFFFFF;
+/* ================= PANEL HUD UNIFICADO DE 4 MÓDULOS (CERO DUPLICADOS) ================= */
+.mo-hud-4panel {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.mo-hud-card {
+  background: linear-gradient(160deg, #0D1520 0%, #080C13 100%);
+  border: 1px solid rgba(73, 191, 230, 0.18);
+  border-radius: 11px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.mo-hud-card.speed-hud {
+  border-left: 3px solid var(--neon-lime);
+}
+
+.mo-hud-card.elev-card {
+  cursor: pointer;
+  border-left: 3px solid var(--caribbean-bright);
+}
+
+.mo-hud-tag {
   font-family: var(--font-speed);
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--caribbean-bright);
+  background: rgba(30, 136, 168, 0.16);
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
-/* Pines del Mapa Leaflet */
-.leaflet-tile-pane { filter: brightness(0.86) contrast(1.14) saturate(0.95); }
+.mo-hud-speed-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin: 2px 0;
+}
+
+.mo-hud-speed-row strong {
+  font-family: var(--font-speed);
+  font-size: 28px;
+  font-weight: 900;
+  color: #FFFFFF;
+  line-height: 0.92;
+  font-variant-numeric: tabular-nums;
+}
+
+.mo-hud-speed-row small {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #8E9BAE;
+}
+
+.mo-speed-smile-arc {
+  width: 100%;
+  max-width: 110px;
+  height: 14px;
+  margin: 0 auto;
+}
+
+.mo-hud-dual-val {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 5px;
+  margin: 3px 0 2px;
+}
+
+.mo-card-primary-val {
+  font-family: var(--font-speed);
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+
+.mo-card-primary-val small {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+.mo-hud-pill-stat {
+  font-family: var(--font-speed);
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--caribbean-bright);
+  background: rgba(30, 136, 168, 0.15);
+  border: 1px solid rgba(73, 191, 230, 0.25);
+  padding: 1.5px 5.5px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.mo-hud-foot-pair {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  color: #8E9BAE;
+}
+
+.mo-hud-foot-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+  font-size: 8px;
+  color: #94A3B8;
+}
+
+.mo-hud-foot-stack small,
+.mo-hud-foot-pair small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mo-elev-chart-container {
+  width: 100%;
+  height: 40px;
+  margin-top: 2px;
+}
+
+/* Pines del Mapa Leaflet y Limpieza de Atribución */
+.leaflet-tile-pane { filter: brightness(0.88) contrast(1.12) saturate(0.96); }
 .leaflet-control-attribution { font-size: 7px !important; background: rgba(5, 8, 13, 0.65) !important; color: var(--alloy-muted) !important; }
 .leaflet-control-attribution a { color: var(--caribbean-bright) !important; }
 
@@ -2137,86 +1999,225 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   font-size: 12px;
 }
 
-/* ================= GRILLAS DE MÉTRICAS DEL MAPA (OPTIMIZADO EN VERTICAL) ================= */
-.mo-bottom-4col-strip {
+/* ================= ELEMENTOS DEL TABLERO DE RELOJES Y DIAGNÓSTICO ================= */
+.obd-live-card {
+  margin-bottom: 11px;
+  border-left: 3px solid var(--caribbean-bright);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  overflow: hidden;
+}
+
+.obd-live-card.obd-active {
+  border-left-color: var(--neon-lime);
+}
+
+.obd-live-card.obd-shift-alert {
+  border-color: var(--red-danger) !important;
+  box-shadow: 0 0 22px rgba(255, 69, 58, 0.55) !important;
+}
+
+.obd-btn-group { display: flex; align-items: center; gap: 5px; }
+
+.obd-machine-dials-grid {
+  display: grid;
+  grid-template-columns: 1.18fr 0.74fr 1.18fr;
+  gap: 6px;
+}
+
+.obd-dial-card,
+.obd-hero-gear-box {
+  background: linear-gradient(165deg, #080E17 0%, #0C1522 100%);
+  border: 1px solid rgba(73, 191, 230, 0.22);
+  border-radius: 12px;
+  padding: 7px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.obd-hero-gear-box {
+  align-items: center;
+  text-align: center;
+  border-color: rgba(88, 232, 0, 0.35);
+  background: radial-gradient(circle at 50% 40%, rgba(88, 232, 0, 0.14) 0%, #070C14 85%);
+}
+
+.obd-svg-dial-wrap {
+  position: relative;
+  width: 100%;
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px 0;
+}
+
+.obd-dial-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 116px;
+  overflow: visible;
+}
+
+#obd-rpm-arc,
+#obd-speed-arc {
+  transition: stroke-dashoffset 0.18s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.2s ease, filter 0.2s ease;
+}
+
+#obd-rpm-arc.torque-glow {
+  filter: drop-shadow(0 0 8px rgba(88, 232, 0, 0.85));
+}
+
+.obd-dial-center-txt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 12px;
+  pointer-events: none;
+}
+
+#obd-rpm-val,
+#obd-speed-val {
+  font-family: var(--font-speed);
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 0.95;
+  color: #FFFFFF;
+  font-variant-numeric: tabular-nums;
+}
+
+#obd-rpm-val { color: var(--neon-lime); }
+
+.obd-dial-center-txt small {
+  font-size: 8.5px;
+  font-weight: 800;
+  color: var(--alloy-muted);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.obd-dial-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8px;
+  color: var(--alloy-silver);
+  border-top: 1px solid rgba(210, 218, 228, 0.07);
+  padding-top: 3px;
+}
+
+.obd-hero-tag { font-size: 8px; font-weight: 800; letter-spacing: 0.5px; color: var(--alloy-muted); }
+.obd-gear-number { font-family: var(--font-speed); font-size: 34px; font-weight: 900; line-height: 0.95; color: var(--neon-lime); margin: 2px 0; }
+.obd-guard-pill { font-size: 7.5px; font-weight: 800; padding: 2px 5px; border-radius: 4px; background: rgba(88, 232, 0, 0.15); color: var(--neon-lime); white-space: nowrap; }
+.rpm-scale-danger { color: var(--red-danger); font-weight: 700; }
+
+.obd-vitals-grid-4 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 6px;
-  background: #0B1017;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.obd-vital-card {
+  background: #080E17;
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 7px 9px;
-  flex-shrink: 0;
 }
 
-.mo-bot-cell {
-  background: rgba(5, 8, 13, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 7px;
-  padding: 5px 7px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
+.obd-vital-val {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 18px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 2px 0;
+  font-variant-numeric: tabular-nums;
 }
 
-.mo-bot-big { font-family: var(--font-speed); font-size: 14px; font-weight: 800; color: #FFFFFF; }
-.mo-bot-big small { font-size: 9px; font-weight: 600; color: #B0BCCB; }
-.mo-bot-route-title { font-size: 10px; font-weight: 800; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mo-bot-coords-txt { font-family: var(--font-speed); font-size: 9px; font-weight: 700; color: #D2DAE4; line-height: 1.2; }
-.mo-bot-sub { font-size: 8px; color: #8E9BAE; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.obd-vital-val small { font-size: 10px; color: var(--alloy-silver); }
 
-.mo-right-4cards-stack {
+.machine-bar-row { display: flex; align-items: center; gap: 5px; margin: 3px 0 4px; }
+.machine-bar-row small { font-size: 7.5px; font-weight: 800; color: var(--alloy-muted); }
+.machine-bar-track { flex: 1; height: 4px; background: #121D2B; border-radius: 99px; overflow: hidden; }
+.machine-bar-fill { height: 100%; width: 0%; background: var(--neon-lime); border-radius: 99px; transition: width 0.25s ease, background-color 0.25s ease; }
+
+.obd-micro-grid-6 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.obd-micro-cell {
+  background: #060A10;
+  border: 1px solid rgba(210, 218, 228, 0.12);
+  border-radius: 8px;
+  padding: 5px 7px;
+}
+
+.micro-lbl { display: block; font-size: 7.5px; font-weight: 800; letter-spacing: 0.4px; color: var(--alloy-muted); }
+.obd-micro-cell strong { display: block; font-family: var(--font-speed); font-size: 12.5px; font-weight: 800; color: #FFFFFF; margin: 1px 0; font-variant-numeric: tabular-nums; }
+.obd-micro-cell small { display: block; font-size: 8px; color: var(--alloy-silver); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.obd-machine-footer-strip {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1.1fr auto;
+  align-items: center;
   gap: 6px;
+  background: #070C14;
+  border: 1px solid rgba(73, 191, 230, 0.22);
+  border-radius: 9px;
+  padding: 6px 8px;
+}
+
+.obd-footer-stat strong { display: block; font-family: var(--font-speed); font-size: 12px; font-weight: 800; color: #FFFFFF; }
+.obd-footer-stat small { display: block; font-size: 7.5px; color: var(--alloy-silver); }
+
+.obd-dtc-strip { background: #070C14; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 9px 11px; }
+.obd-dtc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.obd-dtc-status-txt { font-size: 10px; font-weight: 700; color: var(--neon-lime); margin-top: 1px; }
+.obd-dtc-list { display: flex; flex-direction: column; gap: 4px; margin-top: 7px; padding-top: 6px; border-top: 1px solid rgba(255, 69, 58, 0.25); }
+.obd-dtc-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 69, 58, 0.1); border: 1px solid rgba(255, 69, 58, 0.35); border-radius: 6px; padding: 5px 8px; font-size: 10px; }
+.obd-dtc-code { font-family: var(--font-speed); font-weight: 900; color: var(--red-danger); margin-right: 6px; }
+
+.obd-box-head { display: flex; justify-content: space-between; align-items: center; gap: 4px; width: 100%; }
+.obd-box-head.center { justify-content: center; gap: 5px; }
+.obd-mini-info { width: 16px !important; height: 16px !important; font-size: 9px !important; }
+.obd-micro-info { width: 14px !important; height: 14px !important; font-size: 8px !important; }
+
+.mo-altitude-alert-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 159, 10, 0.18);
+  border: 1px solid var(--amber-warn);
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: 9.5px;
+  color: #FFFFFF;
   flex-shrink: 0;
 }
 
-.mo-side-metric-card {
-  background: linear-gradient(160deg, #0D141E 0%, #090D14 100%);
-  border: 1px solid rgba(73, 191, 230, 0.16);
-  border-radius: 10px;
-  padding: 7px 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.mo-side-metric-card.elev-card {
-  cursor: pointer;
-}
-
-.mo-speed-big-wrap { display: flex; flex-direction: column; align-items: center; margin-top: 1px; }
-.mo-speed-big-wrap strong { font-family: var(--font-speed); font-size: 27px; font-weight: 900; color: #FFFFFF; line-height: 0.92; }
-.mo-speed-big-wrap small { font-size: 8.5px; color: #8E9BAE; margin-top: 2px; }
-.mo-speed-smile-arc { width: 100%; max-width: 105px; height: 15px; margin: 0 auto; }
-.mo-card-primary-val { display: block; font-family: var(--font-speed); font-size: 17px; font-weight: 800; color: #FFFFFF; margin: 2px 0; }
-.mo-card-primary-val small { font-size: 10px; font-weight: 600; color: #B0BCCB; }
-.mo-card-sub-lbl { display: block; font-size: 8px; font-weight: 700; color: #8E9BAE; letter-spacing: 0.3px; }
-.mo-elev-chart-container { width: 100%; height: 40px; margin-top: 2px; }
-
-/* Diagnóstico */
 .obd-diag-master-grid { display: flex; flex-direction: column; gap: 8px; padding-bottom: 8px; }
 .elec-test-card { border-left: 3px solid var(--neon-lime); }
 .blackbox-card { border-left: 3px solid var(--caribbean-bright); }
 .elec-test-metrics-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 7px; }
-.et-metric-box { background: #080E17; border: 1px solid rgba(73, 191, 230, 0.18); border-radius: 8px; padding: 6px 8px; text-align: center; }
+.et-metric-box { background: #050910; border: 1px solid rgba(73, 191, 230, 0.18); border-radius: 8px; padding: 6px 8px; text-align: center; }
 .et-metric-box span { display: block; font-size: 7.5px; font-weight: 800; color: var(--alloy-muted); letter-spacing: 0.4px; }
 .et-metric-box strong { display: block; font-family: var(--font-speed); font-size: 14px; font-weight: 800; color: #FFFFFF; margin: 2px 0; }
 .et-metric-box small { display: block; font-size: 7.5px; color: var(--caribbean-bright); }
 
 /* Regla de los 0.8 Segundos en Modo Timón (ecu-ride-mode) */
 body.ecu-ride-mode #obd-rpm-val,
-body.ecu-ride-mode #obd-speed-val { font-size: 30px !important; }
-body.ecu-ride-mode .obd-gear-number { font-size: 44px !important; }
-body.ecu-ride-mode .obd-vital-val { font-size: 22px !important; }
-body.ecu-ride-mode .micro-lbl,
-body.ecu-ride-mode .tele-label { font-size: 9px !important; color: #D2DAE4 !important; }
-body.ecu-ride-mode .obd-micro-cell strong { font-size: 14.5px !important; }
-body.ecu-ride-mode .mo-top-pill { padding: 7px 11px !important; font-size: 10.5px !important; }
+body.ecu-ride-mode #obd-speed-val { font-size: 28px !important; }
+body.ecu-ride-mode .obd-gear-number { font-size: 42px !important; }
+body.ecu-ride-mode .obd-vital-val { font-size: 20px !important; }
+body.ecu-ride-mode .mo-hud-speed-row strong { font-size: 32px !important; }
 
-/* ================= MODO ALTO CONTRASTE SOLAR (RUTA A MEDIODÍA BAJO SOL DIRECTO) ================= */
+/* ================= MODO ALTO CONTRASTE SOLAR ================= */
 body[data-sunlight="true"] {
   --bg-chassis: #000000;
   --bg-engine: #06090F;
@@ -2229,8 +2230,7 @@ body[data-sunlight="true"] .maint-card,
 body[data-sunlight="true"] .obd-dial-card,
 body[data-sunlight="true"] .obd-vital-card,
 body[data-sunlight="true"] .obd-micro-cell,
-body[data-sunlight="true"] .mo-side-metric-card,
-body[data-sunlight="true"] .mo-bottom-4col-strip,
+body[data-sunlight="true"] .mo-hud-card,
 body[data-sunlight="true"] .mo-dest-overlay-card,
 body[data-sunlight="true"] .mo-pro-search-bar {
   background: #000000 !important;
@@ -2246,65 +2246,29 @@ body[data-sunlight="true"] .leaflet-tile-pane {
   filter: brightness(1.04) contrast(1.22) saturate(1.1) !important;
 }
 
-/* ================= MODO HORIZONTAL WIDESCREEN (TABLET MACHINE OUTDOORS) ================= */
+/* ================= MODO HORIZONTAL WIDESCREEN (MAPA 75% IZQUIERDA + 1 SOLA COLUMNA DERECHA) ================= */
 @media (orientation: landscape) {
   body.ecu-tab-active .tabs-nav-5 { display: none !important; }
   body.ecu-tab-active #main-screen,
   body.ecu-tab-active #tab-ecu:not(.hidden) { height: 100dvh !important; }
-  body.ecu-tab-active .machine-os-shell { flex-direction: row !important; }
 
-  body.ecu-tab-active .mo-sidebar {
-    width: 128px !important;
-    height: 100dvh !important;
-    border-bottom: none !important;
-    border-right: 1px solid rgba(73, 191, 230, 0.16) !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    justify-content: space-between !important;
-    padding: 12px 10px !important;
-  }
-
-  body.ecu-tab-active .mo-side-nav {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    width: 100% !important;
-    gap: 5px !important;
-  }
-
-  body.ecu-tab-active .mo-nav-item {
-    width: 100% !important;
-    justify-content: flex-start !important;
-    padding: 7px 9px !important;
-  }
-
-  body.ecu-tab-active .mo-sidebar-vehicle-foot {
-    display: block !important;
-    width: 100% !important;
-    padding-top: 8px !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-  }
-
-  body.ecu-tab-active .mo-map-master-grid {
+  body.ecu-tab-active .mo-nav-workspace {
     flex-direction: row !important;
     align-items: stretch !important;
     gap: 8px !important;
   }
 
-  body.ecu-tab-active .mo-map-center-column {
+  body.ecu-tab-active .machine-map-canvas-box {
     flex: 1 !important;
-    min-width: 0 !important;
+    min-height: 0 !important;
     height: 100% !important;
   }
 
-  body.ecu-tab-active .mo-bottom-4col-strip {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
-
-  body.ecu-tab-active .mo-right-4cards-stack {
-    width: 180px !important;
+  body.ecu-tab-active .mo-hud-4panel {
+    width: 215px !important;
     height: 100% !important;
     grid-template-columns: 1fr !important;
-    grid-template-rows: 1.15fr 0.9fr 1fr 1.15fr !important;
+    grid-template-rows: repeat(4, 1fr) !important;
     gap: 6px !important;
   }
 
@@ -2319,26 +2283,22 @@ body[data-sunlight="true"] .leaflet-tile-pane {
   body.ecu-tab-active .obd-machine-dials-grid {
     grid-column: 1 / 2 !important;
     grid-row: 1 / 2 !important;
-    margin-bottom: 0 !important;
   }
 
   body.ecu-tab-active .obd-vitals-grid-4 {
     grid-column: 2 / 3 !important;
     grid-row: 1 / 2 !important;
     grid-template-columns: 1fr 1fr !important;
-    margin-bottom: 0 !important;
   }
 
   body.ecu-tab-active .obd-micro-grid-6 {
     grid-column: 1 / -1 !important;
     grid-row: 2 / 3 !important;
     grid-template-columns: repeat(6, 1fr) !important;
-    margin-bottom: 0 !important;
   }
 
   body.ecu-tab-active .obd-machine-footer-strip {
     grid-column: 1 / -1 !important;
     grid-row: 3 / 4 !important;
-    margin-bottom: 0 !important;
   }
 }

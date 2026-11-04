@@ -529,10 +529,10 @@
           </div>
 
           <div class="expense-split-bar" id="expense-split-bar">
-            <div class="split-seg seg-fuel" id="seg-fuel" style="width: 25%"></div>
-            <div class="split-seg seg-maint" id="seg-maint" style="width: 25%"></div>
-            <div class="split-seg seg-garage" id="seg-garage" style="width: 25%"></div>
-            <div class="split-seg seg-admin" id="seg-admin" style="width: 25%"></div>
+            <div class="split-seg seg-fuel" id="seg-fuel" style="width: 0%; opacity: 0;"></div>
+            <div class="split-seg seg-maint" id="seg-maint" style="width: 0%; opacity: 0;"></div>
+            <div class="split-seg seg-garage" id="seg-garage" style="width: 0%; opacity: 0;"></div>
+            <div class="split-seg seg-admin" id="seg-admin" style="width: 0%; opacity: 0;"></div>
           </div>
 
           <div class="tco-grid">
@@ -857,83 +857,223 @@
       </div>
     </div>
 
-    <!-- ================= PESTAÑA 6: MACHINE OUTDOORS OS COCKPIT (REDISEÑADO PRO) ================= -->
+    <!-- ================= PESTAÑA 6: MACHINE OUTDOORS OS (REDISEÑO TOTAL MINIMALISTA & PRO) ================= -->
     <div id="tab-ecu" class="tab-content hidden">
       <div id="obd-cockpit-card" class="machine-os-shell obd-live-card">
         
-        <!-- 1. BARRA LATERAL / SUPERIOR DE NAVEGACIÓN MACHINE OUTDOORS -->
-        <aside class="mo-sidebar">
-          <div class="mo-brand-block">
-            <strong class="mo-brand-title">MACHINE</strong>
-            <span class="mo-brand-sub">OUTDOORS OS</span>
+        <!-- CABECERA UNIFICADA ULTRA-LIMPIA (SIN SIDEBAR QUE ROBE ESPACIO) -->
+        <header class="mo-unified-topbar">
+          <div class="mo-top-brand">
+            <button type="button" class="mo-home-back-btn" id="btn-mo-exit-home" title="Volver al Taller de Mi Moto">←</button>
+            <div class="mo-brand-txt-wrap">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <strong class="mo-brand-title">MACHINE</strong>
+                <span id="obd-live-status" class="status-pill status-ok">OFFLINE</span>
+              </div>
+              <span class="mo-brand-sub">OUTDOORS OS • <strong id="mo-live-clock">09:41</strong> • <strong id="mo-top-temp-txt">24°C</strong></span>
+            </div>
+            <div style="display:none;">
+              <span id="mo-active-view-title">MAPA</span>
+              <span id="mo-top-gps-ico">🛰️</span>
+              <div id="mo-conn-bar-fill"></div>
+            </div>
           </div>
 
-          <nav class="mo-side-nav" aria-label="Menú Machine Outdoors">
-            <button type="button" class="mo-nav-item" id="btn-mo-exit-home" title="Volver al inicio de Mi Moto">
-              <span class="mo-nav-ico">⌂</span>
-              <span class="mo-nav-lbl">INICIO</span>
+          <!-- Selector Central de Módulos -->
+          <nav class="mo-mode-switcher" aria-label="Vistas Machine Outdoors">
+            <button type="button" class="mo-mode-tab active" data-ecuview="map">
+              <span>🗺️</span> <span>Mapa</span>
             </button>
-            <button type="button" class="mo-nav-item active" data-ecuview="map">
-              <span class="mo-nav-ico">🗺️</span>
-              <span class="mo-nav-lbl">NAVEGADOR</span>
+            <button type="button" class="mo-mode-tab" data-ecuview="dials">
+              <span>🎛️</span> <span>Tablero</span>
             </button>
-            <button type="button" class="mo-nav-item" data-ecuview="dials">
-              <span class="mo-nav-ico">🎛️</span>
-              <span class="mo-nav-lbl">TELEMETRÍA</span>
+            <button type="button" class="mo-mode-tab" data-ecuview="diag">
+              <span>🔧</span> <span>Diag</span>
             </button>
-            <button type="button" class="mo-nav-item" data-ecuview="diag">
-              <span class="mo-nav-ico">🔧</span>
-              <span class="mo-nav-lbl">DIAGNÓSTICO</span>
-            </button>
-            <button type="button" class="mo-nav-item sos-nav" id="btn-mo-open-sos" title="Ficha SOS y Coordenadas de Emergencia">
-              <span class="mo-nav-ico">🆘</span>
-              <span class="mo-nav-lbl">SOS</span>
+            <button type="button" class="mo-mode-tab sos" id="btn-mo-open-sos" title="Emergencia SOS">
+              <span>🆘</span>
             </button>
           </nav>
 
-          <div class="mo-sidebar-vehicle-foot">
-            <div class="mo-vehicle-name">PULSAR N160 FI</div>
-            <div class="mo-vehicle-sub">DUAL CHANNEL ABS</div>
-            <div class="mo-conn-indicator">
-              <span id="obd-live-status" class="mo-conn-text">OFFLINE</span>
-              <div class="mo-conn-bar"><div id="mo-conn-bar-fill" class="mo-conn-bar-fill" style="width: 0%;"></div></div>
-            </div>
+          <!-- Acciones Rápidas de Cabecera -->
+          <div class="mo-quick-actions">
+            <button type="button" id="btn-obd-connect" class="mo-top-pill connect" title="Conectar Escáner BLE">⚡ ECU</button>
+            <button type="button" id="btn-obd-sim" class="mo-top-pill" title="Modo Demo">Demo</button>
+            <button type="button" id="btn-obd-rec-toggle" class="mo-top-pill rec" title="Grabar Caja Negra">🔴 REC</button>
+            <button type="button" id="btn-obd-sunlight" class="mo-top-pill" title="Contraste Solar">☀️</button>
+            <button type="button" id="btn-obd-rotate" class="mo-top-pill" title="Girar Pantalla">🔄</button>
+            <button type="button" id="btn-obd-ride-mode" class="mo-top-pill" title="Pantalla Completa">⛶</button>
+            <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_ecu_guide" title="Guía del Cockpit">ⓘ</button>
           </div>
-        </aside>
+        </header>
 
-        <!-- 2. ESCENARIO PRINCIPAL DEL SISTEMA -->
+        <!-- ESCENARIO PRINCIPAL -->
         <div class="mo-main-stage">
-          
-          <!-- Barra de Estado Automotriz -->
-          <header class="mo-statusbar">
-            <div class="mo-status-left">
-              <strong id="mo-live-clock" class="mo-clock-txt">09:41</strong>
-              <span id="mo-active-view-title" class="mo-section-crumb">NAVEGADOR</span>
-              <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_ecu_guide" title="Guía del Cockpit">ⓘ</button>
-            </div>
 
-            <div class="mo-status-center-actions">
-              <button type="button" id="btn-obd-sunlight" class="mo-top-pill" title="Alto Contraste Solar">☀️ Sol</button>
-              <button type="button" id="btn-obd-rotate" class="mo-top-pill" title="Rotar Horizontal / Vertical">🔄 Giro</button>
-              <button type="button" id="btn-obd-ride-mode" class="mo-top-pill" title="Modo Timón Pantalla Completa">⛶ Timón</button>
-              <button type="button" id="btn-obd-rec-toggle" class="mo-top-pill rec" title="Grabar Caja Negra de Telemetría">🔴 REC</button>
-              <button type="button" id="btn-obd-sim" class="mo-top-pill" title="Simulación en vivo">Demo</button>
-              <button type="button" id="btn-obd-connect" class="mo-top-pill connect">⚡ ECU</button>
-            </div>
-
-            <div class="mo-status-right">
-              <span id="mo-top-gps-ico" title="Estado GPS">🛰️</span>
-              <strong id="mo-top-temp-txt" class="mo-temp-readout">24°C</strong>
-            </div>
-          </header>
-
-          <!-- Banner Inteligente de Recalibración Barométrica -->
+          <!-- Alerta Inteligente de Recalibración Barométrica MAP -->
           <div id="mo-map-altitude-alert" class="mo-altitude-alert-strip hidden">
-            <span>⛰️ <strong>Ascenso +1,200m detectado:</strong> En tu próxima parada apaga la llave 5 seg para recalibrar el sensor MAP de la inyección FI.</span>
+            <span>⛰️ <strong>Ascenso +1,200m detectado:</strong> En tu próxima parada apaga la llave 5 seg para recalibrar el sensor MAP FI.</span>
             <button type="button" id="btn-ack-map-reset" class="btn-quick-done">✓ Hecho</button>
           </div>
 
-          <!-- ================= VISTA A: TABLERO DE RELOJES Y 14 SENSORES (OPTIMIZADO VERTICAL Y HORIZONTAL) ================= -->
+          <!-- ================= VISTA 1: NAVEGADOR TÁCTICO PANORÁMICO (CERO SATURACIÓN) ================= -->
+          <div id="obd-map-panel" class="mo-stage-panel">
+            <div class="mo-nav-workspace">
+              
+              <!-- LIENZO DE MAPA PROTAGONISTA -->
+              <div class="machine-map-canvas-box">
+                <div id="leaflet-sat-map" class="leaflet-sat-container"></div>
+
+                <!-- 1. Buscador Flotante Compacto + Chips Plegables -->
+                <div class="mo-map-top-search-hud">
+                  <div class="mo-pro-search-bar">
+                    <span class="mo-search-icon">🔍</span>
+                    <input type="search" id="map-place-search-input" class="mo-pro-search-inp" placeholder="Buscar destino, pueblo o grifo..." autocomplete="off">
+                    <button type="button" id="btn-map-search-clear" class="mo-search-clear-btn hidden" title="Limpiar ruta y búsqueda">✕</button>
+                    <button type="button" id="btn-map-search-go" class="mo-pro-search-btn">Ir</button>
+                  </div>
+
+                  <!-- Resultados Desplegables con Distancia y Rumbo -->
+                  <div id="map-search-results" class="map-search-dropdown hidden"></div>
+
+                  <!-- Carrusel de Destinos Rápidos (Se pliega automáticamente cuando hay ruta activa) -->
+                  <div class="mo-quick-presets-strip" id="map-quick-presets">
+                    <button type="button" class="mo-preset-chip" data-preset-lat="-7.9865" data-preset-lon="-78.6852" data-preset-name="Samne" data-preset-region="Valle Moche • 1,450 msnm">⛰️ Samne</button>
+                    <button type="button" class="mo-preset-chip" data-preset-lat="-8.0782" data-preset-lon="-79.1205" data-preset-name="Huanchaco" data-preset-region="Costa • Nivel del Mar">🌊 Huanchaco</button>
+                    <button type="button" class="mo-preset-chip" data-preset-lat="-7.9719" data-preset-lon="-78.8142" data-preset-name="Simbal" data-preset-region="Valle de Moche • 576 msnm">☀️ Simbal</button>
+                    <button type="button" class="mo-preset-chip" data-preset-lat="-7.9038" data-preset-lon="-78.5636" data-preset-name="Otuzco" data-preset-region="Sierra • 2,641 msnm">🏔️ Otuzco</button>
+                    <button type="button" class="mo-preset-chip" data-preset-lat="-8.0950" data-preset-lon="-78.1585" data-preset-name="Cachicadán" data-preset-region="Alta Montaña • 2,880 msnm">♨️ Cachicadán</button>
+                    <button type="button" class="mo-preset-chip poi" data-poi-query="Grifo Primax Repsol">⛽ Grifos</button>
+                    <button type="button" class="mo-preset-chip poi" data-poi-query="Mirador Turístico">📸 Miradores</button>
+                  </div>
+                </div>
+
+                <!-- 2. Controles Tácticos Flotantes a la Derecha -->
+                <div class="mo-map-right-controls">
+                  <button type="button" id="btn-map-heading-mode" class="mo-compass-circle" title="Centrar Ruta">
+                    <span id="map-compass-needle" class="mo-compass-arrow">▲</span>
+                    <strong id="map-compass-label">N</strong>
+                  </button>
+                  <div class="mo-zoom-pill-group">
+                    <button type="button" id="btn-map-zoom-in" title="Acercar">+</button>
+                    <div class="mo-zoom-divider"></div>
+                    <button type="button" id="btn-map-zoom-out" title="Alejar">−</button>
+                  </div>
+                  <button type="button" id="btn-map-my-loc" class="mo-compass-circle" title="Mi ubicación GPS">📍</button>
+                  <button type="button" id="btn-map-follow-lock" class="mo-compass-circle active" title="Auto-seguir moto">🔒</button>
+                  <button type="button" id="btn-map-recenter" class="mo-compass-circle" title="Encuadrar ruta">🎯</button>
+                  <button type="button" id="btn-map-open-gmaps" class="mo-compass-circle" title="Abrir en Google Maps">🧭</button>
+                  <button type="button" id="btn-map-quick-sos" class="mo-compass-circle sos-btn" title="SOS en Ruta">🆘</button>
+                </div>
+
+                <!-- 3. Píldora Inferior Compacta de Estado de Ruta y Controles de Capa -->
+                <div id="mo-floating-dest-card" class="mo-dest-overlay-card">
+                  <div class="mo-dest-card-head">
+                    <div class="title-with-info" style="min-width:0;flex:1;">
+                      <span class="mo-live-route-dot"></span>
+                      <strong id="map-dest-title" class="mo-dest-title">Exploración Libre</strong>
+                      <small id="map-dest-region" class="mo-dest-sub">Elige un destino arriba o toca el mapa</small>
+                      <span id="map-route-status-tag" class="hidden">MODO LIBRE</span>
+                    </div>
+                    <div class="mo-dest-inline-badges" id="mo-dest-card-body">
+                      <span class="mo-route-chip"><strong id="map-dest-dist">-- km</strong></span>
+                      <span class="mo-route-chip"><strong id="map-dest-time">-- min</strong></span>
+                    </div>
+                    <div class="mo-dest-actions-group">
+                      <button type="button" id="btn-toggle-gps" class="mo-mini-action gps">🛰️ GPS</button>
+                      <button type="button" id="btn-map-layer-toggle" class="mo-mini-action">🌍 Satélite</button>
+                      <button type="button" id="btn-open-route-cfg" class="mo-mini-action" title="Ajuste manual">⚙️</button>
+                      <button type="button" id="btn-toggle-dest-card" class="mo-card-collapse-btn" title="Minimizar">−</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PANEL HUD UNIFICADO DE 4 MÓDULOS (SIN REPETICIONES NI SATURACIÓN) -->
+              <div class="mo-hud-4panel">
+                
+                <!-- Módulo 1: Velocidad & Rumbo -->
+                <div class="mo-hud-card speed-hud">
+                  <div class="obd-box-head">
+                    <span class="micro-lbl">VELOCIDAD ACTUAL</span>
+                    <small id="map-bearing-deg-txt" class="mo-hud-tag">0° N</small>
+                    <span id="map-orientation-badge" class="hidden"></span>
+                  </div>
+                  <div class="mo-hud-speed-row">
+                    <strong id="map-live-speed">0</strong>
+                    <small>km/h</small>
+                  </div>
+                  <svg viewBox="0 0 120 18" class="mo-speed-smile-arc">
+                    <path d="M 8 5 Q 60 18 112 5" fill="none" stroke="#152329" stroke-width="5" stroke-linecap="round"/>
+                    <path id="map-live-speed-arc" d="M 8 5 Q 60 18 112 5" fill="none" stroke="#58E800" stroke-width="5" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+                  </svg>
+                  <div class="hidden"><div id="map-live-speed-bar"></div></div>
+                </div>
+
+                <!-- Módulo 2: Tanque & Eficiencia (Sin duplicar tarjeta) -->
+                <div class="mo-hud-card">
+                  <div class="obd-box-head">
+                    <span class="micro-lbl">AUTONOMÍA & CONSUMO</span>
+                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_safe_range_info">ⓘ</button>
+                  </div>
+                  <div class="mo-hud-dual-val">
+                    <strong id="map-safe-range" class="mo-card-primary-val">⛽ -- <small>km</small></strong>
+                    <span id="map-avg-kml" class="mo-hud-pill-stat">37.0 km/L</span>
+                  </div>
+                  <div class="machine-bar-track" style="margin:4px 0;">
+                    <div id="map-safe-bar" class="machine-bar-fill" style="width:0%;"></div>
+                  </div>
+                  <div class="mo-hud-foot-pair">
+                    <small id="map-safe-pct">Sin lectura de grifo</small>
+                    <small id="map-avg-kmgal">140 km/gal</small>
+                  </div>
+                  <!-- Espejos invisibles de compatibilidad -->
+                  <div class="hidden">
+                    <span id="map-bot-range"></span>
+                    <div id="map-bot-fuel-bar"></div>
+                    <span id="map-bot-fuel-txt"></span>
+                  </div>
+                </div>
+
+                <!-- Módulo 3: Meta, ETA & Presupuesto de Ruta -->
+                <div class="mo-hud-card">
+                  <div class="obd-box-head">
+                    <span class="micro-lbl">META, ETA & COMBUSTIBLE</span>
+                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_eta_info">ⓘ</button>
+                  </div>
+                  <div class="mo-hud-dual-val">
+                    <strong id="map-bot-dist" class="mo-card-primary-val">-- <small>km</small></strong>
+                    <span id="map-bot-eta" class="mo-hud-pill-stat">ETA --:--</span>
+                  </div>
+                  <div class="mo-hud-foot-stack">
+                    <small id="map-bot-needgal" style="color:var(--neon-lime);font-weight:700;">Elige destino para cotizar</small>
+                    <small id="map-bot-terrain">Costa / Plano • <span id="map-bot-gps-status">GPS Listo</span></small>
+                  </div>
+                  <div class="hidden">
+                    <span id="map-bot-routename"></span>
+                    <span id="map-bot-diff"></span>
+                    <span id="map-bot-coords"></span>
+                  </div>
+                </div>
+
+                <!-- Módulo 4: Altímetro & Perfil Topográfico Interactivo -->
+                <div class="mo-hud-card elev-card" title="Toca la curva para inspeccionar altitud">
+                  <div class="obd-box-head">
+                    <span class="micro-lbl">ALTITUD & TOPOGRAFÍA</span>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                      <strong id="map-current-elev" style="font-family:var(--font-speed);font-size:12px;color:var(--neon-lime);">34 m</strong>
+                      <small id="map-bot-peak-alt" style="font-size:8px;color:var(--alloy-muted);">• Cima --</small>
+                    </div>
+                  </div>
+                  <div id="map-elevation-svg-wrap" class="mo-elev-chart-container"></div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ================= VISTA 2: TABLERO DE RELOJES Y SENSORES ECU ================= -->
           <div id="obd-live-panel" class="mo-stage-panel hidden">
             <div class="obd-machine-dials-grid">
               <!-- Reloj Izquierdo: TACÓMETRO RPM -->
@@ -1143,202 +1283,8 @@
             </div>
           </div>
 
-          <!-- ================= VISTA B: NAVEGADOR TÁCTICO PRO (MACHINE OUTDOORS) ================= -->
-          <div id="obd-map-panel" class="mo-stage-panel">
-            <div class="mo-map-master-grid">
-              
-              <!-- ZONA PRINCIPAL: LIENZO DE MAPA CON HUD SUPERIOR E INFERIOR -->
-              <div class="mo-map-center-column">
-                <div class="machine-map-canvas-box">
-                  <div id="leaflet-sat-map" class="leaflet-sat-container"></div>
-
-                  <!-- 1. HUD SUPERIOR DE BÚSQUEDA + DESTINOS RÁPIDOS + PDI MOTEROS -->
-                  <div class="mo-map-top-search-hud">
-                    <div class="mo-pro-search-bar">
-                      <span class="mo-search-icon">🔍</span>
-                      <input type="search" id="map-place-search-input" class="mo-pro-search-inp" placeholder="Buscar destino, pueblo, grifo o ruta..." autocomplete="off">
-                      <button type="button" id="btn-map-search-clear" class="mo-search-clear-btn hidden" title="Limpiar búsqueda">✕</button>
-                      <button type="button" id="btn-map-search-go" class="mo-pro-search-btn">Ir</button>
-                    </div>
-
-                    <!-- Resultados Desplegables con Distancia y Rumbo -->
-                    <div id="map-search-results" class="map-search-dropdown hidden"></div>
-
-                    <!-- Carrusel Horizontal de Destinos Rápidos y PDI en 1 Toque -->
-                    <div class="mo-quick-presets-strip" id="map-quick-presets">
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-7.9865" data-preset-lon="-78.6852" data-preset-name="Samne (Otuzco)" data-preset-region="Valle Moche • Ascenso Sierra">⛰️ Samne</button>
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-8.0782" data-preset-lon="-79.1205" data-preset-name="Huanchaco" data-preset-region="Ruta Costera Nivel del Mar">🌊 Huanchaco</button>
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-7.9719" data-preset-lon="-78.8142" data-preset-name="Simbal" data-preset-region="Ruta de Sol y Montaña">☀️ Simbal</button>
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-7.9038" data-preset-lon="-78.5636" data-preset-name="Otuzco" data-preset-region="Capital de la Fe • 2,640 msnm">🏔️ Otuzco</button>
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-8.0950" data-preset-lon="-78.1585" data-preset-name="Cachicadán" data-preset-region="Aguas Termales • Santiago de Chuco">♨️ Cachicadán</button>
-                      <button type="button" class="mo-preset-chip poi" data-poi-query="Grifo Primax Repsol">⛽ Grifos</button>
-                      <button type="button" class="mo-preset-chip poi" data-poi-query="Mirador Turístico">📸 Miradores</button>
-                    </div>
-                  </div>
-
-                  <!-- 2. DOCK DE CONTROLES TÁCTICOS A LA DERECHA (PARA GUANTES) -->
-                  <div class="mo-map-right-controls">
-                    <button type="button" id="btn-map-heading-mode" class="mo-compass-circle" title="Rumbo al destino / Centrar Ruta">
-                      <span id="map-compass-needle" class="mo-compass-arrow">▲</span>
-                      <strong id="map-compass-label">N</strong>
-                    </button>
-
-                    <div class="mo-zoom-pill-group">
-                      <button type="button" id="btn-map-zoom-in" title="Acercar mapa">+</button>
-                      <div class="mo-zoom-divider"></div>
-                      <button type="button" id="btn-map-zoom-out" title="Alejar mapa">−</button>
-                    </div>
-
-                    <button type="button" id="btn-map-my-loc" class="mo-compass-circle" title="Ir a mi ubicación GPS actual">📍</button>
-                    <button type="button" id="btn-map-follow-lock" class="mo-compass-circle active" title="Auto-Seguir Moto en Ruta">🔒</button>
-                    <button type="button" id="btn-map-recenter" class="mo-compass-circle" title="Encuadrar toda la ruta">🎯</button>
-                    <button type="button" id="btn-map-open-gmaps" class="mo-compass-circle" title="Abrir navegación voz en Google Maps">🧭</button>
-                    <button type="button" id="btn-map-quick-sos" class="mo-compass-circle sos-btn" title="Emergencia SOS en Ruta">🆘</button>
-                  </div>
-
-                  <!-- 3. TARJETA FLOTANTE INFERIOR DE RUTA ACTIVA (COMPACTA Y COLAPSABLE) -->
-                  <div id="mo-floating-dest-card" class="mo-dest-overlay-card">
-                    <div class="mo-dest-card-head">
-                      <div class="title-with-info" style="min-width:0;">
-                        <span class="mo-live-route-dot"></span>
-                        <span class="micro-lbl" id="map-route-status-tag">RUTA ACTIVA</span>
-                        <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_radar_guide">ⓘ</button>
-                      </div>
-                      <div style="display:flex;align-items:center;gap:4px;">
-                        <button type="button" id="btn-toggle-gps" class="mo-mini-action gps">🛰️ GPS Vivo</button>
-                        <button type="button" id="btn-map-layer-toggle" class="mo-mini-action">🌍 Satélite</button>
-                        <button type="button" id="btn-open-route-cfg" class="mo-mini-action" title="Configurar distancia o altitud manual">⚙️</button>
-                        <button type="button" id="btn-toggle-dest-card" class="mo-card-collapse-btn" title="Minimizar / Expandir panel">−</button>
-                      </div>
-                    </div>
-
-                    <div id="mo-dest-card-body" class="mo-dest-body-horizontal">
-                      <div class="mo-dest-main-info">
-                        <strong id="map-dest-title" class="mo-dest-title">Selecciona un destino</strong>
-                        <small id="map-dest-region" class="mo-dest-sub">Toca cualquier punto del mapa o elige un destino arriba</small>
-                      </div>
-                      <div class="mo-dest-stats-pair">
-                        <div class="mo-stat-pill-box">
-                          <strong id="map-dest-dist">25.0 <small>km</small></strong>
-                          <span>DISTANCIA</span>
-                        </div>
-                        <div class="mo-stat-pill-box">
-                          <strong id="map-dest-time">32 <small>min</small></strong>
-                          <span>TIEMPO EST.</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Escala y Rumbo Discretos -->
-                  <div class="mo-safe-label-overlay">
-                    <span id="map-orientation-badge">ALCANCE SEGURO</span>
-                    <small id="map-bearing-deg-txt">Rumbo 0° N</small>
-                  </div>
-                </div>
-
-                <!-- Barra Inferior de 4 Indicadores de Viaje -->
-                <div class="mo-bottom-4col-strip">
-                  <div class="mo-bot-cell">
-                    <div class="obd-box-head">
-                      <span class="micro-lbl">RANGO TANQUE ⛽</span>
-                      <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_range_info">ⓘ</button>
-                    </div>
-                    <strong id="map-bot-range" class="mo-bot-big">0 <small>km</small></strong>
-                    <div class="machine-bar-track" style="margin:3px 0;height:4px;">
-                      <div id="map-bot-fuel-bar" class="machine-bar-fill" style="width:0%"></div>
-                    </div>
-                    <small id="map-bot-fuel-txt" class="mo-bot-sub">Sin lecturas de grifo</small>
-                  </div>
-
-                  <div class="mo-bot-cell">
-                    <div class="obd-box-head">
-                      <span class="micro-lbl">META Y PRESUPUESTO</span>
-                      <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_eta_info">ⓘ</button>
-                    </div>
-                    <strong id="map-bot-dist" class="mo-bot-big">25.0 <small>km</small></strong>
-                    <small id="map-bot-eta" class="mo-bot-sub">32 min • ETA --:--</small>
-                    <small id="map-bot-needgal" class="mo-bot-sub" style="color:var(--neon-lime);">Req: 0.18 gal</small>
-                  </div>
-
-                  <div class="mo-bot-cell">
-                    <div class="obd-box-head">
-                      <span class="micro-lbl">TOPOGRAFÍA FI</span>
-                      <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_topo_info">ⓘ</button>
-                    </div>
-                    <strong id="map-bot-routename" class="mo-bot-route-title">Ruta Satelital</strong>
-                    <small id="map-bot-terrain" class="mo-bot-sub">Terreno mixto</small>
-                    <small id="map-bot-diff" class="mo-bot-sub">Dificultad media</small>
-                  </div>
-
-                  <div class="mo-bot-cell">
-                    <div class="obd-box-head">
-                      <span class="micro-lbl">COORDENADAS</span>
-                      <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_gps_info">ⓘ</button>
-                    </div>
-                    <strong id="map-bot-coords" class="mo-bot-coords-txt">8° 06' 42" S<br>79° 01' 43" O</strong>
-                    <small id="map-bot-gps-status" class="mo-bot-sub" style="color:var(--neon-lime);">GPS Listo</small>
-                    <small id="map-bot-peak-alt" class="mo-bot-sub">Cima: 650m</small>
-                  </div>
-                </div>
-              </div>
-
-              <!-- COLUMNA / GRILLA DE 4 TARJETAS TÁCTICAS (VELOCIDAD, CONSUMO, ALCANCE Y PERFIL DE ELEVACIÓN INTERACTIVO) -->
-              <div class="mo-right-4cards-stack">
-                <div class="mo-side-metric-card speed-card">
-                  <div class="obd-box-head center">
-                    <span class="micro-lbl">VELOCIDAD ACTUAL</span>
-                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_speed_info">ⓘ</button>
-                  </div>
-                  <div class="mo-speed-big-wrap">
-                    <strong id="map-live-speed">0</strong>
-                    <small>km/h</small>
-                  </div>
-                  <svg viewBox="0 0 120 24" class="mo-speed-smile-arc">
-                    <path d="M 12 6 Q 60 24 108 6" fill="none" stroke="#152329" stroke-width="5.5" stroke-linecap="round"/>
-                    <path id="map-live-speed-arc" d="M 12 6 Q 60 24 108 6" fill="none" stroke="#58E800" stroke-width="5.5" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
-                  </svg>
-                  <div style="display:none;"><div id="map-live-speed-bar"></div></div>
-                </div>
-
-                <div class="mo-side-metric-card">
-                  <div class="obd-box-head">
-                    <span class="micro-lbl">CONSUMO PROMEDIO</span>
-                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_avg_econ_info">ⓘ</button>
-                  </div>
-                  <strong class="mo-card-primary-val" id="map-avg-kml">37.0 <small>km/L</small></strong>
-                  <small id="map-avg-kmgal" class="mo-card-sub-lbl">140 km/gal • Base FI</small>
-                </div>
-
-                <div class="mo-side-metric-card">
-                  <div class="obd-box-head">
-                    <span class="micro-lbl">AUTONOMÍA SEGURA</span>
-                    <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_safe_range_info">ⓘ</button>
-                  </div>
-                  <strong class="mo-card-primary-val" id="map-safe-range">⛽ 0 <small>km</small></strong>
-                  <div class="machine-bar-track" style="margin:4px 0;height:4.5px;">
-                    <div id="map-safe-bar" class="machine-bar-fill" style="width:0%;"></div>
-                  </div>
-                  <small id="map-safe-pct" class="mo-card-sub-lbl">Registra grifo o km</small>
-                </div>
-
-                <div class="mo-side-metric-card elev-card" title="Toca la curva para inspeccionar altitud">
-                  <div class="obd-box-head">
-                    <span class="micro-lbl">PERFIL DE ALTURA</span>
-                    <div style="display:flex;align-items:center;gap:4px;">
-                      <strong id="map-current-elev" style="font-family:var(--font-speed);font-size:12px;color:var(--neon-lime);">34 m</strong>
-                      <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_elev_guide">ⓘ</button>
-                    </div>
-                  </div>
-                  <div id="map-elevation-svg-wrap" class="mo-elev-chart-container"></div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- ================= VISTA C: LABORATORIO DE DIAGNÓSTICO ================= -->
-          <div id="obd-diag-panel" class="mo-stage-panel hidden" style="overflow-y:auto;">
+          <!-- ================= VISTA 3: LABORATORIO DE DIAGNÓSTICO ================= -->
+          <div id="obd-diag-panel" class="mo-stage-panel hidden">
             <div class="obd-diag-master-grid">
               
               <div class="obd-dtc-strip elec-test-card" id="elec-test-card">
