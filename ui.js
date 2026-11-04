@@ -21,6 +21,7 @@ let toastTimeout = null;
 let confirmCallback = null;
 let hasRunSweepOnce = false;
 let lastMapRenderTimeMs = 0;
+let smartHudBound = false;
 
 export const uiConfig = {
   activePeriod: 'month',
@@ -33,6 +34,7 @@ export const uiConfig = {
   routeTerrainFactor: 1,
   activeEcuSubView: 'map',
   activeRoutePresetId: 'standby',
+  searchExpanded: false,
   customRoute: (function () {
     try {
       const saved = localStorage.getItem('mi_moto_last_sat_route_v1');
@@ -70,7 +72,7 @@ function isRouteActive(route) {
   );
 }
 
-// Exige al menos 1 carga real en Grifo para encender la barra de tanque (Evita el falso 99% con 1 km)
+// Exige al menos 1 carga real en Grifo para encender la barra de tanque (Evita el falso 99% sin cargas)
 function getTankTelemetryState(tele, sessKm = 0) {
   const hasFuelLogs = Array.isArray(appState.fuelLogs) && appState.fuelLogs.length > 0;
 
@@ -96,6 +98,48 @@ function getTankTelemetryState(tele, sessKm = 0) {
     remKm,
     tankPct
   };
+}
+
+// Sincroniza el estado contraído (Píldora Lupa) vs. expandido (Buscador completo)
+function syncSmartSearchHudState(hasActiveRoute) {
+  const collapsedPill = document.getElementById('mo-collapsed-route-pill');
+  const expandedBox = document.getElementById('mo-expanded-search-box');
+  if (!collapsedPill || !expandedBox) return;
+
+  const showCollapsed = hasActiveRoute && !uiConfig.searchExpanded;
+  collapsedPill.classList.toggle('hidden', !showCollapsed);
+  expandedBox.classList.toggle('hidden', showCollapsed);
+}
+
+function bindSmartSearchHudOnce() {
+  if (smartHudBound) return;
+  smartHudBound = true;
+
+  const expandSearchHandler = (e) => {
+    e.stopPropagation();
+    uiConfig.searchExpanded = true;
+    syncSmartSearchHudState(isRouteActive(uiConfig.customRoute));
+    triggerHaptic(10);
+    const inp = document.getElementById('map-place-search-input');
+    if (inp) {
+      setTimeout(() => {
+        inp.focus();
+        inp.select();
+      }, 60);
+    }
+  };
+
+  document.getElementById('btn-expand-search-lupa')?.addEventListener('click', expandSearchHandler);
+  document.getElementById('btn-expand-search-text')?.addEventListener('click', expandSearchHandler);
+
+  document.getElementById('btn-pill-clear-route')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const inp = document.getElementById('map-place-search-input');
+    if (inp) inp.value = '';
+    clearActiveRouteOnMap();
+    triggerHaptic(12);
+    showToast('🗺️ Ruta finalizada • Modo Exploración Libre');
+  });
 }
 
 // ================= GESTOR NATIVO DE MODALES =================
@@ -401,7 +445,6 @@ export function renderMaintenanceCards() {
     const kmRestantes = nextTargetKm - appState.currentKm;
     const kmRatio = kmRecorridos / rule.intervalKm;
 
-    // Solo calculamos vencimiento por tiempo si ya existe un servicio registrado de este tipo
     const lastDateStr = appState.lastServiceDate?.[rule.id] || '';
     let daysLeft = null;
     let timeRatio = 0;
@@ -413,7 +456,6 @@ export function renderMaintenanceCards() {
       timeRatio = elapsedDays / totalAllowedDays;
     }
 
-    // La barra visual mide exclusivamente el avance en kilómetros (con 1 km de 500 km es 0%)
     const pct = Math.min(100, Math.floor(kmRatio * 100));
     const effectiveRatio = Math.max(kmRatio, timeRatio >= 1 ? timeRatio : 0);
 
@@ -989,7 +1031,6 @@ export function renderGarageSection() {
       ? treadInfo.lifeRemainingPct
       : Math.max(0, Math.min(100, Math.round((1 - wearRatio) * 100)));
 
-    // Barra de desgaste: 0% cuando la llanta está nueva / pocos km
     const wearBarPct = kmRodados < 50 && !treadInfo.hasMeasurement
       ? 0
       : Math.max(0, Math.min(100, Math.floor(wearRatio * 100)));
@@ -1407,7 +1448,7 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0, routeAct
       uiConfig.inspectedElevIdx = idx;
       const pickedAlt = elevArray[idx];
       const elevEl = document.getElementById('map-current-elev');
-      if (elevEl) elevEl.innerHTML = `${pickedAlt.toLocaleString('es-PE')} <small>m</small>`;
+      if (elevEl) elevEl.textContent = `${pickedAlt.toLocaleString('es-PE')} m`;
       renderElevationProfileSVG(elevArray, progressRatio, true);
       triggerHaptic(8);
     };
@@ -1526,6 +1567,7 @@ function removeRouteLayersFromLeaflet() {
 export function clearActiveRouteOnMap() {
   uiConfig.customRoute = { ...ROUTE_PRESETS[0] };
   uiConfig.activeRoutePresetId = 'standby';
+  uiConfig.searchExpanded = true;
   uiConfig.inspectedElevIdx = null;
   try {
     localStorage.removeItem('mi_moto_last_sat_route_v1');
@@ -1537,8 +1579,7 @@ export function clearActiveRouteOnMap() {
   }
 
   document.querySelectorAll('#map-quick-presets .mo-preset-chip').forEach((c) => c.classList.remove('active'));
-  const presetsStrip = document.getElementById('map-quick-presets');
-  if (presetsStrip) presetsStrip.classList.remove('chips-collapsed');
+  syncSmartSearchHudState(false);
 
   centerMapOnBike(12);
   renderTacticalMapUI(null, false);
@@ -1584,7 +1625,7 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
     }
   );
 
-  // Capa oficial Esri World Boundaries and Places (100% libre de marcas de agua "API KEY REQUIRED")
+  // Capa oficial Esri World Boundaries and Places (100% limpia sin marca de agua)
   labelsTileLayer = window.L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
     {
@@ -1615,6 +1656,11 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
   }
 
   leafletMap.on('dragstart', () => {
+    // Si el buscador estaba abierto pero ya hay ruta activa, al mover el mapa se contrae solo en la Lupa
+    if (uiConfig.searchExpanded && isRouteActive(uiConfig.customRoute)) {
+      uiConfig.searchExpanded = false;
+      syncSmartSearchHudState(true);
+    }
     if (uiConfig.followLock) {
       uiConfig.followLock = false;
       const btn = document.getElementById('btn-map-follow-lock');
@@ -1768,9 +1814,6 @@ export async function searchAndPlotPoisOnMap(poiQuery, iconEmoji = '⛽') {
 }
 
 export async function calculateRealRouteAndElevation({ destLat, destLon, name, region }) {
-  const statusTag = document.getElementById('map-route-status-tag');
-  if (statusTag) statusTag.textContent = 'CALCULANDO...';
-
   const origLat = uiConfig.liveGpsLat ?? DEFAULT_ORIGIN_COORDS.lat;
   const origLon = uiConfig.liveGpsLon ?? DEFAULT_ORIGIN_COORDS.lon;
 
@@ -1838,11 +1881,13 @@ export async function calculateRealRouteAndElevation({ destLat, destLon, name, r
 
   currentRoadLatLngs = roadLatLngs;
   uiConfig.inspectedElevIdx = null;
+  // Contrae automáticamente el buscador en la Lupa inteligente al definir el lugar
+  uiConfig.searchExpanded = false;
 
   uiConfig.customRoute = {
     id: 'live',
     name: name || 'Destino Seleccionado',
-    region: region || `Ruta Real OSRM • Cima ${peakAlt.toLocaleString('es-PE')} msnm`,
+    region: region || `Cima ${peakAlt.toLocaleString('es-PE')} msnm`,
     distKm,
     estMin,
     startAlt,
@@ -1861,6 +1906,8 @@ export async function calculateRealRouteAndElevation({ destLat, destLon, name, r
 }
 
 export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
+  bindSmartSearchHudOnce();
+
   const clockEl = document.getElementById('mo-live-clock');
   if (clockEl) {
     clockEl.textContent = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -1877,15 +1924,8 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   const sessKm = Number(ecuData?.sessionKm) || 0;
   const tankState = getTankTelemetryState(tele, sessKm);
 
-  // Pliega los chips rápidos cuando hay ruta activa para despejar el mapa
-  const presetsStrip = document.getElementById('map-quick-presets');
-  if (presetsStrip) {
-    presetsStrip.classList.toggle('chips-collapsed', hasActiveRoute);
-  }
-  const clearSearchBtn = document.getElementById('btn-map-search-clear');
-  if (clearSearchBtn && hasActiveRoute) {
-    clearSearchBtn.classList.remove('hidden');
-  }
+  // Sincroniza la Lupa Auto-contráctil
+  syncSmartSearchHudState(hasActiveRoute);
 
   let progressRatio = hasActiveRoute && route.distKm > 0 ? Math.min(1, sessKm / route.distKm) : 0;
   if (hasActiveRoute && ecuData?.mode === 'sim') {
@@ -1904,17 +1944,12 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
   const neededGal = hasActiveRoute && effKmGal > 0 ? route.distKm / effKmGal : 0;
   const neededSoles = hasActiveRoute ? route.distKm * tele.avgCostPerKm * (route.terrainFactor || 1.0) : 0;
 
-  const liveRouteDot = document.querySelector('.mo-live-route-dot');
-  if (liveRouteDot) liveRouteDot.classList.toggle('active', hasActiveRoute);
-
   const titleEl = document.getElementById('map-dest-title');
   if (titleEl) {
     titleEl.textContent = hasActiveRoute ? route.name : 'Exploración Libre';
     document.getElementById('map-dest-region').textContent = hasActiveRoute
       ? route.region
-      : 'Elige destino arriba o toca el mapa';
-    document.getElementById('map-dest-dist').textContent = hasActiveRoute ? `${remDistKm.toFixed(1)} km` : '-- km';
-    document.getElementById('map-dest-time').textContent = hasActiveRoute ? `${remMin} min` : '-- min';
+      : 'Toca la lupa para buscar destino';
   }
 
   const mapPanel = document.getElementById('obd-map-panel');
@@ -2042,14 +2077,53 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
     }
   }
 
-  // Actualización de las 4 Tarjetas HUD Unificadas
+  // Tarjeta 1: Velocímetro + Marcha TFT + Signos Vitales ECU en Vivo
   const liveSpd = Number(ecuData?.speedKmh) || Number(uiConfig.liveGpsSpeedKmh) || 0;
   const spdEl = document.getElementById('map-live-speed');
-  const spdArc = document.getElementById('map-live-speed-arc');
-  const spdPct = Math.min(100, Math.round((liveSpd / 130) * 100));
   if (spdEl) spdEl.textContent = Math.round(liveSpd);
-  if (spdArc) spdArc.setAttribute('stroke-dashoffset', String(100 - spdPct));
 
+  const hudGearEl = document.getElementById('map-hud-gear');
+  const hudVitalsEl = document.getElementById('map-hud-vitals');
+  if (hudGearEl) {
+    hudGearEl.textContent = ecuData?.connected ? (ecuData.gear || 'N') : 'N';
+  }
+  if (hudVitalsEl) {
+    if (ecuData?.connected) {
+      const tVal = ecuData.tempC > 0 ? `${ecuData.tempC}°C` : '--°C';
+      const vVal = ecuData.voltage > 0 ? `${ecuData.voltage.toFixed(1)}V` : '--V';
+      const rVal = (Number(ecuData.rpm) || 0).toLocaleString('es-PE');
+      hudVitalsEl.textContent = `🌡️ ${tVal} • 🔋 ${vVal} • ${rVal} RPM`;
+    } else {
+      hudVitalsEl.textContent = uiConfig.gpsWatchId !== null ? '🟢 Velocidad GPS Satelital' : '⚡ Conecta ECU o activa Demo';
+    }
+  }
+
+  // Tarjeta 2: Meta, ETA & Combustible Requerido
+  const distEl = document.getElementById('map-bot-dist');
+  const etaEl = document.getElementById('map-bot-eta');
+  const needGalEl = document.getElementById('map-bot-needgal');
+  const terrainEl = document.getElementById('map-bot-terrain');
+
+  if (distEl) {
+    distEl.innerHTML = hasActiveRoute ? `${remDistKm.toFixed(1)} <small>km</small>` : `-- <small>km</small>`;
+  }
+  if (etaEl) {
+    etaEl.textContent = hasActiveRoute ? `${remMin}m • ${etaStr}` : 'ETA --:--';
+  }
+  if (needGalEl) {
+    needGalEl.textContent = hasActiveRoute
+      ? `Req: ${neededGal.toFixed(2)} gal (S/ ${neededSoles.toFixed(2)})`
+      : 'Toca 🔍 para elegir destino';
+  }
+  if (terrainEl) {
+    const extraPct = Math.round(((route.terrainFactor || 1) - 1) * 100);
+    const gpsTxt = uiConfig.gpsWatchId !== null ? '🟢 GPS Vivo' : '🛰️ Satélite';
+    terrainEl.textContent = hasActiveRoute
+      ? `${extraPct > 0 ? `Ascenso (+${extraPct}% FI)` : 'Costa (0%)'} • ${gpsTxt}`
+      : `Modo Libre • ${gpsTxt}`;
+  }
+
+  // Tarjeta 3: Tanque (14 L) & Consumo Promedio
   const avgKmL = tele.avgKmPerGal / 3.78541;
   const kmlEl = document.getElementById('map-avg-kml');
   const kmgalEl = document.getElementById('map-avg-kmgal');
@@ -2080,30 +2154,7 @@ export function renderTacticalMapUI(ecuData, fitMapBounds = false) {
     }
   }
 
-  const distEl = document.getElementById('map-bot-dist');
-  const etaEl = document.getElementById('map-bot-eta');
-  const needGalEl = document.getElementById('map-bot-needgal');
-  const terrainEl = document.getElementById('map-bot-terrain');
-
-  if (distEl) {
-    distEl.innerHTML = hasActiveRoute ? `${remDistKm.toFixed(1)} <small>km</small>` : `-- <small>km</small>`;
-  }
-  if (etaEl) {
-    etaEl.textContent = hasActiveRoute ? `${remMin}m • ${etaStr}` : 'ETA --:--';
-  }
-  if (needGalEl) {
-    needGalEl.textContent = hasActiveRoute
-      ? `Req: ${neededGal.toFixed(2)} gal (S/ ${neededSoles.toFixed(2)})`
-      : 'Elige destino para cotizar';
-  }
-  if (terrainEl) {
-    const extraPct = Math.round(((route.terrainFactor || 1) - 1) * 100);
-    const gpsTxt = uiConfig.gpsWatchId !== null ? '🟢 GPS Vivo' : '🛰️ Satélite';
-    terrainEl.textContent = hasActiveRoute
-      ? `${extraPct > 0 ? `Ascenso (+${extraPct}% FI)` : 'Costa (0%)'} • ${gpsTxt}`
-      : `Modo Libre • ${gpsTxt}`;
-  }
-
+  // Tarjeta 4: Altitud & Topografía DEM
   const elevArr = Array.isArray(route.elevProfile) && route.elevProfile.length >= 2 ? route.elevProfile : [34, 34];
   const floatIdx = progressRatio * (elevArr.length - 1);
   const interpAlt = hasActiveRoute

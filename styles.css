@@ -1212,7 +1212,7 @@ body[data-theme="white"] {
 .docs-garage-card.docs-alert { border-left-color: var(--amber-warn); }
 .docs-garage-card.docs-danger { border-left-color: var(--red-danger); }
 
-/* ================= REDISEÑO TOTAL: MACHINE OUTDOORS OS (ZŪMO / CONNECTEDRIDE EDITION) ================= */
+/* ================= MACHINE OUTDOORS OS - EDICIÓN TFT PREMIUM MOTO ================= */
 #obd-live-panel.hidden,
 #obd-map-panel.hidden,
 #obd-diag-panel.hidden {
@@ -1226,7 +1226,7 @@ body.ecu-ride-mode {
   overflow: hidden !important;
   padding: 0 !important;
   margin: 0 !important;
-  background: #05080C !important;
+  background: #04070B !important;
 }
 
 body.ecu-tab-active .app-header,
@@ -1263,17 +1263,17 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   padding: 0 !important;
   border-radius: 0 !important;
   border: none !important;
-  background: #060A0F !important;
+  background: #05090E !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
 }
 
-/* 1. Cabecera Unificada de 1 sola línea (Reemplaza Sidebar + Statusbar) */
+/* 1. Cabecera Unificada TFT (1 Sola Línea) */
 .mo-unified-topbar {
-  background: linear-gradient(180deg, #0D1520 0%, #080D14 100%);
-  border-bottom: 1px solid rgba(73, 191, 230, 0.18);
-  padding: 6px 10px;
+  background: linear-gradient(180deg, #0D1622 0%, #070B12 100%);
+  border-bottom: 1px solid rgba(73, 191, 230, 0.2);
+  padding: 5px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1295,8 +1295,8 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: rgba(30, 136, 168, 0.16);
-  border: 1px solid rgba(73, 191, 230, 0.35);
+  background: rgba(30, 136, 168, 0.18);
+  border: 1px solid rgba(73, 191, 230, 0.38);
   color: var(--caribbean-bright);
   font-size: 14px;
   font-weight: 900;
@@ -1315,18 +1315,18 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .mo-brand-title {
   font-family: var(--font-speed);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 1.2px;
   color: #FFFFFF;
 }
 
 .mo-brand-sub {
-  font-size: 7.5px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.5px;
   color: #8E9BAE;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .mo-brand-sub strong {
@@ -1334,15 +1334,15 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   font-family: var(--font-speed);
 }
 
-/* Píldoras de Navegación Centrales */
+/* Selector Central de Vistas */
 .mo-mode-switcher {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: #04070B;
+  gap: 3px;
+  background: #030609;
   padding: 3px;
   border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   flex-shrink: 0;
 }
 
@@ -1364,17 +1364,17 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .mo-mode-tab.active {
   background: linear-gradient(135deg, var(--caribbean-primary), var(--caribbean-deep));
-  border-color: rgba(73, 191, 230, 0.45);
+  border-color: rgba(73, 191, 230, 0.5);
   color: #FFFFFF;
   box-shadow: 0 2px 8px rgba(30, 136, 168, 0.35);
 }
 
 .mo-mode-tab.sos {
   border-color: rgba(255, 69, 58, 0.35);
-  background: rgba(255, 69, 58, 0.1);
+  background: rgba(255, 69, 58, 0.12);
 }
 
-/* Acciones Rápidas Derecha */
+/* Botones Rápidos de Cabecera */
 .mo-quick-actions {
   display: flex;
   align-items: center;
@@ -1384,7 +1384,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .mo-top-pill {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #D2DAE4;
   font-size: 9.5px;
   font-weight: 800;
@@ -1394,9 +1394,13 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   white-space: nowrap;
 }
 
+.mo-top-pill.icon-only {
+  padding: 5px 7px;
+}
+
 .mo-top-pill.connect {
-  background: rgba(88, 232, 0, 0.14);
-  border-color: rgba(88, 232, 0, 0.45);
+  background: rgba(88, 232, 0, 0.15);
+  border-color: rgba(88, 232, 0, 0.5);
   color: #58E800;
 }
 
@@ -1417,15 +1421,15 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   to { box-shadow: 0 0 12px rgba(255, 69, 58, 0.95); }
 }
 
-/* 2. Escenario Principal y Workspace */
+/* 2. Escenario Principal */
 .mo-main-stage {
   flex: 1;
   min-height: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 7px 9px;
-  gap: 7px;
+  padding: 6px 8px;
+  gap: 6px;
   overflow: hidden;
 }
 
@@ -1434,7 +1438,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
@@ -1445,20 +1449,20 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
-/* Lienzo del Mapa Protagonista */
+/* Lienzo del Mapa Satelital */
 .machine-map-canvas-box {
   position: relative;
   flex: 1;
   width: 100%;
-  min-height: 265px;
-  background: #060B0E;
-  border: 1px solid rgba(73, 191, 230, 0.24);
+  min-height: 270px;
+  background: #05090D;
+  border: 1px solid rgba(73, 191, 230, 0.26);
   border-radius: 13px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
 .leaflet-sat-container {
@@ -1466,22 +1470,129 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  background: #060B0E;
+  background: #05090D;
   z-index: 1;
 }
 
-/* Buscador Flotante Compacto */
+/* ================= LUPA AUTO-CONTRÁCTIL (SMART SEARCH PILL) ================= */
 .mo-map-top-search-hud {
   position: absolute;
   top: 8px;
   left: 8px;
-  right: 46px;
-  max-width: 440px;
+  right: 48px;
+  max-width: 420px;
   z-index: 650;
+  pointer-events: none;
+}
+
+/* Estado Contraído: Píldora Compacta con Lupa cuando ya elegiste destino */
+.mo-collapsed-lupa-pill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  background: rgba(7, 12, 19, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(88, 232, 0, 0.55);
+  border-radius: 99px;
+  padding: 4px 6px 4px 5px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.72);
+  animation: pillPopIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes pillPopIn {
+  from { opacity: 0; transform: scale(0.92) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.mo-lupa-circle-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(73, 191, 230, 0.45);
+  background: linear-gradient(135deg, var(--caribbean-primary), var(--caribbean-deep));
+  color: #FFFFFF;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(30, 136, 168, 0.45);
+}
+
+.mo-lupa-circle-btn:active {
+  transform: scale(0.92);
+}
+
+.mo-active-dest-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  cursor: pointer;
+  padding-right: 2px;
+}
+
+.mo-live-route-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--neon-lime);
+  box-shadow: 0 0 8px var(--neon-lime);
+  flex-shrink: 0;
+}
+
+.mo-active-dest-texts {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.1;
+}
+
+.mo-active-dest-texts strong {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+
+.mo-active-dest-texts small {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--caribbean-bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+
+.mo-pill-clear-x {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 69, 58, 0.4);
+  background: rgba(255, 69, 58, 0.16);
+  color: #FF6961;
+  font-size: 10px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Estado Expandido: Buscador Completo + Chips */
+.mo-expanded-search-wrap {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  pointer-events: none;
 }
 
 .mo-pro-search-bar {
@@ -1489,13 +1600,13 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(7, 12, 19, 0.90);
+  background: rgba(7, 12, 19, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(73, 191, 230, 0.36);
-  border-radius: 10px;
-  padding: 3.5px 5px 3.5px 10px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(73, 191, 230, 0.4);
+  border-radius: 99px;
+  padding: 3.5px 5px 3.5px 11px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.68);
 }
 
 .mo-pro-search-bar:focus-within {
@@ -1538,8 +1649,8 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   background: var(--neon-lime);
   color: #05090D;
   border: none;
-  border-radius: 7px;
-  padding: 4.5px 10px;
+  border-radius: 99px;
+  padding: 4.5px 11px;
   font-family: var(--font-speed);
   font-size: 10.5px;
   font-weight: 900;
@@ -1553,16 +1664,16 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   background: rgba(8, 13, 21, 0.97);
   backdrop-filter: blur(14px);
   border: 1px solid var(--caribbean-bright);
-  border-radius: 10px;
+  border-radius: 11px;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.88);
-  max-height: 195px;
+  max-height: 190px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
 .map-search-item {
-  padding: 7px 10px;
+  padding: 7px 11px;
   border-bottom: 1px solid rgba(210, 218, 228, 0.08);
   cursor: pointer;
   text-align: left;
@@ -1592,7 +1703,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   white-space: nowrap;
 }
 
-/* Carrusel de Chips Rápidos (Se oculta cuando hay ruta activa para limpiar el mapa) */
+/* Chips Rápidos */
 .mo-quick-presets-strip {
   pointer-events: auto;
   display: flex;
@@ -1601,16 +1712,11 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
-  transition: opacity 0.2s ease, max-height 0.2s ease;
 }
 .mo-quick-presets-strip::-webkit-scrollbar { display: none; }
 
-.mo-quick-presets-strip.chips-collapsed {
-  display: none !important;
-}
-
 .mo-preset-chip {
-  background: rgba(8, 14, 22, 0.86);
+  background: rgba(8, 14, 22, 0.88);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #E2E8F0;
@@ -1633,7 +1739,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   color: var(--caribbean-bright);
 }
 
-/* Dock Derecho de Botones de Mapa */
+/* 2. Dock Derecho Minimalista (Solo 4 Controles Táctiles) */
 .mo-map-right-controls {
   position: absolute;
   top: 8px;
@@ -1641,15 +1747,15 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   z-index: 600;
 }
 
 .mo-compass-circle {
-  width: 30px;
-  height: 30px;
+  width: 31px;
+  height: 31px;
   border-radius: 50%;
-  background: rgba(9, 14, 21, 0.90);
+  background: rgba(8, 13, 20, 0.90);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #FFFFFF;
@@ -1667,26 +1773,22 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   background: rgba(88, 232, 0, 0.18);
 }
 
-.mo-compass-circle.sos-btn {
-  border-color: rgba(255, 69, 58, 0.65);
-  background: rgba(45, 10, 14, 0.92);
-}
-
 .mo-compass-arrow { font-size: 6.5px; color: #FF453A; line-height: 1; transition: transform 0.3s ease; }
 .mo-compass-circle strong { font-size: 8px; line-height: 1; }
 
 .mo-zoom-pill-group {
-  background: rgba(9, 14, 21, 0.90);
+  background: rgba(8, 13, 20, 0.90);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 99px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
 }
 
 .mo-zoom-pill-group button {
-  width: 30px;
-  height: 24px;
+  width: 31px;
+  height: 25px;
   background: transparent;
   border: none;
   color: #FFFFFF;
@@ -1697,105 +1799,32 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .mo-zoom-divider { height: 1px; width: 16px; margin: 0 auto; background: rgba(255, 255, 255, 0.14); }
 
-/* Píldora Inferior Ultracompacta de Estado de Ruta */
-.mo-dest-overlay-card {
+/* 3. Micro-Dock Flotante Inferior Izquierdo (Sin repetir datos de distancia/tiempo) */
+.mo-map-bottom-toolbar {
   position: absolute;
   bottom: 8px;
   left: 8px;
-  right: 46px;
-  background: rgba(8, 13, 20, 0.90);
+  z-index: 550;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(7, 12, 19, 0.88);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(73, 191, 230, 0.28);
-  border-radius: 10px;
-  padding: 5.5px 9px;
-  z-index: 550;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
-}
-
-.mo-dest-overlay-card.collapsed {
-  right: auto;
-}
-
-.mo-dest-overlay-card.collapsed #mo-dest-card-body,
-.mo-dest-overlay-card.collapsed .mo-dest-sub {
-  display: none !important;
-}
-
-.mo-dest-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.mo-live-route-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--alloy-muted);
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-.mo-live-route-dot.active {
-  background: var(--neon-lime);
-  box-shadow: 0 0 8px var(--neon-lime);
-}
-
-.mo-dest-title {
-  font-size: 11px;
-  font-weight: 800;
-  color: #FFFFFF;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mo-dest-sub {
-  font-size: 8.5px;
-  color: #94A3B8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 160px;
-}
-
-.mo-dest-inline-badges {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.mo-route-chip {
-  background: rgba(88, 232, 0, 0.12);
-  border: 1px solid rgba(88, 232, 0, 0.35);
-  color: var(--neon-lime);
-  font-family: var(--font-speed);
-  font-size: 10.5px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 5px;
-  white-space: nowrap;
-}
-
-.mo-dest-actions-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
+  border: 1px solid rgba(73, 191, 230, 0.25);
+  border-radius: 99px;
+  padding: 3.5px 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65);
 }
 
 .mo-mini-action {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #D2DAE4;
   font-size: 8.5px;
   font-weight: 700;
-  padding: 3.5px 6px;
-  border-radius: 5px;
+  padding: 3.5px 7.5px;
+  border-radius: 99px;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -1806,32 +1835,19 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   color: #58E800;
 }
 
-.mo-card-collapse-btn {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #D2DAE4;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
-}
-
-/* ================= PANEL HUD UNIFICADO DE 4 MÓDULOS (CERO DUPLICADOS) ================= */
+/* ================= PANEL TFT DE 4 TARJETAS DE TELEMETRÍA EN RUTA ================= */
 .mo-hud-4panel {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 7px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .mo-hud-card {
-  background: linear-gradient(160deg, #0D1520 0%, #080C13 100%);
+  background: linear-gradient(160deg, #0D1520 0%, #070B11 100%);
   border: 1px solid rgba(73, 191, 230, 0.18);
   border-radius: 11px;
-  padding: 8px 10px;
+  padding: 7px 9px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1842,32 +1858,48 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   border-left: 3px solid var(--neon-lime);
 }
 
+.mo-hud-card.route-hud {
+  border-left: 3px solid var(--caribbean-bright);
+}
+
+.mo-hud-card.fuel-hud {
+  border-left: 3px solid var(--caribbean-primary);
+}
+
 .mo-hud-card.elev-card {
   cursor: pointer;
-  border-left: 3px solid var(--caribbean-bright);
+  border-left: 3px solid var(--amber-warn);
 }
 
 .mo-hud-tag {
   font-family: var(--font-speed);
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 800;
   color: var(--caribbean-bright);
-  background: rgba(30, 136, 168, 0.16);
+  background: rgba(30, 136, 168, 0.18);
+  border: 1px solid rgba(73, 191, 230, 0.28);
   padding: 1px 5px;
   border-radius: 4px;
+}
+
+/* Cluster Velocidad + Indicador de Marcha TFT */
+.mo-tft-speed-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 2px 0;
 }
 
 .mo-hud-speed-row {
   display: flex;
   align-items: baseline;
-  justify-content: center;
-  gap: 4px;
-  margin: 2px 0;
+  gap: 3px;
 }
 
 .mo-hud-speed-row strong {
   font-family: var(--font-speed);
-  font-size: 28px;
+  font-size: 27px;
   font-weight: 900;
   color: #FFFFFF;
   line-height: 0.92;
@@ -1875,48 +1907,81 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .mo-hud-speed-row small {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   color: #8E9BAE;
 }
 
-.mo-speed-smile-arc {
-  width: 100%;
-  max-width: 110px;
-  height: 14px;
-  margin: 0 auto;
+.mo-tft-gear-badge {
+  background: rgba(88, 232, 0, 0.12);
+  border: 1px solid rgba(88, 232, 0, 0.4);
+  border-radius: 7px;
+  padding: 2px 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.mo-tft-gear-badge span {
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: #94A3B8;
+}
+
+.mo-tft-gear-badge strong {
+  font-family: var(--font-speed);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--neon-lime);
+  margin-top: 1px;
+}
+
+#map-hud-vitals {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #B0BCCB;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mo-hud-dual-val {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 5px;
-  margin: 3px 0 2px;
+  gap: 4px;
+  margin: 2px 0;
 }
 
 .mo-card-primary-val {
   font-family: var(--font-speed);
-  font-size: 16.5px;
+  font-size: 16px;
   font-weight: 800;
   color: #FFFFFF;
   white-space: nowrap;
 }
 
 .mo-card-primary-val small {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 600;
   color: #94A3B8;
 }
 
 .mo-hud-pill-stat {
   font-family: var(--font-speed);
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   color: var(--caribbean-bright);
-  background: rgba(30, 136, 168, 0.15);
-  border: 1px solid rgba(73, 191, 230, 0.25);
-  padding: 1.5px 5.5px;
+  background: rgba(30, 136, 168, 0.16);
+  border: 1px solid rgba(73, 191, 230, 0.28);
+  padding: 1.5px 5px;
   border-radius: 5px;
   white-space: nowrap;
 }
@@ -1947,11 +2012,11 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .mo-elev-chart-container {
   width: 100%;
-  height: 40px;
+  height: 38px;
   margin-top: 2px;
 }
 
-/* Pines del Mapa Leaflet y Limpieza de Atribución */
+/* Pines del Mapa Leaflet */
 .leaflet-tile-pane { filter: brightness(0.88) contrast(1.12) saturate(0.96); }
 .leaflet-control-attribution { font-size: 7px !important; background: rgba(5, 8, 13, 0.65) !important; color: var(--alloy-muted) !important; }
 .leaflet-control-attribution a { color: var(--caribbean-bright) !important; }
@@ -2231,10 +2296,11 @@ body[data-sunlight="true"] .obd-dial-card,
 body[data-sunlight="true"] .obd-vital-card,
 body[data-sunlight="true"] .obd-micro-cell,
 body[data-sunlight="true"] .mo-hud-card,
-body[data-sunlight="true"] .mo-dest-overlay-card,
+body[data-sunlight="true"] .mo-collapsed-lupa-pill,
+body[data-sunlight="true"] .mo-map-bottom-toolbar,
 body[data-sunlight="true"] .mo-pro-search-bar {
   background: #000000 !important;
-  border-color: rgba(255, 255, 255, 0.48) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 body[data-sunlight="true"] #obd-rpm-arc,
@@ -2246,7 +2312,7 @@ body[data-sunlight="true"] .leaflet-tile-pane {
   filter: brightness(1.04) contrast(1.22) saturate(1.1) !important;
 }
 
-/* ================= MODO HORIZONTAL WIDESCREEN (MAPA 75% IZQUIERDA + 1 SOLA COLUMNA DERECHA) ================= */
+/* ================= MODO HORIZONTAL WIDESCREEN (MAPA PANORÁMICO + COLUMNA TFT DERECHA) ================= */
 @media (orientation: landscape) {
   body.ecu-tab-active .tabs-nav-5 { display: none !important; }
   body.ecu-tab-active #main-screen,
@@ -2265,7 +2331,7 @@ body[data-sunlight="true"] .leaflet-tile-pane {
   }
 
   body.ecu-tab-active .mo-hud-4panel {
-    width: 215px !important;
+    width: 222px !important;
     height: 100% !important;
     grid-template-columns: 1fr !important;
     grid-template-rows: repeat(4, 1fr) !important;
