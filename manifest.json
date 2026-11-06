@@ -1,50 +1,48 @@
 {
-  "id": "./",
   "name": "Mi Moto - Pulsar N160 FI",
   "short_name": "MiMoto",
-  "description": "Telemetría de consumo Premium, control financiero CAPEX/OPEX y bitácora mecánica para Bajaj Pulsar N160 FI.",
+  "description": "Telemetría OBD2, Navegación Táctica DEM, Mantenimiento y Finanzas para Bajaj Pulsar N160 FI.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#060A0F",
   "theme_color": "#060A0F",
-  "lang": "es-PE",
   "icons": [
     {
-      "src": "./icono.png",
-      "sizes": "192x192 512x512",
+      "src": "icono.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "./icono.png",
-      "sizes": "192x192 512x512",
+      "src": "icono.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Abastecer Premium",
-      "short_name": "+ Grifo",
-      "description": "Registrar nueva carga de combustible",
+      "name": "Registrar Grifo",
+      "short_name": "Grifo",
+      "description": "Nuevo abastecimiento de Gasolina Premium",
       "url": "./index.html?action=fuel",
-      "icons": [{ "src": "./icono.png", "sizes": "192x192" }]
+      "icons": [{ "src": "icono.png", "sizes": "192x192" }]
     },
     {
       "name": "Registrar Servicio",
-      "short_name": "+ Taller",
+      "short_name": "Taller",
       "description": "Registrar mantenimiento en bitácora",
       "url": "./index.html?action=maint",
-      "icons": [{ "src": "./icono.png", "sizes": "192x192" }]
+      "icons": [{ "src": "icono.png", "sizes": "192x192" }]
     },
     {
       "name": "Registrar Lavado",
-      "short_name": "+ Lavado",
-      "description": "Registrar lavado y cuidado",
+      "short_name": "Lavado",
+      "description": "Registrar lavado y cuidado de unidad",
       "url": "./index.html?action=spa",
-      "icons": [{ "src": "./icono.png", "sizes": "192x192" }]
+      "icons": [{ "src": "icono.png", "sizes": "192x192" }]
     }
   ]
 }

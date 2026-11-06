@@ -72,6 +72,7 @@ import {
   startSimulatorMode,
   stopEcuTelemetry,
   resetSessionDistance,
+  feedGpsDistanceSample,
   startElectricalHealthTest,
   toggleBlackboxRecording,
   exportBlackboxFile,
@@ -101,6 +102,8 @@ let selectedExpenseCat = 'Cochera / Peaje';
 let editingTirePos = 'front';
 let selectedTireAction = 'edit';
 let selectedTireCompound = 'Touring / Calle';
+
+let hasLoadedInitialRoadRoute = false;
 
 function applyBikeTheme(themeName = 'blue') {
   const normalized = themeName === 'grey' ? 'white' : themeName;
@@ -193,16 +196,42 @@ async function exitEcuLandscapeIfNeeded() {
   } catch (e) {}
 }
 
-function switchMainTab(tabId) {
-  if (tabId === 'tab-ecu') {
-    document.body.classList.add('ecu-tab-active');
-    renderObdLiveUI(liveEcuData, true);
-    setTimeout(() => {
-      renderTacticalMapUI(liveEcuData, true);
-    }, 100);
-  } else {
-    exitEcuLandscapeIfNeeded();
+function activateMachineOutdoorsSubView(view) {
+  uiConfig.activeEcuSubView = view;
+  document.querySelectorAll('[data-ecuview]').forEach((b) => {
+    b.classList.toggle('active', b.getAttribute('data-ecuview') === view);
+  });
+
+  const dialsPanel = document.getElementById('obd-live-panel');
+  const mapPanel = document.getElementById('obd-map-panel');
+  const diagPanel = document.getElementById('obd-diag-panel');
+  const crumbEl = document.getElementById('mo-active-view-title');
+
+  if (dialsPanel) dialsPanel.classList.toggle('hidden', view !== 'dials');
+  if (mapPanel) mapPanel.classList.toggle('hidden', view !== 'map');
+  if (diagPanel) diagPanel.classList.toggle('hidden', view !== 'diag');
+
+  const titleMap = { map: 'NAVEGADOR', dials: 'TELEMETRÍA', diag: 'DIAGNÓSTICO' };
+  if (crumbEl) crumbEl.textContent = titleMap[view] || 'NAVEGADOR';
+
+  if (view === 'map') {
+    renderTacticalMapUI(liveEcuData, true);
+    if (!hasLoadedInitialRoadRoute) {
+      hasLoadedInitialRoadRoute = true;
+      const r0 = uiConfig.customRoute;
+      if (r0 && r0.id !== 'standby' && r0.lat !== null && r0.lon !== null && Number(r0.distKm) > 0) {
+        calculateRealRouteAndElevation({
+          destLat: Number(r0.lat),
+          destLon: Number(r0.lon),
+          name: r0.name,
+          region: r0.region
+        });
+      }
+    }
   }
+}
+
+function switchMainTab(tabId) {
   document.querySelectorAll('.tab-btn').forEach((b) => {
     const isTarget = b.getAttribute('data-tab') === tabId || (tabId === 'tab-specs' && b.getAttribute('data-tab') === 'tab-maint');
     b.classList.toggle('active', isTarget);
@@ -210,6 +239,16 @@ function switchMainTab(tabId) {
   document.querySelectorAll('.tab-content').forEach((c) => {
     c.classList.toggle('hidden', c.id !== tabId);
   });
+
+  if (tabId === 'tab-ecu') {
+    document.body.classList.add('ecu-tab-active');
+    renderObdLiveUI(liveEcuData, true);
+    setTimeout(() => {
+      activateMachineOutdoorsSubView(uiConfig.activeEcuSubView || 'map');
+    }, 80);
+  } else {
+    exitEcuLandscapeIfNeeded();
+  }
 }
 
 function showOnboardingScreen() {
@@ -707,13 +746,14 @@ function setupEventListeners() {
     });
   }
 
-  // Proveedor de coordenadas GPS en vivo para la Caja Negra (BlackBox Recorder)
+  // Proveedor completo de coordenadas y velocidad GPS en vivo para la Caja Negra (BlackBox Recorder)
   registerGpsProviderForBlackbox(() => {
     const r = uiConfig.customRoute || ROUTE_PRESETS[0];
     return {
       lat: uiConfig.liveGpsLat ?? r.lat ?? -8.1116,
       lon: uiConfig.liveGpsLon ?? r.lon ?? -79.0287,
-      alt: uiConfig.liveGpsAlt ?? liveEcuData.estimatedAltM ?? 34
+      alt: uiConfig.liveGpsAlt ?? liveEcuData.estimatedAltM ?? 34,
+      speedKmh: uiConfig.liveGpsSpeedKmh ?? 0
     };
   });
 
@@ -725,8 +765,11 @@ function setupEventListeners() {
     });
   }
 
-  // Botones de Grabación y Exportación de Caja Negra (BlackBox .GPX y .CSV)
+  // Botones de Grabación y Exportación de Caja Negra (Auto-enciende GPS si estaba apagado)
   const handleBlackboxToggle = () => {
+    if (!liveEcuData.blackbox.recording && uiConfig.gpsWatchId === null) {
+      document.getElementById('btn-toggle-gps')?.click();
+    }
     toggleBlackboxRecording(renderObdLiveUI, (msg) => showToast(msg));
   };
   document.getElementById('btn-obd-rec-toggle')?.addEventListener('click', handleBlackboxToggle);
@@ -805,44 +848,7 @@ function setupEventListeners() {
     });
   }
 
-  // Selector de Vistas Machine Outdoors OS (Sin trazar rutas falsas en modo Standby)
-  let hasLoadedInitialRoadRoute = false;
-
-  function activateMachineOutdoorsSubView(view) {
-    uiConfig.activeEcuSubView = view;
-    document.querySelectorAll('[data-ecuview]').forEach((b) => {
-      b.classList.toggle('active', b.getAttribute('data-ecuview') === view);
-    });
-
-    const dialsPanel = document.getElementById('obd-live-panel');
-    const mapPanel = document.getElementById('obd-map-panel');
-    const diagPanel = document.getElementById('obd-diag-panel');
-    const crumbEl = document.getElementById('mo-active-view-title');
-
-    if (dialsPanel) dialsPanel.classList.toggle('hidden', view !== 'dials');
-    if (mapPanel) mapPanel.classList.toggle('hidden', view !== 'map');
-    if (diagPanel) diagPanel.classList.toggle('hidden', view !== 'diag');
-
-    const titleMap = { map: 'NAVEGADOR', dials: 'TELEMETRÍA', diag: 'DIAGNÓSTICO' };
-    if (crumbEl) crumbEl.textContent = titleMap[view] || 'NAVEGADOR';
-
-    if (view === 'map') {
-      renderTacticalMapUI(liveEcuData, true);
-      if (!hasLoadedInitialRoadRoute) {
-        hasLoadedInitialRoadRoute = true;
-        const r0 = uiConfig.customRoute;
-        if (r0 && r0.id !== 'standby' && r0.lat !== null && r0.lon !== null && Number(r0.distKm) > 0) {
-          calculateRealRouteAndElevation({
-            destLat: Number(r0.lat),
-            destLon: Number(r0.lon),
-            name: r0.name,
-            region: r0.region
-          });
-        }
-      }
-    }
-  }
-
+  // Selector de Vistas Machine Outdoors OS
   document.querySelectorAll('[data-ecuview]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const view = btn.getAttribute('data-ecuview') || 'map';
@@ -982,7 +988,7 @@ function setupEventListeners() {
       }
       searchDebounceTimer = setTimeout(() => {
         executePlaceSearch(false);
-      }, 380);
+      }, 650);
     });
 
     searchInput.addEventListener('keydown', (ev) => {
@@ -1111,6 +1117,7 @@ function setupEventListeners() {
       peakAlt
     ];
 
+    uiConfig.searchExpanded = false;
     uiConfig.customRoute = {
       ...uiConfig.customRoute,
       id: 'custom',
@@ -1134,7 +1141,7 @@ function setupEventListeners() {
     showToast(`🏁 Ruta "${name}" (${distKm} km) actualizada`);
   });
 
-  // Botón de GPS Satelital en Vivo
+  // Botón de GPS Satelital en Vivo (Sincronizado con Odómetro de Ruta, Velocidad Pico y Caja Negra)
   const btnToggleGps = document.getElementById('btn-toggle-gps');
   if (btnToggleGps) {
     btnToggleGps.addEventListener('click', () => {
@@ -1145,8 +1152,10 @@ function setupEventListeners() {
       if (uiConfig.gpsWatchId !== null) {
         navigator.geolocation.clearWatch(uiConfig.gpsWatchId);
         uiConfig.gpsWatchId = null;
+        uiConfig.liveGpsSpeedKmh = null;
         btnToggleGps.classList.remove('active');
         btnToggleGps.textContent = '🛰️ GPS Vivo';
+        renderObdLiveUI(liveEcuData, false);
         renderTacticalMapUI(liveEcuData, false);
         showToast('⏹ Rastreo GPS desactivado');
         return;
@@ -1159,15 +1168,24 @@ function setupEventListeners() {
       let recalculatedFromGpsOnce = false;
       uiConfig.gpsWatchId = navigator.geolocation.watchPosition(
         (pos) => {
-          uiConfig.liveGpsLat = pos.coords.latitude;
-          uiConfig.liveGpsLon = pos.coords.longitude;
-          if (pos.coords.altitude !== null) {
+          const newLat = pos.coords.latitude;
+          const newLon = pos.coords.longitude;
+          const accuracy = pos.coords.accuracy || 20;
+
+          const fallbackKmh = feedGpsDistanceSample(newLat, newLon, accuracy, pos.coords.speed);
+
+          uiConfig.liveGpsLat = newLat;
+          uiConfig.liveGpsLon = newLon;
+          if (pos.coords.altitude !== null && !isNaN(pos.coords.altitude)) {
             uiConfig.liveGpsAlt = pos.coords.altitude;
             updateAltitudeDeltaCheck(pos.coords.altitude);
           }
-          if (pos.coords.speed !== null && pos.coords.speed >= 0) {
+          if (pos.coords.speed !== null && !isNaN(pos.coords.speed) && pos.coords.speed >= 0) {
             uiConfig.liveGpsSpeedKmh = pos.coords.speed * 3.6;
+          } else {
+            uiConfig.liveGpsSpeedKmh = fallbackKmh || 0;
           }
+
           if (!recalculatedFromGpsOnce) {
             recalculatedFromGpsOnce = true;
             const currR = uiConfig.customRoute;
@@ -1180,9 +1198,11 @@ function setupEventListeners() {
               });
             } else {
               centerMapOnBike(14);
+              renderObdLiveUI(liveEcuData, false);
               renderTacticalMapUI(liveEcuData, false);
             }
           } else {
+            renderObdLiveUI(liveEcuData, false);
             renderTacticalMapUI(liveEcuData, false);
           }
         },
@@ -1270,7 +1290,7 @@ function setupEventListeners() {
     });
   }
 
-  // Botón para inyectar los kilómetros reales medidos por la ECU directo al Odómetro Total de la App
+  // Botón para inyectar los kilómetros reales medidos por la ECU o GPS directo al Odómetro Total de la App
   const btnSyncSessionKm = document.getElementById('btn-obd-sync-km');
   if (btnSyncSessionKm) {
     btnSyncSessionKm.addEventListener('click', () => {
@@ -1281,8 +1301,8 @@ function setupEventListeners() {
       }
       const targetKm = appState.currentKm + addKm;
       openCustomConfirm({
-        title: 'Inyectar Km de Ruta ECU',
-        message: `La ECU registró +${Number(liveEcuData.sessionKm).toFixed(2)} km en este trayecto. ¿Deseas sumar ${addKm} km a tu Odómetro Total (${appState.currentKm.toLocaleString('es-PE')} → ${targetKm.toLocaleString('es-PE')} km)?`,
+        title: 'Inyectar Km de Ruta',
+        message: `Se registraron +${Number(liveEcuData.sessionKm).toFixed(2)} km en este trayecto. ¿Deseas sumar ${addKm} km a tu Odómetro Total (${appState.currentKm.toLocaleString('es-PE')} → ${targetKm.toLocaleString('es-PE')} km)?`,
         confirmText: `Sumar +${addKm} km`,
         isDanger: false,
         icon: '🏁',

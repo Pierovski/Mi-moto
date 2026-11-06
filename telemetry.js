@@ -53,7 +53,6 @@ export function computeMaintMemoryMap() {
   return memoryMap;
 }
 
-// Auditoría Predictiva del Kit de Arrastre (Detecta estiramiento prematuro de cadena 428 O-Ring)
 export function computeChainHealth() {
   const chainLogs = appState.logs
     .filter((l) => l.typeId === 'chain_lube')
@@ -90,7 +89,6 @@ export function computeChainHealth() {
   };
 }
 
-// Cálculo Físico de Desgaste de Neumático por Milímetro de Cocada (Límite legal TWI = 1.6 mm)
 export function computeTireTreadWear(tire, posKey = 'front') {
   const defaultNewMm = posKey === 'front' ? 4.8 : 6.0;
   const twiLimitMm = 1.6;
@@ -139,7 +137,6 @@ export function getLastFuelPriceRecord(excludeId = null) {
   return withPrice.length > 0 ? withPrice[0] : null;
 }
 
-// Extrae los últimos 3 grifos y los últimos 3 talleres usados para las píldoras de autocompletado
 export function getRecentQuickPicks() {
   const stations = [];
   const workshops = [];
@@ -600,8 +597,25 @@ export function computeMasterFinancials(period = 'all') {
       ...maintList.map((l) => Number(l.km)),
       ...spaList.map((w) => Number(w.km)),
       ...otherList.map((e) => Number(e.km))
-    ].filter((k) => !isNaN(k) && k > 0);
-    trackedKm = kms.length >= 2 ? Math.max(...kms) - Math.min(...kms) : 0;
+    ].filter((k) => !isNaN(k) && k >= 0);
+
+    if (kms.length >= 2) {
+      trackedKm = Math.max(...kms) - Math.min(...kms);
+    } else if (kms.length === 1) {
+      const singleKm = kms[0];
+      const allPrevKms = [
+        Number(appState.initialKm) || 0,
+        ...appState.fuelLogs.map((f) => Number(f.km)),
+        ...appState.logs.map((l) => Number(l.km)),
+        ...(appState.washLogs || []).map((w) => Number(w.km)),
+        ...(appState.otherExpenses || []).map((e) => Number(e.km))
+      ].filter((k) => !isNaN(k) && k >= 0 && k < singleKm);
+
+      const basePrevKm = allPrevKms.length > 0 ? Math.max(...allPrevKms) : (Number(appState.initialKm) || 0);
+      trackedKm = Math.max(0, Math.max(singleKm, Number(appState.currentKm) || singleKm) - basePrevKm);
+    } else {
+      trackedKm = 0;
+    }
   }
 
   const realOpCostPerKm = trackedKm > 0 ? opCostTotal / trackedKm : 0;

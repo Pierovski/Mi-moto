@@ -4,7 +4,8 @@ import { appState, triggerHaptic } from './state.js';
 const BLE_SERVICES = [
   '0000fff0-0000-1000-8000-00805f9b34fb', // Estándar Konnwei KW901 / Vgate BLE
   '0000ffe0-0000-1000-8000-00805f9b34fb', // Estándar HM-10 / ELM327 BLE
-  'e7810a71-73ae-499d-8c15-faa9aef0c3f2'  // Servicio alternativo BLE Serial
+  '000018f0-0000-1000-8000-00805f9b34fb', // Servicio BLE Serial alternativo
+  'e7810a71-73ae-499d-8c15-faa9aef0c3f2'  // Servicio BLE UART alternativo
 ];
 
 let bleDevice = null;
@@ -12,20 +13,25 @@ let writeChar = null;
 let notifyChar = null;
 let pollInterval = null;
 let isPollingActive = false;
+let isDtcBusy = false;
 let isSimulating = false;
+let isStoppingTelemetry = false;
 let responseBuffer = '';
 let currentResolve = null;
+let commandTimeoutId = null;
 let wakeLockSentinel = null;
 let lastRpmWarnTime = 0;
 
-// Variables para Filtro EMA (Suavizado de agujas 60 FPS)
+let lastGpsLat = null;
+let lastGpsLon = null;
+let lastGpsSampleTimeMs = 0;
+
 const EMA_ALPHA_FAST = 0.65;
 const EMA_ALPHA_VOLT = 0.45;
 let emaRpm = 0;
 let emaSpeed = 0;
 let emaVolt = 0;
 
-// Diccionario de Códigos de Falla (DTC) comunes en Bajaj Pulsar N160 FI (BS6 / Euro5)
 export const BAJAJ_DTC_DICTIONARY = {
   P0107: 'Sensor MAP (Presión Barométrica/Admisión): Voltaje bajo',
   P0108: 'Sensor MAP (Presión Barométrica/Admisión): Señal alta',
@@ -58,7 +64,7 @@ export const liveEcuData = {
   peakRpm: 0,
   speedKmh: 0,
   peakSpeed: 0,
-  gear: 'N',           // 'N', '1', '2', '3', '4', '5'
+  gear: 'N',           // 'N', '-', '1', '2', '3', '4', '5'
   tempC: 0,            // 0105: Temperatura de motor / aceite EOT (°C)
   iatC: 0,             // 010F: Temperatura aire de admisión (°C)
   voltage: 0.0,        // ATRV: Voltaje real batería 4Ah / estator (V)
@@ -66,22 +72,21 @@ export const liveEcuData = {
   engineLoadPct: 0,    // 0104: Carga calculada del motor (%)
   mapKpa: 101,         // 010B: Presión colector admisión / altura (kPa)
   estimatedAltM: 0,    // Altitud barométrica estimada (msnm)
-  sessionStartAltM: null, // Altitud base al iniciar ruta para alerta de recalibración MAP
-  altDeltaM: 0,        // Desnivel acumulado en la sesión actual (m)
-  mapResetNeeded: false, // Alerta cuando subes > 1,200m sin apagar la llave
+  sessionStartAltM: null,
+  altDeltaM: 0,
+  mapResetNeeded: false,
   timingAdvDeg: 0,     // 010E: Avance de chispa DTS-i (° antes de PMS)
   o2Volt: 0.45,        // 0114: Voltaje sonda lambda (0.1V - 0.9V)
   stftPct: 0.0,        // 0106: Ajuste corto plazo mezcla aire/gasolina (%)
   runTimeSec: 0,       // 011F: Segundos con motor encendido
-  sessionKm: 0.0,      // Distancia integrada en tiempo real desde 010D (km)
+  sessionKm: 0.0,      // Distancia integrada en tiempo real desde 010D o GPS (km)
   instKmPerGal: 0.0,   // Economía instantánea estimada (km/gal)
   instKmPerL: 0.0,     // Economía instantánea estimada (km/L)
   dtcCodes: [],        // 03: Lista de códigos de falla activos
   lastDtcScan: '',
-  // Estado del Test Eléctrico de 15 Segundos (Batería 4Ah + CCA Arranque + Estator)
   elecTest: {
     active: false,
-    phase: 'idle',     // 'idle' | 'resting' | 'cranking' | 'charging' | 'done'
+    phase: 'idle',
     remainingSec: 0,
     restingVolt: 0,
     crankingMinVolt: 99,
@@ -91,7 +96,6 @@ export const liveEcuData = {
     verdictStatus: 'ok',
     verdictDetail: ''
   },
-  // Estado de la Caja Negra de Telemetría (BlackBox Recorder)
   blackbox: {
     recording: false,
     startTimeMs: 0,
@@ -113,14 +117,62 @@ export function registerGpsProviderForBlackbox(fn) {
   getGpsCallback = fn;
 }
 
-// Filtro de Media Móvil Exponencial (EMA) para eliminar saltos robóticos en agujas SVG
+export function feedGpsDistanceSample(lat, lon, accuracy = 20, speedMps = null) {
+  const nowMs = Date.now();
+
+  if (typeof speedMps === 'number' && !isNaN(speedMps) && speedMps >= 0 && !liveEcuData.connected) {
+    const gpsKmh = Math.round(speedMps * 3.6);
+    if (gpsKmh > liveEcuData.peakSpeed) {
+      liveEcuData.peakSpeed = gpsKmh;
+    }
+  }
+
+  if (typeof lat !== 'number' || typeof lon !== 'number' || isNaN(lat) || isNaN(lon)) return 0;
+  if (accuracy > 45) return 0;
+
+  let calculatedKmh = 0;
+
+  if (lastGpsLat !== null && lastGpsLon !== null) {
+    const R = 6371;
+    const dLat = ((lat - lastGpsLat) * Math.PI) / 180;
+    const dLon = ((lon - lastGpsLon) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lastGpsLat * Math.PI) / 180) *
+        Math.cos((lat * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const deltaKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const elapsedHours = lastGpsSampleTimeMs > 0 ? (nowMs - lastGpsSampleTimeMs) / 3600000 : 0;
+
+    if (deltaKm >= 0.006 && deltaKm <= 0.5) {
+      if (!liveEcuData.connected) {
+        liveEcuData.sessionKm = Number((liveEcuData.sessionKm + deltaKm).toFixed(3));
+      }
+      if (elapsedHours > 0) {
+        const rawCalcKmh = Math.round(deltaKm / elapsedHours);
+        if (rawCalcKmh <= 145) {
+          calculatedKmh = rawCalcKmh;
+          if (!liveEcuData.connected && calculatedKmh > liveEcuData.peakSpeed) {
+            liveEcuData.peakSpeed = calculatedKmh;
+          }
+        }
+      }
+    }
+  }
+
+  lastGpsLat = lat;
+  lastGpsLon = lon;
+  lastGpsSampleTimeMs = nowMs;
+  return calculatedKmh;
+}
+
 function applyEmaSmoothing(rawVal, prevEma, alpha) {
   if (rawVal <= 0) return 0;
   if (prevEma <= 0) return rawVal;
   return alpha * rawVal + (1 - alpha) * prevEma;
 }
 
-// Evalúa si el ascenso acumulado supera los 1,200m para sugerir reinicio de sensor MAP
 export function updateAltitudeDeltaCheck(currentAltM) {
   if (typeof currentAltM !== 'number' || isNaN(currentAltM) || currentAltM <= 0) return;
 
@@ -172,7 +224,6 @@ function updateInstantFuelEconomy() {
     return;
   }
 
-  // Modelo volumétrico para 164.82cc FI: a velocidad crucero y baja carga rinde ~155 km/gal; al exigir TPS/carga baja a ~95 km/gal
   const loadFactor = 0.55 + (load / 100) * 0.65 + (tps / 100) * 0.35;
   const rpmPenalty = rpm > 6500 ? 1 + ((rpm - 6500) / 4000) * 0.35 : 1.0;
   const baseKmGal = 148 / (loadFactor * rpmPenalty);
@@ -182,18 +233,18 @@ function updateInstantFuelEconomy() {
   liveEcuData.instKmPerL = Number((clampedKmGal / 3.78541).toFixed(1));
 }
 
-// Estima la marcha engranada (1ra a 5ta) según la relación de caja de la Pulsar N160 FI (14T/45T)
+// Calibrado para transmisión de 5 velocidades de la Pulsar N160 FI (Piñón 14T / Catalina 45T / Llanta 130/70-17)
 function calculateEstimatedGear(rpm, speedKmh) {
   if (speedKmh < 3 || rpm < 950) return 'N';
   const ratio = rpm / Math.max(1, speedKmh);
-  if (ratio > 155) return '1';
-  if (ratio > 108) return '2';
-  if (ratio > 82)  return '3';
-  if (ratio > 67)  return '4';
+  if (ratio < 44) return '-';
+  if (ratio > 132) return '1';
+  if (ratio > 96)  return '2';
+  if (ratio > 73)  return '3';
+  if (ratio > 57)  return '4';
   return '5';
 }
 
-// Convierte kPa barométricos reales en altitud aproximada (SOLO cuando motor está apagado KOEO o mariposa WOT >85%)
 function estimateAltitudeFromKpa(kpa) {
   if (!kpa || kpa <= 0) return 0;
   const clamped = Math.min(102, Math.max(55, kpa));
@@ -221,7 +272,7 @@ async function releaseDashboardWakeLock() {
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && liveEcuData.connected) {
+  if (document.visibilityState === 'visible' && (liveEcuData.connected || liveEcuData.blackbox.recording)) {
     requestDashboardWakeLock();
   }
 });
@@ -235,29 +286,27 @@ function checkBreakinRpmAlert(rpm) {
   }
 }
 
-// Decodifica todos los PIDs estándar OBD2 de la ECU Bajaj con suavizado EMA
 function parseObdResponse(cmd, rawHex) {
   const baseCmd = cmd.slice(0, 4);
   const clean = String(rawHex || '').replace(/[\r\n> ]/g, '').toUpperCase();
 
-  // Voltaje directo del pin 16 OBD2
   if (baseCmd === 'ATRV') {
-    const vMatch = String(rawHex || '').match(/(\d+\.\d+)V/i);
+    const vMatch = String(rawHex || '').match(/(\d+\.\d+)\s*V?/i);
     if (vMatch) {
       const rawV = parseFloat(vMatch[1]);
-      // Durante el test eléctrico leemos el voltaje crudo sin filtro para capturar el milisegundo exacto de caída CCA
-      if (liveEcuData.elecTest.active) {
-        liveEcuData.voltage = rawV;
-      } else {
-        emaVolt = applyEmaSmoothing(rawV, emaVolt, EMA_ALPHA_VOLT);
-        liveEcuData.voltage = Number(emaVolt.toFixed(1));
+      if (rawV > 5 && rawV < 20) {
+        if (liveEcuData.elecTest.active) {
+          liveEcuData.voltage = rawV;
+        } else {
+          emaVolt = applyEmaSmoothing(rawV, emaVolt, EMA_ALPHA_VOLT);
+          liveEcuData.voltage = Number(emaVolt.toFixed(1));
+        }
+        feedElecTestSample(rawV, liveEcuData.rpm);
       }
-      feedElecTestSample(rawV, liveEcuData.rpm);
     }
     return;
   }
 
-  // 010C - RPM del Motor: ((A * 256) + B) / 4
   if (baseCmd === '010C' && clean.includes('410C')) {
     const idx = clean.indexOf('410C') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
@@ -276,7 +325,6 @@ function parseObdResponse(cmd, rawHex) {
     return;
   }
 
-  // 010D - Velocidad del Vehículo: A (km/h)
   if (baseCmd === '010D' && clean.includes('410D')) {
     const idx = clean.indexOf('410D') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
@@ -291,7 +339,6 @@ function parseObdResponse(cmd, rawHex) {
     return;
   }
 
-  // 0105 - Temperatura de Motor / Aceite EOT: A - 40 (°C)
   if (baseCmd === '0105' && clean.includes('4105')) {
     const idx = clean.indexOf('4105') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
@@ -299,7 +346,6 @@ function parseObdResponse(cmd, rawHex) {
     return;
   }
 
-  // 0111 - Posición Mariposa Acelerador (TPS): (A * 100) / 255 (%)
   if (baseCmd === '0111' && clean.includes('4111')) {
     const idx = clean.indexOf('4111') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
@@ -307,7 +353,6 @@ function parseObdResponse(cmd, rawHex) {
     return;
   }
 
-  // 0104 - Carga Calculada del Motor: (A * 100) / 255 (%)
   if (baseCmd === '0104' && clean.includes('4104')) {
     const idx = clean.indexOf('4104') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
@@ -315,14 +360,12 @@ function parseObdResponse(cmd, rawHex) {
     return;
   }
 
-  // 010B - Presión Colector Admisión / Sensor MAP: A (kPa)
-  // Solo actualiza altitud barométrica con motor apagado (KOEO: rpm === 0) o mariposa a fondo (WOT: tpsPct >= 85%).
   if (baseCmd === '010B' && clean.includes('410B')) {
     const idx = clean.indexOf('410B') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
     if (!isNaN(A)) {
       liveEcuData.mapKpa = A;
-      if (liveEcuData.rpm === 0 || liveEcuData.tpsPct >= 85) {
+      if ((liveEcuData.rpm === 0 || liveEcuData.tpsPct >= 85) && A >= 60 && A <= 103) {
         liveEcuData.estimatedAltM = estimateAltitudeFromKpa(A);
         updateAltitudeDeltaCheck(liveEcuData.estimatedAltM);
       }
@@ -330,7 +373,6 @@ function parseObdResponse(cmd, rawHex) {
     return;
   }
 
-  // 010F - Temperatura de Aire de Admisión (IAT): A - 40 (°C)
   if (baseCmd === '010F' && clean.includes('410F')) {
     const idx = clean.indexOf('410F') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
@@ -338,7 +380,6 @@ function parseObdResponse(cmd, rawHex) {
     return;
   }
 
-  // 010E - Avance de Encendido (Chispa DTS-i): (A / 2) - 64 (°)
   if (baseCmd === '010E' && clean.includes('410E')) {
     const idx = clean.indexOf('410E') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
@@ -346,7 +387,6 @@ function parseObdResponse(cmd, rawHex) {
     return;
   }
 
-  // 0114 - Sonda Lambda (Sensor O2): A / 200 (V) y B = Ajuste Mezcla
   if (baseCmd === '0114' && clean.includes('4114')) {
     const idx = clean.indexOf('4114') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
@@ -358,14 +398,12 @@ function parseObdResponse(cmd, rawHex) {
     return;
   }
 
-  // 011F - Tiempo de motor encendido (segundos): (A * 256) + B
   if (baseCmd === '011F' && clean.includes('411F')) {
     const idx = clean.indexOf('411F') + 4;
     const A = parseInt(clean.slice(idx, idx + 2), 16);
     const B = parseInt(clean.slice(idx + 2, idx + 4), 16);
     if (!isNaN(A) && !isNaN(B)) {
       const sec = (A * 256) + B;
-      // Si el motor acaba de encenderse (< 8 seg), reiniciamos la alerta de sensor MAP porque ya recalibró con el contacto
       if (sec > 0 && sec < 8 && liveEcuData.mapResetNeeded) {
         acknowledgeMapReset();
       }
@@ -374,13 +412,30 @@ function parseObdResponse(cmd, rawHex) {
   }
 }
 
-// Decodifica tramas del Modo 03 (Códigos de falla Check Engine)
+// Decodificador compatible con ISO 15765-4 CAN (salta byte de conteo DTC y limpia prefijos multiframa)
 function parseDtcMode03(rawHex) {
-  const clean = String(rawHex || '').replace(/[\r\n> ]/g, '').toUpperCase();
-  if (!clean.includes('43')) return [];
+  const strippedFrames = String(rawHex || '')
+    .replace(/^[0-9A-F]:/gim, '')
+    .replace(/[\r\n> ]/g, '')
+    .toUpperCase()
+    .replace(/[^0-9A-F]/g, '');
 
-  const idx = clean.indexOf('43') + 2;
-  const payload = clean.slice(idx);
+  if (!strippedFrames.includes('43')) return [];
+
+  const idx = strippedFrames.indexOf('43') + 2;
+  let payload = strippedFrames.slice(idx);
+  if (payload.length < 4) return [];
+
+  if (payload.length % 4 === 2) {
+    payload = payload.slice(2);
+  } else if (payload.length >= 6) {
+    const possibleCount = parseInt(payload.slice(0, 2), 16);
+    const remainingHex = payload.slice(2);
+    if (possibleCount > 0 && possibleCount <= 12 && remainingHex.length >= possibleCount * 4 && remainingHex.slice(0, 4) !== '0000') {
+      payload = remainingHex;
+    }
+  }
+
   const codes = [];
   const prefixMap = ['P0', 'P1', 'P2', 'P3', 'C0', 'C1', 'C2', 'C3', 'B0', 'B1', 'B2', 'B3', 'U0', 'U1', 'U2', 'U3'];
 
@@ -400,25 +455,46 @@ function parseDtcMode03(rawHex) {
 function sendAtCommand(cmd, timeoutMs = 450) {
   return new Promise((resolve) => {
     if (!writeChar) return resolve('');
+
+    if (commandTimeoutId) {
+      clearTimeout(commandTimeoutId);
+      commandTimeoutId = null;
+    }
+
     responseBuffer = '';
     currentResolve = resolve;
 
     const encoder = new TextEncoder();
     const data = encoder.encode(cmd + '\r');
 
-    const writePromise = writeChar.properties.writeWithoutResponse
-      ? writeChar.writeValueWithoutResponse(data)
-      : writeChar.writeValue(data);
+    const performWrite = async () => {
+      if (writeChar.properties.write) {
+        try {
+          await writeChar.writeValue(data);
+          return;
+        } catch (e) {}
+      }
+      if (writeChar.properties.writeWithoutResponse) {
+        await writeChar.writeValueWithoutResponse(data);
+      } else {
+        await writeChar.writeValue(data);
+      }
+    };
 
-    writePromise.catch(() => {
-      if (currentResolve) {
+    performWrite().catch(() => {
+      if (commandTimeoutId) {
+        clearTimeout(commandTimeoutId);
+        commandTimeoutId = null;
+      }
+      if (currentResolve === resolve) {
         currentResolve = null;
         resolve('');
       }
     });
 
-    setTimeout(() => {
-      if (currentResolve) {
+    commandTimeoutId = setTimeout(() => {
+      commandTimeoutId = null;
+      if (currentResolve === resolve) {
         const partial = responseBuffer;
         currentResolve = null;
         resolve(partial);
@@ -431,6 +507,10 @@ function handleBleNotification(event) {
   const chunk = new TextDecoder().decode(event.target.value);
   responseBuffer += chunk;
   if (responseBuffer.includes('>') && currentResolve) {
+    if (commandTimeoutId) {
+      clearTimeout(commandTimeoutId);
+      commandTimeoutId = null;
+    }
     const finalResp = responseBuffer;
     const res = currentResolve;
     currentResolve = null;
@@ -438,19 +518,23 @@ function handleBleNotification(event) {
   }
 }
 
-// Bucle Asíncrono Secuencial con sufijo "1" (Duplica los FPS y evita colisión de tramas BLE)
 async function runSequentialBleLoop(onUpdateCallback) {
   const normalPidQueue = [
-    '010C1', '010D1', '01111', '01051',
-    '010C1', '010D1', 'ATRV',  '01041',
-    '010C1', '010D1', '01111', '010B1',
-    '010C1', '010D1', '010F1', '010E1',
-    '010C1', '010D1', '01141', '011F1'
+    '010C', '010D', '0111', '0105',
+    '010C', '010D', 'ATRV', '0104',
+    '010C', '010D', '0111', '010B',
+    '010C', '010D', '010F', '010E',
+    '010C', '010D', '0114', '011F'
   ];
-  const elecTestQueue = ['ATRV', '010C1', 'ATRV', 'ATRV', '010C1'];
+  const elecTestQueue = ['ATRV', '010C', 'ATRV', 'ATRV', '010C'];
   let stepIndex = 0;
 
   while (isPollingActive && liveEcuData.connected && liveEcuData.mode === 'ble') {
+    if (isDtcBusy) {
+      await new Promise((r) => setTimeout(r, 120));
+      continue;
+    }
+
     const queue = liveEcuData.elecTest.active ? elecTestQueue : normalPidQueue;
     const cmd = queue[stepIndex % queue.length];
     stepIndex++;
@@ -458,10 +542,12 @@ async function runSequentialBleLoop(onUpdateCallback) {
     const raw = await sendAtCommand(cmd, 240);
     if (!isPollingActive) break;
 
-    parseObdResponse(cmd, raw);
-    if (onUpdateCallback) onUpdateCallback(liveEcuData);
+    if (!isDtcBusy) {
+      parseObdResponse(cmd, raw);
+      if (onUpdateCallback) onUpdateCallback(liveEcuData);
+    }
 
-    await new Promise((r) => setTimeout(r, 15));
+    await new Promise((r) => setTimeout(r, 14));
   }
 }
 
@@ -479,8 +565,10 @@ export async function connectKonnweiBle(onUpdateCallback, onStatusCallback) {
   });
 
   bleDevice.addEventListener('gattserverdisconnected', () => {
-    stopEcuTelemetry(onUpdateCallback);
-    if (onStatusCallback) onStatusCallback('Escáner desconectado');
+    if (!isStoppingTelemetry) {
+      stopEcuTelemetry(onUpdateCallback);
+      if (onStatusCallback) onStatusCallback('Escáner desconectado');
+    }
   });
 
   if (onStatusCallback) onStatusCallback('Conectando con ECU N160...');
@@ -500,8 +588,17 @@ export async function connectKonnweiBle(onUpdateCallback, onStatusCallback) {
 
   const chars = await service.getCharacteristics();
   for (const c of chars) {
-    if (c.properties.notify || c.properties.indicate) notifyChar = c;
-    if (c.properties.write || c.properties.writeWithoutResponse) writeChar = c;
+    const uuidStr = String(c.uuid || '').toLowerCase();
+    if (c.properties.notify || c.properties.indicate) {
+      if (!notifyChar || uuidStr.includes('fff1') || uuidStr.includes('ffe1')) {
+        notifyChar = c;
+      }
+    }
+    if (c.properties.write || c.properties.writeWithoutResponse) {
+      if (!writeChar || uuidStr.includes('fff2') || uuidStr.includes('ffe1')) {
+        writeChar = c;
+      }
+    }
   }
 
   if (!notifyChar || !writeChar) {
@@ -511,21 +608,25 @@ export async function connectKonnweiBle(onUpdateCallback, onStatusCallback) {
   await notifyChar.startNotifications();
   notifyChar.addEventListener('characteristicvaluechanged', handleBleNotification);
 
-  // Secuencia de inicialización de alto rendimiento ELM327 V1.5
-  await sendAtCommand('ATZ', 700);
+  await sendAtCommand('ATZ', 800);
   await sendAtCommand('ATE0', 220);
   await sendAtCommand('ATL0', 220);
   await sendAtCommand('ATS0', 220);
   await sendAtCommand('ATH0', 220);
   await sendAtCommand('ATAT1', 220);
   await sendAtCommand('ATST19', 220);
-  await sendAtCommand('ATSP0', 400);
+  await sendAtCommand('ATSP6', 300);
+
+  const testPid = await sendAtCommand('0100', 900);
+  if (!String(testPid).replace(/\s+/g, '').includes('4100')) {
+    await sendAtCommand('ATSP0', 350);
+    await sendAtCommand('0100', 1200);
+  }
 
   liveEcuData.connected = true;
   liveEcuData.mode = 'ble';
   liveEcuData.peakRpm = 0;
   liveEcuData.peakSpeed = 0;
-  liveEcuData.sessionKm = 0.0;
   liveEcuData.sessionStartAltM = null;
   liveEcuData.altDeltaM = 0;
   liveEcuData.mapResetNeeded = false;
@@ -533,15 +634,15 @@ export async function connectKonnweiBle(onUpdateCallback, onStatusCallback) {
   emaSpeed = 0;
   emaVolt = 0;
   lastSpeedUpdateMs = Date.now();
+  isDtcBusy = false;
   isPollingActive = true;
 
   await requestDashboardWakeLock();
-  if (onStatusCallback) onStatusCallback('🟢 ECU N160 En Línea (Alta Frecuencia)');
+  if (onStatusCallback) onStatusCallback('🟢 ECU N160 En Línea (CAN 500kbps)');
 
   runSequentialBleLoop(onUpdateCallback);
 }
 
-// ================= TEST AUTOMÁTICO DE SALUD ELÉCTRICA (15 SEGUNDOS) =================
 let chargingSamples = [];
 
 function feedElecTestSample(volt, rpm) {
@@ -642,7 +743,6 @@ export function startElectricalHealthTest(onUpdateCallback, onStatusCallback) {
   }, 1000);
 }
 
-// ================= GRABADOR DE CAJA NEGRA (BLACKBOX TELEMETRY LOGGER) =================
 export function toggleBlackboxRecording(onUpdateCallback, onStatusCallback) {
   const bb = liveEcuData.blackbox;
 
@@ -651,6 +751,9 @@ export function toggleBlackboxRecording(onUpdateCallback, onStatusCallback) {
     if (blackboxTimer) {
       clearInterval(blackboxTimer);
       blackboxTimer = null;
+    }
+    if (!liveEcuData.connected) {
+      releaseDashboardWakeLock();
     }
     triggerHaptic(20);
     if (onStatusCallback) onStatusCallback(`⏹ Caja Negra detenida (${bb.points.length} muestras grabadas)`);
@@ -666,8 +769,17 @@ export function toggleBlackboxRecording(onUpdateCallback, onStatusCallback) {
   bb.maxSpeed = liveEcuData.speedKmh || 0;
   bb.minVolt = liveEcuData.voltage > 0 ? liveEcuData.voltage : 12.6;
 
+  requestDashboardWakeLock();
+
   const samplePoint = () => {
-    const gps = typeof getGpsCallback === 'function' ? getGpsCallback() : { lat: -8.1116, lon: -79.0287, alt: liveEcuData.estimatedAltM || 34 };
+    const gps = typeof getGpsCallback === 'function'
+      ? getGpsCallback()
+      : { lat: -8.1116, lon: -79.0287, alt: liveEcuData.estimatedAltM || 34, speedKmh: 0 };
+
+    const effectiveSpeed = liveEcuData.connected
+      ? (liveEcuData.speedKmh || 0)
+      : Math.round(Number(gps.speedKmh) || 0);
+
     const pt = {
       isoTime: new Date().toISOString(),
       elapsedSec: Math.round((Date.now() - bb.startTimeMs) / 1000),
@@ -675,7 +787,7 @@ export function toggleBlackboxRecording(onUpdateCallback, onStatusCallback) {
       lon: Number(gps.lon || -79.0287).toFixed(6),
       altM: Math.round(Number(gps.alt ?? liveEcuData.estimatedAltM ?? 34)),
       rpm: liveEcuData.rpm || 0,
-      speedKmh: liveEcuData.speedKmh || 0,
+      speedKmh: effectiveSpeed,
       gear: liveEcuData.gear || 'N',
       tempC: liveEcuData.tempC || 0,
       voltage: Number(liveEcuData.voltage || 0).toFixed(2),
@@ -764,7 +876,6 @@ export function exportBlackboxFile(format = 'csv') {
   return true;
 }
 
-// Escanea códigos de error Check Engine (Modo 03)
 export async function scanEcuDtcCodes(onUpdateCallback, onStatusCallback) {
   const nowStr = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
   if (liveEcuData.mode === 'sim') {
@@ -786,9 +897,15 @@ export async function scanEcuDtcCodes(onUpdateCallback, onStatusCallback) {
   }
 
   if (onStatusCallback) onStatusCallback('🔍 Escaneando memoria de fallas ECU (Modo 03)...');
-  const raw = await sendAtCommand('03', 900);
-  liveEcuData.dtcCodes = parseDtcMode03(raw);
-  liveEcuData.lastDtcScan = nowStr;
+  isDtcBusy = true;
+  try {
+    await new Promise((r) => setTimeout(r, 220));
+    const raw = await sendAtCommand('03', 900);
+    liveEcuData.dtcCodes = parseDtcMode03(raw);
+    liveEcuData.lastDtcScan = nowStr;
+  } finally {
+    isDtcBusy = false;
+  }
 
   if (liveEcuData.dtcCodes.length === 0) {
     if (onStatusCallback) onStatusCallback('✅ ECU Limpia: 0 códigos de error activos');
@@ -799,7 +916,6 @@ export async function scanEcuDtcCodes(onUpdateCallback, onStatusCallback) {
   if (onUpdateCallback) onUpdateCallback(liveEcuData);
 }
 
-// Borra los códigos de falla y apaga la luz Check Engine (Modo 04)
 export async function clearEcuDtcCodes(onUpdateCallback, onStatusCallback) {
   if (liveEcuData.mode === 'sim') {
     liveEcuData.dtcCodes = [];
@@ -813,14 +929,20 @@ export async function clearEcuDtcCodes(onUpdateCallback, onStatusCallback) {
     return;
   }
 
-  await sendAtCommand('04', 900);
-  liveEcuData.dtcCodes = [];
+  isDtcBusy = true;
+  try {
+    await new Promise((r) => setTimeout(r, 220));
+    await sendAtCommand('04', 900);
+    liveEcuData.dtcCodes = [];
+  } finally {
+    isDtcBusy = false;
+  }
+
   triggerHaptic(30);
   if (onStatusCallback) onStatusCallback('✅ Memoria DTC reiniciada y Check Engine apagado');
   if (onUpdateCallback) onUpdateCallback(liveEcuData);
 }
 
-// Modo Simulador Completo (Con suavizado EMA y simulación de ascenso en montaña)
 export async function startSimulatorMode(onUpdateCallback, onStatusCallback) {
   stopEcuTelemetry();
   isSimulating = true;
@@ -828,7 +950,6 @@ export async function startSimulatorMode(onUpdateCallback, onStatusCallback) {
   liveEcuData.mode = 'sim';
   liveEcuData.peakRpm = 0;
   liveEcuData.peakSpeed = 0;
-  liveEcuData.sessionKm = 0.0;
   liveEcuData.sessionStartAltM = 34;
   liveEcuData.altDeltaM = 0;
   liveEcuData.mapResetNeeded = false;
@@ -837,7 +958,7 @@ export async function startSimulatorMode(onUpdateCallback, onStatusCallback) {
   liveEcuData.iatC = 26;
   liveEcuData.voltage = 14.1;
   liveEcuData.mapKpa = 99;
-  liveEcuData.estimatedAltM = 180;
+  liveEcuData.estimatedAltM = 34;
   liveEcuData.runTimeSec = 120;
   emaRpm = 1450;
   emaSpeed = 0;
@@ -888,9 +1009,6 @@ export async function startSimulatorMode(onUpdateCallback, onStatusCallback) {
     }
 
     liveEcuData.mapKpa = Math.round(38 + wave * 62);
-    if (liveEcuData.tpsPct >= 85) {
-      liveEcuData.estimatedAltM = estimateAltitudeFromKpa(liveEcuData.mapKpa);
-    }
     liveEcuData.timingAdvDeg = Number((10 + wave * 24).toFixed(1));
     liveEcuData.o2Volt = Number((0.48 + fastWave * 0.36).toFixed(2));
     liveEcuData.stftPct = Number((fastWave * 3.8).toFixed(1));
@@ -904,42 +1022,65 @@ export async function startSimulatorMode(onUpdateCallback, onStatusCallback) {
 export function resetSessionDistance() {
   liveEcuData.sessionKm = 0.0;
   lastSpeedUpdateMs = Date.now();
+  lastGpsLat = null;
+  lastGpsLon = null;
+  lastGpsSampleTimeMs = 0;
 }
 
 export function stopEcuTelemetry(onUpdateCallback) {
-  lastSpeedUpdateMs = 0;
-  isPollingActive = false;
-  liveEcuData.connected = false;
-  liveEcuData.mode = 'offline';
-  isSimulating = false;
-  emaRpm = 0;
-  emaSpeed = 0;
-  emaVolt = 0;
+  if (isStoppingTelemetry) return;
+  isStoppingTelemetry = true;
 
-  if (pollInterval) {
-    clearInterval(pollInterval);
-    pollInterval = null;
+  try {
+    lastSpeedUpdateMs = 0;
+    isPollingActive = false;
+    isDtcBusy = false;
+    liveEcuData.connected = false;
+    liveEcuData.mode = 'offline';
+    isSimulating = false;
+    emaRpm = 0;
+    emaSpeed = 0;
+    emaVolt = 0;
+
+    if (commandTimeoutId) {
+      clearTimeout(commandTimeoutId);
+      commandTimeoutId = null;
+    }
+    currentResolve = null;
+
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+
+    if (elecTestTimer) {
+      clearInterval(elecTestTimer);
+      elecTestTimer = null;
+      liveEcuData.elecTest.active = false;
+    }
+
+    writeChar = null;
+    notifyChar = null;
+
+    if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
+      try {
+        bleDevice.gatt.disconnect();
+      } catch (e) {}
+    }
+
+    // Mantiene la pantalla encendida si la Caja Negra sigue grabando vía GPS
+    if (!liveEcuData.blackbox.recording) {
+      releaseDashboardWakeLock();
+    }
+
+    liveEcuData.rpm = 0;
+    liveEcuData.rawRpm = 0;
+    liveEcuData.speedKmh = 0;
+    liveEcuData.gear = 'N';
+    liveEcuData.tpsPct = 0;
+    liveEcuData.engineLoadPct = 0;
+    if (onUpdateCallback) onUpdateCallback(liveEcuData);
+  } finally {
+    isStoppingTelemetry = false;
   }
-
-  if (elecTestTimer) {
-    clearInterval(elecTestTimer);
-    elecTestTimer = null;
-    liveEcuData.elecTest.active = false;
-  }
-
-  if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) {
-    try {
-      bleDevice.gatt.disconnect();
-    } catch (e) {}
-  }
-
-  releaseDashboardWakeLock();
-
-  liveEcuData.rpm = 0;
-  liveEcuData.rawRpm = 0;
-  liveEcuData.speedKmh = 0;
-  liveEcuData.gear = 'N';
-  liveEcuData.tpsPct = 0;
-  liveEcuData.engineLoadPct = 0;
-  if (onUpdateCallback) onUpdateCallback(liveEcuData);
 }

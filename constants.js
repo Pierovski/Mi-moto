@@ -202,7 +202,7 @@ export const TECHNICAL_GUIDES = {
     why: 'Si ves la Carga al 90% pero las RPM son bajas (ej. subiendo una cuesta en 4ta o 5ta marcha), estás forzando la biela y provocando cascabeleo; debes bajar un cambio de inmediato.'
   },
   obd_map_info: {
-    category: 'SENSOR BAROMÉICO Y VACÍO (PID 010B)',
+    category: 'SENSOR BAROMÉTRICO Y VACÍO (PID 010B)',
     title: 'Presión de Admisión (kPa) y Altímetro (msnm)',
     how: 'A nivel del mar con contacto puesto marca ~101 kPa (0 msnm). Al subir hacia la sierra la presión cae (~75 kPa a 2,500 msnm) y la app calcula tu altitud.',
     why: 'La ECU usa este sensor para saber cuánto oxígeno hay en el aire y recortar gasolina en altura para que la moto no se ahogue al subir de la costa a la sierra.'

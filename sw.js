@@ -1,6 +1,6 @@
-const CACHE_NAME = 'mi-moto-n160-cache-v19';
+const CACHE_NAME = 'mi-moto-n160-cache-v22';
 const MAP_TILES_CACHE = 'mi-moto-n160-maptiles-v1';
-const MAX_MAP_TILES = 120;
+const MAX_MAP_TILES = 250;
 
 const CORE_ASSETS = [
   './',
@@ -14,12 +14,22 @@ const CORE_ASSETS = [
   './ui.js',
   './app.js',
   './manifest.json',
-  './icono.png'
+  './icono.png',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await Promise.allSettled(
+        CORE_ASSETS.map((assetUrl) =>
+          cache.add(assetUrl).catch((err) => {
+            console.warn('[SW] Activo omitido en precarga:', assetUrl, err);
+          })
+        )
+      );
+    })
   );
   self.skipWaiting();
 });
@@ -42,9 +52,9 @@ self.addEventListener('activate', (event) => {
 async function trimCache(cacheName, maxItems) {
   const cache = await caches.open(cacheName);
   const keys = await cache.keys();
-  if (keys.length > maxItems) {
-    await cache.delete(keys[0]);
-    await trimCache(cacheName, maxItems);
+  const excess = keys.length - maxItems;
+  if (excess > 0) {
+    await Promise.all(keys.slice(0, excess).map((key) => cache.delete(key)));
   }
 }
 
@@ -53,7 +63,6 @@ self.addEventListener('fetch', (event) => {
   const url = event.request.url;
   if (!url.startsWith('http')) return;
 
-  // 1. Excluir APIs dinámicas (Firebase, OSRM Routing, Nominatim Search, Open-Meteo DEM)
   if (
     url.includes('firestore.googleapis.com') ||
     url.includes('firebase') ||
@@ -65,7 +74,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Aislar Tiles de Mapas Satelitales y Calles en caché rotativo con límite (FIFO)
+  // Caché dedicada para teselas del mapa satelital y calles (Stale-While-Revalidate)
   if (
     url.includes('arcgisonline.com') ||
     url.includes('tile.openstreetmap.org') ||
@@ -90,7 +99,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Estrategia Network-First para el código núcleo de la aplicación
+  // Estrategia Network-First con respaldo inteligente para navegación y atajos PWA
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
@@ -106,6 +115,17 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       })
-      .catch(() => caches.match(event.request))
+      .catch(async () => {
+        const directMatch = await caches.match(event.request);
+        if (directMatch) return directMatch;
+
+        const ignoreSearchMatch = await caches.match(event.request, { ignoreSearch: true });
+        if (ignoreSearchMatch) return ignoreSearchMatch;
+
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+        return undefined;
+      })
   );
 });
