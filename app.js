@@ -94,7 +94,34 @@ let selectedSpaType = 'Carwash Básico';
 
 let editingModId = null;
 let selectedModCat = 'protection';
+let selectedModElecMode = 'none'; // 'none' | 'switched_acc' | 'direct_24_7'
 let selectedModHasElec = false;
+
+const MOD_TIPS_BY_CAT = {
+  protection: '🛡️ Tip: En sliders de motor para la N160 verifica que usen pernos de acero grado 8.8 o 10.9 y topes de nylon/delrin.',
+  security: '🚨 Tip: Exige instalación con relé y fusible independiente sin pelar el ramal original FI. Consumo en reposo < 3 mA.',
+  electric: '⚡ Tip: Conecta cargadores USB o exploradoras únicamente a línea bajo llave (contacto ACC) para proteger la batería de 4Ah.',
+  gear: '🪖 Tip: El poliestireno expandido (EPS) de un casco certificado se degrada a los 4 años de uso; la app calculará su vigencia.'
+};
+
+function selectModElecModePill(elecMode = 'none') {
+  selectedModElecMode = elecMode || 'none';
+  selectedModHasElec = selectedModElecMode !== 'none';
+  document.querySelectorAll('#mod-elec-picker .compound-pill').forEach((p) => {
+    p.classList.toggle('selected', p.getAttribute('data-modelec') === selectedModElecMode);
+  });
+}
+
+function syncModCategoryUI(cat = 'protection') {
+  selectedModCat = cat || 'protection';
+  document.querySelectorAll('#mod-category-picker .service-option').forEach((c) => {
+    c.classList.toggle('selected', c.getAttribute('data-modcat') === selectedModCat);
+  });
+  const tipEl = document.getElementById('mod-smart-tip');
+  if (tipEl) {
+    tipEl.innerHTML = `<span>${MOD_TIPS_BY_CAT[selectedModCat] || MOD_TIPS_BY_CAT.protection}</span>`;
+  }
+}
 
 let editingExpenseId = null;
 let selectedExpenseCat = 'Cochera / Peaje';
@@ -498,14 +525,15 @@ function openModModal(editItem = null) {
   editingModId = editItem ? editItem.id : null;
   document.getElementById('mod-modal-title').textContent = editItem ? 'Editar Accesorio' : 'Agregar Accesorio';
 
-  selectedModCat = editItem ? editItem.category : 'protection';
-  selectedModHasElec = editItem ? Boolean(editItem.hasElec) : false;
-
-  document.querySelectorAll('#mod-category-picker .service-option').forEach((c) => {
-    c.classList.toggle('selected', c.getAttribute('data-modcat') === selectedModCat);
-  });
+  const cat = editItem ? (editItem.category || 'protection') : 'protection';
+  syncModCategoryUI(cat);
 
   if (editItem) {
+    const inferredElecMode = editItem.elecMode
+      ? editItem.elecMode
+      : (editItem.hasElec ? (cat === 'security' ? 'direct_24_7' : 'switched_acc') : 'none');
+    selectModElecModePill(inferredElecMode);
+
     document.getElementById('mod-name').value = editItem.name || '';
     document.getElementById('mod-brand').value = editItem.brand || '';
     document.getElementById('mod-cost').value = editItem.cost || '';
@@ -513,6 +541,7 @@ function openModModal(editItem = null) {
     document.getElementById('mod-date').value = editItem.date || getLocalISODate();
     document.getElementById('mod-notes').value = editItem.notes || '';
   } else {
+    selectModElecModePill('none');
     document.getElementById('mod-name').value = '';
     document.getElementById('mod-brand').value = '';
     document.getElementById('mod-cost').value = '';
@@ -1371,7 +1400,8 @@ function setupEventListeners() {
 
       const targetDate = new Date();
       targetDate.setDate(targetDate.getDate() + daysUntil);
-      const isoDate = targetDate.toISOString().slice(0, 10);
+      const offsetMs = targetDate.getTimezoneOffset() * 60000;
+      const isoDate = new Date(targetDate.getTime() - offsetMs).toISOString().slice(0, 10);
 
       openGoogleCalendarEvent({
         title: `${title} (${targetKm.toLocaleString('es-PE')} km)`,
@@ -2181,20 +2211,20 @@ function setupEventListeners() {
   document.getElementById('btn-close-mod-x').addEventListener('click', closeModModal);
   document.getElementById('btn-cancel-mod').addEventListener('click', closeModModal);
 
-  const modTipsByCat = {
-    protection: '🛡️ Tip: En sliders de motor para la N160 verifica que usen pernos de acero grado 8.8 o 10.9 y topes de nylon/delrin.',
-    security: '🚨 Tip: Exige instalación con relé y fusible independiente sin pelar el ramal original FI. Consumo en reposo < 3 mA.',
-    electric: '⚡ Tip: Conecta cargadores USB o exploradoras únicamente a línea bajo llave (contacto ACC) para proteger la batería de 4Ah.',
-    gear: '🪖 Tip: El poliestireno expandido (EPS) de un casco certificado se degrada a los 4 años de uso; la app calculará su vigencia.'
-  };
-
   document.querySelectorAll('#mod-category-picker .service-option').forEach((card) => {
     card.addEventListener('click', () => {
-      document.querySelectorAll('#mod-category-picker .service-option').forEach((c) => c.classList.remove('selected'));
-      card.classList.add('selected');
-      selectedModCat = card.getAttribute('data-modcat');
-      selectedModHasElec = card.getAttribute('data-elec') === 'true';
-      document.getElementById('mod-smart-tip').innerHTML = `<span>${modTipsByCat[selectedModCat] || ''}</span>`;
+      const cat = card.getAttribute('data-modcat') || 'protection';
+      syncModCategoryUI(cat);
+      if (!editingModId) {
+        const defElec = card.getAttribute('data-default-elec') || 'none';
+        selectModElecModePill(defElec);
+      }
+    });
+  });
+
+  document.querySelectorAll('#mod-elec-picker .compound-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      selectModElecModePill(pill.getAttribute('data-modelec') || 'none');
     });
   });
 
@@ -2226,13 +2256,14 @@ function setupEventListeners() {
     if (editingModId) {
       appState.accessories = appState.accessories.map((m) =>
         String(m.id) === String(editingModId)
-          ? { ...m, category: selectedModCat, hasElec: selectedModHasElec, name, brand, cost, km, date, notes }
+          ? { ...m, category: selectedModCat, elecMode: selectedModElecMode, hasElec: selectedModHasElec, name, brand, cost, km, date, notes }
           : m
       );
     } else {
       appState.accessories.unshift({
         id: Date.now(),
         category: selectedModCat,
+        elecMode: selectedModElecMode,
         hasElec: selectedModHasElec,
         name,
         brand,
@@ -2448,7 +2479,12 @@ function setupEventListeners() {
   document.getElementById('btn-close-backup-x').addEventListener('click', closeBackup);
 
   document.getElementById('btn-export').addEventListener('click', () => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(appState, null, 2));
+    const exportPayload = {
+      ...appState,
+      logoBase64: appState.logoBase64 || localStorage.getItem('mi_moto_n160_media_logo_v1') || '',
+      bikePhotoBase64: appState.bikePhotoBase64 || localStorage.getItem('mi_moto_n160_media_photo_v1') || ''
+    };
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportPayload, null, 2));
     const a = document.createElement('a');
     a.setAttribute('href', dataStr);
     a.setAttribute('download', `MiMoto_N160_Respaldo_${appState.currentKm}km.json`);

@@ -1193,17 +1193,23 @@ export function renderGarageSection() {
   const totalModsCost = mods.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
   document.getElementById('mods-total-invested').textContent = `S/ ${totalModsCost.toFixed(2)}`;
 
-  const elecModsCount = mods.filter((m) => m.hasElec).length;
+  const getModElecMode = (m) => m.elecMode ? m.elecMode : (m.hasElec ? (m.category === 'security' ? 'direct_24_7' : 'switched_acc') : 'none');
+  const direct247Count = mods.filter((m) => getModElecMode(m) === 'direct_24_7').length;
+  const switchedAccCount = mods.filter((m) => getModElecMode(m) === 'switched_acc').length;
   const elecStatusEl = document.getElementById('mods-elec-status');
   elecStatusEl.style.color = '';
-  if (elecModsCount === 0) {
-    elecStatusEl.textContent = '0 Mods (Óptima)';
+
+  if (direct247Count === 0 && switchedAccCount === 0) {
+    elecStatusEl.textContent = '0 Cargas (100% Stock)';
     elecStatusEl.className = 'fin-val';
-  } else if (elecModsCount === 1) {
-    elecStatusEl.textContent = '1 Activo (Vigilar)';
+  } else if (direct247Count === 0 && switchedAccCount > 0) {
+    elecStatusEl.textContent = `${switchedAccCount} Bajo Llave (Seguro)`;
+    elecStatusEl.className = 'fin-val neon-txt';
+  } else if (direct247Count === 1) {
+    elecStatusEl.textContent = `1 Parásito 24/7${switchedAccCount > 0 ? ` + ${switchedAccCount} ACC` : ''}`;
     elecStatusEl.className = 'fin-val carib-txt';
   } else {
-    elecStatusEl.textContent = `${elecModsCount} Activos (Riesgo 4Ah)`;
+    elecStatusEl.textContent = `${direct247Count} Directos (Riesgo 4Ah)`;
     elecStatusEl.className = 'fin-val';
     elecStatusEl.style.color = 'var(--amber-warn)';
   }
@@ -1211,8 +1217,11 @@ export function renderGarageSection() {
   const modsContainer = document.getElementById('mods-list-container');
   modsContainer.innerHTML = '';
   const filteredMods = uiConfig.activeModFilter === 'all' ? mods : mods.filter((m) => m.category === uiConfig.activeModFilter);
+  const sortedMods = [...filteredMods].sort(
+    (a, b) => Number(b.km || 0) - Number(a.km || 0) || String(b.date || '').localeCompare(String(a.date || '')) || Number(b.id || 0) - Number(a.id || 0)
+  );
 
-  if (filteredMods.length === 0) {
+  if (sortedMods.length === 0) {
     modsContainer.innerHTML = `<div class="empty-logs">Sin accesorios en esta categoría. Toca "+ Agregar" para registrar sliders, alarma o casco.</div>`;
   } else {
     const catLabels = {
@@ -1222,9 +1231,14 @@ export function renderGarageSection() {
       gear: '🪖 Casco / Piloto'
     };
 
-    filteredMods.forEach((m) => {
+    sortedMods.forEach((m) => {
       const badges = [`<span class="tele-chip">${catLabels[m.category] || 'Accesorio'}</span>`];
-      if (m.hasElec) badges.push(`<span class="mem-badge mem-up">⚡ Consumo 12V (Batería 4Ah)</span>`);
+      const eMode = getModElecMode(m);
+      if (eMode === 'direct_24_7') {
+        badges.push(`<span class="mem-badge mem-up">🔋 Directo 24/7 (Drenaje <3mA)</span>`);
+      } else if (eMode === 'switched_acc') {
+        badges.push(`<span class="tele-chip neon">🔑 Bajo Llave ACC (Corta al apagar)</span>`);
+      }
       if (m.category === 'gear' && m.date) {
         const buyYear = parseInt(m.date.split('-')[0], 10);
         if (!isNaN(buyYear)) badges.push(`<span class="tele-chip neon">Vigencia EPS hasta ${buyYear + 4}</span>`);
@@ -2071,8 +2085,8 @@ export function renderTacticalMapUI(ecuData = liveEcuData, fitMapBounds = false)
         }
 
         if (tankState.hasFuelData) {
-          const routeSpanMeters = Math.max(3000, (route.distKm || 20) * 1000);
-          const rMid = Math.round(routeSpanMeters * 0.68);
+          // Radio geodésico real basado en la autonomía restante del tanque (con factor de tortuosidad vial 0.76)
+          const rMid = Math.max(1500, Math.round((tankState.remKm || 0) * 1000 * 0.76));
           const ringColor = tankState.remKm >= route.distKm * 2 ? '#58E800' : (tankState.remKm >= route.distKm ? '#FF9F0A' : '#FF453A');
 
           if (!safeRangeCircle) {

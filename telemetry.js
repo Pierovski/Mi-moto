@@ -574,8 +574,9 @@ export function computeMasterFinancials(period = 'all') {
       : 0;
   const allTires = frontCost + rearCost + histTireCost;
 
-  const modsCost = (appState.accessories || []).reduce((s, m) => s + (Number(m.cost) || 0), 0);
-  const bikePrice = Number(appState.bikePurchasePrice) || 0;
+  const modsList = (appState.accessories || []).filter((m) => period === 'all' ? true : filterFn(m.date));
+  const modsCost = modsList.reduce((s, m) => s + (Number(m.cost) || 0), 0);
+  const bikePrice = period === 'all' ? (Number(appState.bikePurchasePrice) || 0) : 0;
   const capexTotal = bikePrice + modsCost;
 
   const allGarage = allTires;

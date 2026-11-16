@@ -233,16 +233,16 @@ function updateInstantFuelEconomy() {
   liveEcuData.instKmPerL = Number((clampedKmGal / 3.78541).toFixed(1));
 }
 
-// Calibrado para transmisión de 5 velocidades de la Pulsar N160 FI (Piñón 14T / Catalina 45T / Llanta 130/70-17)
+// Calibrado físico exacto para caja de 5 velocidades de la Pulsar N160 FI (Primaria 3.473, Final 45/14 = 3.214, Llanta 130/70-17)
 function calculateEstimatedGear(rpm, speedKmh) {
-  if (speedKmh < 3 || rpm < 950) return 'N';
+  if (speedKmh < 4 || rpm < 950) return 'N';
   const ratio = rpm / Math.max(1, speedKmh);
-  if (ratio < 44) return '-';
-  if (ratio > 132) return '1';
-  if (ratio > 96)  return '2';
-  if (ratio > 73)  return '3';
-  if (ratio > 57)  return '4';
-  return '5';
+  if (ratio < 64 || ratio > 265) return '-'; // Embrague presionado o transición
+  if (ratio > 175) return '1'; // 1ra (~210 rpm/kmh)
+  if (ratio > 128) return '2'; // 2da (~145 rpm/kmh)
+  if (ratio > 99)  return '3'; // 3ra (~110 rpm/kmh)
+  if (ratio > 83)  return '4'; // 4ta (~90 rpm/kmh)
+  return '5';                  // 5ta (~76.9 rpm/kmh -> 80 km/h @ ~6,150 RPM)
 }
 
 function estimateAltitudeFromKpa(kpa) {
@@ -291,7 +291,7 @@ function parseObdResponse(cmd, rawHex) {
   const clean = String(rawHex || '').replace(/[\r\n> ]/g, '').toUpperCase();
 
   if (baseCmd === 'ATRV') {
-    const vMatch = String(rawHex || '').match(/(\d+\.\d+)\s*V?/i);
+    const vMatch = String(rawHex || '').match(/(\d+(?:\.\d+)?)\s*V?/i);
     if (vMatch) {
       const rawV = parseFloat(vMatch[1]);
       if (rawV > 5 && rawV < 20) {
@@ -527,6 +527,7 @@ async function runSequentialBleLoop(onUpdateCallback) {
     '010C', '010D', '0114', '011F'
   ];
   const elecTestQueue = ['ATRV', '010C', 'ATRV', 'ATRV', '010C'];
+  const crankBurstQueue = ['ATRV']; // Ráfaga pura ADC pin 16 en el milisegundo de arranque
   let stepIndex = 0;
 
   while (isPollingActive && liveEcuData.connected && liveEcuData.mode === 'ble') {
@@ -535,11 +536,15 @@ async function runSequentialBleLoop(onUpdateCallback) {
       continue;
     }
 
-    const queue = liveEcuData.elecTest.active ? elecTestQueue : normalPidQueue;
+    const isCrankingBurst = liveEcuData.elecTest.active && liveEcuData.elecTest.phase === 'cranking';
+    const queue = isCrankingBurst
+      ? crankBurstQueue
+      : (liveEcuData.elecTest.active ? elecTestQueue : normalPidQueue);
     const cmd = queue[stepIndex % queue.length];
     stepIndex++;
 
-    const raw = await sendAtCommand(cmd, 240);
+    const cmdTimeout = isCrankingBurst ? 160 : 240;
+    const raw = await sendAtCommand(cmd, cmdTimeout);
     if (!isPollingActive) break;
 
     if (!isDtcBusy) {
@@ -972,8 +977,8 @@ export async function startSimulatorMode(onUpdateCallback, onStatusCallback) {
     const wave = Math.abs(Math.sin(time * 0.65));
     const fastWave = Math.sin(time * 2.2);
 
-    const rawRpmVal = Math.round(1450 + wave * 6700);
-    const rawSpdVal = Math.round(wave * 106);
+    const rawSpdVal = Math.round(wave * 104);
+    const rawRpmVal = rawSpdVal < 4 ? 1420 : Math.round(Math.min(8600, Math.max(1450, rawSpdVal * (77 + (1 - wave) * 45))));
 
     emaRpm = Math.round(applyEmaSmoothing(rawRpmVal, emaRpm, EMA_ALPHA_FAST));
     emaSpeed = Math.round(applyEmaSmoothing(rawSpdVal, emaSpeed, EMA_ALPHA_FAST));

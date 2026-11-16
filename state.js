@@ -298,7 +298,14 @@ export function migrateAndNormalizeState(raw) {
       rear: { ...DEFAULT_TIRES.rear, ...(raw.tires?.rear || {}) },
       history: Array.isArray(raw.tires?.history) ? raw.tires.history : []
     },
-    accessories: Array.isArray(raw.accessories) ? raw.accessories : [],
+    accessories: (Array.isArray(raw.accessories) ? raw.accessories : []).map((m) => {
+      const eMode = m.elecMode ? m.elecMode : (m.hasElec ? (m.category === 'security' ? 'direct_24_7' : 'switched_acc') : 'none');
+      return {
+        ...m,
+        elecMode: eMode,
+        hasElec: eMode !== 'none'
+      };
+    }),
     otherExpenses: Array.isArray(raw.otherExpenses) ? raw.otherExpenses : [],
     logs: normalizedLogs,
     fuelLogs: normalizedFuelLogs,
