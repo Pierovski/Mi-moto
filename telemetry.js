@@ -575,9 +575,24 @@ export function computeMasterFinancials(period = 'all') {
   const allTires = frontCost + rearCost + histTireCost;
 
   const modsList = (appState.accessories || []).filter((m) => period === 'all' ? true : filterFn(m.date));
-  const modsCost = modsList.reduce((s, m) => s + (Number(m.cost) || 0), 0);
+  const bikeMountedModsCost = modsList.filter((m) => m.category !== 'gear').reduce((s, m) => s + (Number(m.cost) || 0), 0);
+  const pilotGearCost = modsList.filter((m) => m.category === 'gear').reduce((s, m) => s + (Number(m.cost) || 0), 0);
+  const modsCost = bikeMountedModsCost + pilotGearCost;
   const bikePrice = period === 'all' ? (Number(appState.bikePurchasePrice) || 0) : 0;
-  const capexTotal = bikePrice + modsCost;
+  const capexTotal = bikePrice + bikeMountedModsCost;
+
+  // Cálculo de Amortización y Valor de Reventa Estimado (Depreciación anual ~11% + factor km + bono bitácora al día)
+  const yearsOwned = Math.max(0.08, getDaysElapsed(appState.firstUseDate) / 365.25);
+  const totalOdoKm = Math.max(0, Number(appState.currentKm) || 0);
+  const ageDeprFactor = Math.pow(0.89, Math.min(8, yearsOwned));
+  const kmDeprPenalty = Math.min(0.32, (totalOdoKm / 60000) * 0.25);
+  const maintBonus = appState.logs.length >= 2 ? 0.03 : 0;
+  const retentionRatio = Math.max(0.42, Math.min(0.96, ageDeprFactor - kmDeprPenalty + maintBonus));
+  const baseBikeMarketPrice = Number(appState.bikePurchasePrice) > 0 ? Number(appState.bikePurchasePrice) : 10990;
+  const allMountedModsHistorical = (appState.accessories || [])
+    .filter((m) => m.category !== 'gear')
+    .reduce((s, m) => s + (Number(m.cost) || 0), 0);
+  const estimatedResaleValue = Math.round(baseBikeMarketPrice * retentionRatio + allMountedModsHistorical * 0.42);
 
   const allGarage = allTires;
 
@@ -662,7 +677,11 @@ export function computeMasterFinancials(period = 'all') {
     period,
     bikePrice,
     modsCost,
+    bikeMountedModsCost,
+    pilotGearCost,
     capexTotal,
+    estimatedResaleValue,
+    retentionPct: Math.round(retentionRatio * 100),
     allTires,
     allFuel,
     allMaint,

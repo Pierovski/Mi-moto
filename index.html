@@ -114,8 +114,7 @@
         <div class="brand-titles">
           <div class="brand-row">
             <span class="pulsar-script-header">pulsar</span>
-            <span class="fi-tag">N160 FI</span>
-            <span id="header-plate-badge" class="plate-mini-pill hidden">---</span>
+            <span id="header-plate-badge" class="plate-mini-pill" title="Toca para ver Guantera Digital">N160 FI</span>
           </div>
           <span class="health-indicator" id="bike-health-badge">● Sistema 100% Óptimo</span>
         </div>
@@ -139,7 +138,7 @@
     <div id="main-bike-banner" class="bike-banner hidden">
       <img id="banner-bike-img" src="" alt="Mi Pulsar N160">
       <div class="banner-overlay">
-        <span class="pulsar-banner-script">pulsar <small>N160 FI</small></span>
+        <span class="pulsar-banner-script">pulsar <small id="banner-edition-sub">FI • ABS</small></span>
         <button type="button" id="breakin-pill" class="breakin-pill" data-info-key="breakin_guide">
           ASENTAMIENTO ⓘ
         </button>
@@ -206,6 +205,7 @@
       </div>
 
       <div id="chain-stretch-alert-banner" class="diag-alert-box hidden"></div>
+      <div id="fi-stft-alert-banner" class="diag-alert-box hidden"></div>
 
       <div id="maint-alerts-grid" class="alerts-grid"></div>
 
@@ -243,6 +243,7 @@
             <button type="button" class="mod-filter-pill" data-maintfilter="air_spark">Filtro/Bujías</button>
             <button type="button" class="mod-filter-pill" data-maintfilter="brakes_abs">Frenos</button>
             <button type="button" class="mod-filter-pill" data-maintfilter="valve_calib">Válvulas</button>
+            <button type="button" class="mod-filter-pill" data-maintfilter="fi_injector">Inyector FI</button>
           </div>
           <div id="logs-container" class="compact-scroll-list"></div>
         </div>
@@ -427,12 +428,16 @@
       </div>
 
       <div id="sub-garage-tires" class="garage-panel">
-        <div class="section-header-row">
+        <div class="section-header-row" style="flex-wrap:wrap;gap:6px;">
           <div class="title-with-info">
             <span class="section-title-sleek">TELEMETRÍA DE NEUMÁTICOS</span>
             <button type="button" class="btn-info-dot" data-info-key="tire_dot_guide">ⓘ</button>
+            <button type="button" class="btn-info-dot" data-info-key="load_psi_guide" title="Guía de Carga y Monoshock">⚖️</button>
           </div>
-          <span id="garage-psi-dynamic" class="psi-mini-reminder">Frío: 25 / 28-32 PSI</span>
+          <button type="button" id="btn-toggle-load-mode" class="psi-load-switch-btn" title="Toca para alternar entre Piloto Solo y Con Copiloto/Carga">
+            👤 Solo: 25 / 28 PSI • Monoshock Pos 2
+          </button>
+          <span id="garage-psi-dynamic" class="hidden">Frío: 25 / 28 PSI</span>
         </div>
 
         <div id="tires-status-grid" class="tires-grid"></div>
@@ -505,11 +510,11 @@
         </div>
         <div class="capex-opex-grid">
           <div class="co-card capex">
-            <span class="co-tag">🏛️ PATRIMONIO (CAPEX)</span>
-            <strong class="co-val carib-txt" id="capex-total-display">S/ 0.00</strong>
+            <span class="co-tag">🏛️ PATRIMONIO CHASIS (CAPEX)</span>
+            <strong class="co-val" id="capex-total-display">S/ 0.00</strong>
             <div class="co-sub">
-              <span id="capex-bike-sub">Moto: S/ 0</span>
-              <button type="button" id="btn-edit-bike-price" class="btn-link-mini">✏️ Precio Moto</button>
+              <span id="capex-bike-sub">Reventa: S/ 0</span>
+              <button type="button" id="btn-edit-bike-price" class="btn-link-mini">✏️ Valor Moto</button>
             </div>
           </div>
           <div class="co-card opex">
@@ -537,8 +542,16 @@
 
           <div class="tco-grid">
             <div class="tco-item">
-              <span>🏍️ Valor de Compra Moto + Accesorios (CAPEX)</span>
-              <strong class="carib-txt" id="tco-capex-row">S/ 0.00</strong>
+              <span>🏍️ Inversión en Moto + Mods Chasis (CAPEX)</span>
+              <strong id="tco-capex-row">S/ 0.00</strong>
+            </div>
+            <div class="tco-item sub-breakdown">
+              <span>↳ 💎 Valor de Reventa Estimado Hoy (<small id="tco-retention-pct">--%</small>)</span>
+              <strong class="carib-txt" id="tco-resale-est">S/ 0.00</strong>
+            </div>
+            <div class="tco-item sub-breakdown">
+              <span>↳ 🪖 Equipamiento de Piloto (Casco / Guantes)</span>
+              <small id="tco-pilot-gear">S/ 0.00</small>
             </div>
             <div class="tco-item">
               <span>⛽ Combustible Premium (<small id="pct-fuel">0%</small>)</span>
@@ -598,7 +611,7 @@
         <div class="route-calc-card">
           <div class="route-header">
             <span class="section-title-sleek">SIMULADOR DE VIAJE / RUTA</span>
-            <span class="route-badge">N160 FI</span>
+            <span class="route-badge">FI • 14L</span>
           </div>
           <p class="route-desc">Proyección según tu consumo real de Gasolina Premium y la topografía:</p>
 
@@ -653,8 +666,8 @@
                 <input type="checkbox" class="ride-chk">
                 <span class="chk-box"></span>
                 <div class="chk-info">
-                  <strong>Presión de Llantas en Frío</strong>
-                  <small>Del: 25 PSI • Tras: 28 PSI (32 PSI con copiloto)</small>
+                  <strong>Presión de Llantas y Precarga Monoshock</strong>
+                  <small id="chk-tires-dynamic-sub">Modo Solo: Del 25 PSI • Tras 28 PSI • Nitrox Pos 2-3</small>
                 </div>
               </label>
               <button type="button" class="btn-info-dot" data-info-key="chk_tires">ⓘ</button>
@@ -895,15 +908,21 @@
             </button>
           </nav>
 
-          <!-- Acciones ECU y Pantalla -->
+          <!-- Acciones Principales Despejadas + Menú Táctico -->
           <div class="mo-quick-actions">
             <button type="button" id="btn-obd-connect" class="mo-top-pill connect" title="Conectar Escáner OBD2">⚡ ECU</button>
-            <button type="button" id="btn-obd-sim" class="mo-top-pill" title="Simulador en Ruta">Demo</button>
             <button type="button" id="btn-obd-rec-toggle" class="mo-top-pill rec" title="Grabar Caja Negra">🔴 REC</button>
-            <button type="button" id="btn-obd-sunlight" class="mo-top-pill icon-only" title="Modo Sol">☀️</button>
-            <button type="button" id="btn-obd-rotate" class="mo-top-pill icon-only" title="Girar Pantalla">🔄</button>
-            <button type="button" id="btn-obd-ride-mode" class="mo-top-pill icon-only" title="Pantalla Completa">⛶</button>
-            <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_ecu_guide" title="Guía del Cockpit">ⓘ</button>
+            <div class="mo-tools-dropdown-wrap">
+              <button type="button" id="btn-mo-tools-toggle" class="mo-top-pill icon-only" title="Controles de Pantalla y Demo">⚙️</button>
+              <div id="mo-tools-popover" class="mo-tools-popover hidden">
+                <button type="button" id="btn-obd-sim" class="mo-top-pill" title="Simulador en Ruta">⚡ Modo Demo</button>
+                <button type="button" id="btn-mo-open-replay-top" class="mo-top-pill" title="Reproducir última sesión de Caja Negra en el Mapa">▶️ Replay Ruta</button>
+                <button type="button" id="btn-obd-sunlight" class="mo-top-pill" title="Modo Sol">☀️ Alto Contraste</button>
+                <button type="button" id="btn-obd-rotate" class="mo-top-pill" title="Girar Pantalla">🔄 Giro</button>
+                <button type="button" id="btn-obd-ride-mode" class="mo-top-pill" title="Pantalla Completa">⛶ Timón</button>
+                <button type="button" class="mo-top-pill" data-info-key="obd_ecu_guide">ⓘ Guía Cockpit</button>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -985,7 +1004,27 @@
                   </div>
                 </div>
 
-                <!-- 3. MICRO-DOCK FLOTANTE INFERIOR IZQUIERDO (CERO DATOS REPETIDOS) -->
+                <!-- 3. REPRODUCTOR INTERACTIVO DE CAJA NEGRA (RACE REPLAY HUD) -->
+                <div id="mo-race-replay-hud" class="mo-race-replay-hud hidden">
+                  <div class="mo-replay-top-row">
+                    <div class="mo-replay-title-wrap">
+                      <span class="mo-replay-badge">▶️ RACE REPLAY</span>
+                      <strong id="replay-time-lbl">00:00 / 00:00</strong>
+                      <small id="replay-point-counter">(0/0)</small>
+                    </div>
+                    <div class="mo-replay-vitals-strip" id="replay-vitals-strip">
+                      <span>0 km/h</span> • <span>0 RPM</span> • <span>M: N</span> • <span>TPS 0%</span> • <span>--°C</span>
+                    </div>
+                    <button type="button" id="btn-replay-close" class="mo-pill-clear-x" title="Salir del Reproductor">✕</button>
+                  </div>
+                  <div class="mo-replay-controls-row">
+                    <button type="button" id="btn-replay-play" class="mo-replay-play-btn" title="Reproducir / Pausar">▶️</button>
+                    <input type="range" id="replay-scrubber" class="mo-replay-slider" min="0" max="100" value="0" step="1">
+                    <button type="button" id="btn-replay-speed" class="mo-replay-spd-btn" title="Velocidad de reproducción">1x</button>
+                  </div>
+                </div>
+
+                <!-- 4. MICRO-DOCK FLOTANTE INFERIOR IZQUIERDO (CERO DATOS REPETIDOS) -->
                 <div id="mo-floating-dest-card" class="mo-map-bottom-toolbar">
                   <button type="button" id="btn-toggle-gps" class="mo-mini-action gps">🛰️ GPS Vivo</button>
                   <button type="button" id="btn-map-layer-toggle" class="mo-mini-action">🌍 Satélite</button>
@@ -1214,58 +1253,40 @@
               </div>
             </div>
 
-            <!-- Micro-Grilla de 6 Sensores Secundarios -->
+            <!-- Micro-Grilla de 6 Sensores Secundarios (Toca cualquier celda para ver guía técnica) -->
             <div class="obd-micro-grid-6">
-              <div class="obd-micro-cell">
-                <div class="obd-box-head">
-                  <span class="micro-lbl">CARGA MOTOR</span>
-                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_load_info">ⓘ</button>
-                </div>
+              <div class="obd-micro-cell interactive-cell" data-info-key="obd_load_info" title="Toca para ver explicación técnica">
+                <span class="micro-lbl">CARGA MOTOR</span>
                 <strong id="obd-micro-load">0%</strong>
                 <small>Esfuerzo (0104)</small>
               </div>
 
-              <div class="obd-micro-cell">
-                <div class="obd-box-head">
-                  <span class="micro-lbl">PRESIÓN MAP</span>
-                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_map_info">ⓘ</button>
-                </div>
+              <div class="obd-micro-cell interactive-cell" data-info-key="obd_map_info" title="Toca para ver explicación técnica">
+                <span class="micro-lbl">PRESIÓN MAP</span>
                 <strong id="obd-micro-map">-- kPa</strong>
                 <small id="obd-micro-alt">Alt: ~0 msnm</small>
               </div>
 
-              <div class="obd-micro-cell">
-                <div class="obd-box-head">
-                  <span class="micro-lbl">TEMP. ADM (IAT)</span>
-                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_iat_info">ⓘ</button>
-                </div>
+              <div class="obd-micro-cell interactive-cell" data-info-key="obd_iat_info" title="Toca para ver explicación técnica">
+                <span class="micro-lbl">TEMP. ADM (IAT)</span>
                 <strong id="obd-micro-iat">-- °C</strong>
                 <small>Aire Caja Filtro</small>
               </div>
 
-              <div class="obd-micro-cell">
-                <div class="obd-box-head">
-                  <span class="micro-lbl">AVANCE CHISPA</span>
-                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_timing_info">ⓘ</button>
-                </div>
+              <div class="obd-micro-cell interactive-cell" data-info-key="obd_timing_info" title="Toca para ver explicación técnica">
+                <span class="micro-lbl">AVANCE CHISPA</span>
                 <strong id="obd-micro-timing">0.0°</strong>
                 <small>Doble Bujía DTS-i</small>
               </div>
 
-              <div class="obd-micro-cell">
-                <div class="obd-box-head">
-                  <span class="micro-lbl">MEZCLA / O2</span>
-                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_o2_info">ⓘ</button>
-                </div>
+              <div class="obd-micro-cell interactive-cell" data-info-key="obd_o2_info" title="Toca para ver explicación técnica">
+                <span class="micro-lbl">MEZCLA / O2</span>
                 <strong id="obd-micro-o2">0.45 V</strong>
                 <small id="obd-micro-stft">STFT: 0.0%</small>
               </div>
 
-              <div class="obd-micro-cell">
-                <div class="obd-box-head">
-                  <span class="micro-lbl">HORA MOTOR</span>
-                  <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_runtime_info">ⓘ</button>
-                </div>
+              <div class="obd-micro-cell interactive-cell" data-info-key="obd_runtime_info" title="Toca para ver explicación técnica">
+                <span class="micro-lbl">HORA MOTOR</span>
                 <strong id="obd-micro-runtime">00:00</strong>
                 <small id="obd-micro-dist">Ruta: +0.00 km</small>
               </div>
@@ -1355,8 +1376,9 @@
                       Listo para grabar trazado satelital y parámetros del motor cada 2.5s
                     </div>
                   </div>
-                  <div class="obd-btn-group">
+                  <div class="obd-btn-group" style="flex-wrap:wrap;justify-content:flex-end;">
                     <button type="button" id="btn-bb-toggle-diag" class="btn-action-sleek">🔴 Grabar Ruta</button>
+                    <button type="button" id="btn-bb-open-replay" class="btn-quick-done">▶️ Replay</button>
                     <button type="button" id="btn-bb-export-gpx" class="btn-quick-done">🗺️ .GPX</button>
                     <button type="button" id="btn-bb-export-csv" class="btn-quick-done">📊 .CSV</button>
                   </div>
@@ -1395,6 +1417,41 @@
                 <div id="obd-dtc-list" class="obd-dtc-list hidden" style="margin-top:8px;"></div>
               </div>
 
+              <div class="obd-dtc-strip night-drain-card">
+                <div class="obd-dtc-top">
+                  <div>
+                    <div class="title-with-info">
+                      <span class="section-title-sleek">🌙 AUDITORÍA DE DRENAJE PARÁSITO NOCTURNO (REPOSO 4Ah)</span>
+                      <button type="button" class="btn-info-dot obd-mini-info" data-info-key="night_drain_guide">ⓘ</button>
+                    </div>
+                    <div id="night-drain-summary" class="obd-dtc-status-txt" style="font-size:11px;margin-top:3px;color:var(--alloy-silver);">
+                      Mide cuánto voltaje pierde tu batería de noche por alarma o GPS (vía OBD2 o multímetro)
+                    </div>
+                  </div>
+                  <div class="obd-btn-group">
+                    <button type="button" id="btn-night-save-base" class="btn-quick-done">🌙 Base Noche</button>
+                    <button type="button" id="btn-night-compare-morning" class="btn-action-sleek">☀️ Evaluar Mañana</button>
+                  </div>
+                </div>
+                <div class="elec-test-metrics-3" style="margin-top:6px;">
+                  <div class="et-metric-box">
+                    <span>VOLTAJE NOCHE</span>
+                    <strong id="nd-val-base">-- V</strong>
+                    <small id="nd-time-base">Sin muestra</small>
+                  </div>
+                  <div class="et-metric-box">
+                    <span>VOLTAJE MAÑANA</span>
+                    <strong id="nd-val-morning">-- V</strong>
+                    <small id="nd-hours-elapsed">Reposo 8-12h</small>
+                  </div>
+                  <div class="et-metric-box">
+                    <span>CAÍDA (ΔV)</span>
+                    <strong id="nd-val-drop">-- V</strong>
+                    <small id="nd-verdict-sub">Meta: ≤ 0.18V</small>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -1425,7 +1482,7 @@
       <div class="modal-header">
         <div>
           <span class="info-modal-tag">PATRIMONIO FÍSICO (CAPEX)</span>
-          <h3 class="modal-pulsar-title">Precio de Compra N160</h3>
+          <h3 class="modal-pulsar-title">Valor de Compra</h3>
         </div>
         <button id="btn-close-bike-price-x" class="btn-close-x">✕</button>
       </div>
@@ -1526,6 +1583,10 @@
         <div class="service-option" data-value="valve_calib" data-title="Calibración de Válvulas y Cambio Filtro Aire">
           <span class="srv-dot"></span>
           <div class="srv-text"><strong>Válvulas y Filtro 10k</strong><small>Calibración 0.05 / 0.08mm</small></div>
+        </div>
+        <div class="service-option" data-value="fi_injector" data-title="Limpieza Cuerpo de Aceleración e Inyector FI">
+          <span class="srv-dot"></span>
+          <div class="srv-text"><strong>Inyector & TPS (10k)</strong><small>Cuerpo acel., IACV y microfiltro</small></div>
         </div>
         <div class="service-option" data-value="fork_oil" data-title="Mantenimiento Barras Telescópicas (37 mm)">
           <span class="srv-dot"></span>
@@ -1767,7 +1828,7 @@
       <div class="modal-header">
         <div>
           <span class="info-modal-tag">BÓVEDA PERSONAL & RECORDATORIOS</span>
-          <h3 class="modal-pulsar-title">Guantera Digital N160</h3>
+          <h3 class="modal-pulsar-title">Guantera Digital</h3>
         </div>
         <button id="btn-close-docs-x" class="btn-close-x">✕</button>
       </div>
@@ -1801,8 +1862,47 @@
           <input type="tel" id="doc-sos-phone" placeholder="Ej: 999888777">
         </div>
       </div>
+      <label class="modal-label" style="margin-top: 10px;">🛡️ BÓVEDA OFFLINE SIN SEÑAL (INDEXED-DB ALTA CAPACIDAD):</label>
+      <div class="vault-media-grid">
+        <div class="vault-doc-slot">
+          <div class="vault-slot-top">
+            <strong>📄 Certificado SOAT</strong>
+            <span id="vault-soat-badge" class="status-pill status-warn">Vacío</span>
+          </div>
+          <small>Captura o foto para operativos sin señal</small>
+          <div class="vault-slot-actions">
+            <button type="button" id="btn-vault-upload-soat" class="btn-quick-done">📷 Subir</button>
+            <button type="button" id="btn-vault-view-soat" class="btn-edit-log hidden">👁️ Ver</button>
+            <button type="button" id="btn-vault-del-soat" class="btn-del-log hidden">✕</button>
+          </div>
+          <input type="file" id="vault-soat-input" accept="image/*" class="hidden">
+        </div>
+
+        <div class="vault-doc-slot">
+          <div class="vault-slot-top">
+            <strong>🪪 Tarjeta Propiedad</strong>
+            <span id="vault-card-badge" class="status-pill status-warn">Vacío</span>
+          </div>
+          <small>T. Propiedad / Brevete digitalizado</small>
+          <div class="vault-slot-actions">
+            <button type="button" id="btn-vault-upload-card" class="btn-quick-done">📷 Subir</button>
+            <button type="button" id="btn-vault-view-card" class="btn-edit-log hidden">👁️ Ver</button>
+            <button type="button" id="btn-vault-del-card" class="btn-del-log hidden">✕</button>
+          </div>
+          <input type="file" id="vault-card-input" accept="image/*" class="hidden">
+        </div>
+      </div>
+
+      <div id="vault-preview-box" class="vault-preview-lightbox hidden">
+        <div class="vault-preview-head">
+          <strong id="vault-preview-title">Documento Offline</strong>
+          <button type="button" id="btn-close-vault-preview" class="btn-close-x">✕</button>
+        </div>
+        <img id="vault-preview-img" src="" alt="Documento guardado en bóveda">
+      </div>
+
       <div id="docs-status-summary" class="memory-pill-bar" style="margin-top: 10px;">
-        <span>🪪 Tus datos se guardan únicamente en la memoria privada de tu teléfono.</span>
+        <span>🪪 Tus documentos y capturas quedan encriptados localmente en IndexedDB para mostrarlos sin internet.</span>
       </div>
       <div class="modal-actions">
         <button id="btn-cancel-docs" class="btn-secondary">Cerrar</button>

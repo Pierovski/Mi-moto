@@ -96,15 +96,27 @@ export const liveEcuData = {
     verdictStatus: 'ok',
     verdictDetail: ''
   },
-  blackbox: {
-    recording: false,
-    startTimeMs: 0,
-    points: [],
-    maxTempC: 0,
-    maxRpm: 0,
-    maxSpeed: 0,
-    minVolt: 99
-  }
+  blackbox: (function () {
+    const def = {
+      recording: false,
+      startTimeMs: 0,
+      points: [],
+      maxTempC: 0,
+      maxRpm: 0,
+      maxSpeed: 0,
+      minVolt: 99
+    };
+    try {
+      const saved = localStorage.getItem('mi_moto_n160_last_blackbox_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed.points) && parsed.points.length > 0) {
+          return { ...def, ...parsed, recording: false };
+        }
+      }
+    } catch (e) {}
+    return def;
+  })()
 };
 
 let lastSpeedUpdateMs = 0;
@@ -760,8 +772,18 @@ export function toggleBlackboxRecording(onUpdateCallback, onStatusCallback) {
     if (!liveEcuData.connected) {
       releaseDashboardWakeLock();
     }
+    try {
+      localStorage.setItem('mi_moto_n160_last_blackbox_v1', JSON.stringify({
+        startTimeMs: bb.startTimeMs,
+        points: bb.points.slice(-800),
+        maxTempC: bb.maxTempC,
+        maxRpm: bb.maxRpm,
+        maxSpeed: bb.maxSpeed,
+        minVolt: bb.minVolt
+      }));
+    } catch (e) {}
     triggerHaptic(20);
-    if (onStatusCallback) onStatusCallback(`⏹ Caja Negra detenida (${bb.points.length} muestras grabadas)`);
+    if (onStatusCallback) onStatusCallback(`⏹ Caja Negra lista (${bb.points.length} muestras • Toca ▶️ Replay)`);
     if (onUpdateCallback) onUpdateCallback(liveEcuData);
     return false;
   }
@@ -1088,4 +1110,71 @@ export function stopEcuTelemetry(onUpdateCallback) {
   } finally {
     isStoppingTelemetry = false;
   }
+}
+
+export function ensureBlackboxDemoOrSavedTrack(routeCoords = null) {
+  const bb = liveEcuData.blackbox;
+  if (Array.isArray(bb.points) && bb.points.length >= 2) {
+    return bb.points;
+  }
+  // Genera una sesión demostrativa sobre la ruta activa (o ascenso Trujillo -> Samne) para probar el Replay al instante
+  const baseCoords = Array.isArray(routeCoords) && routeCoords.length >= 4
+    ? routeCoords
+    : [
+        [-8.1116, -79.0287], [-8.1020, -78.9950], [-8.0885, -78.9610], [-8.0710, -78.9210],
+        [-8.0540, -78.8820], [-8.0390, -78.8410], [-8.0260, -78.7980], [-8.0120, -78.7550],
+        [-8.0010, -78.7180], [-7.9912, -78.6854]
+      ];
+  const totalSamples = Math.min(60, Math.max(20, baseCoords.length));
+  const simPts = [];
+  const startMs = Date.now() - totalSamples * 2500;
+  let maxT = 0, maxR = 0, maxS = 0;
+
+  for (let i = 0; i < totalSamples; i++) {
+    const frac = i / (totalSamples - 1);
+    const cIdx = Math.min(baseCoords.length - 1, Math.floor(frac * (baseCoords.length - 1)));
+    const nextIdx = Math.min(baseCoords.length - 1, cIdx + 1);
+    const subFrac = (frac * (baseCoords.length - 1)) - cIdx;
+    const lat = baseCoords[cIdx][0] + (baseCoords[nextIdx][0] - baseCoords[cIdx][0]) * subFrac;
+    const lon = baseCoords[cIdx][1] + (baseCoords[nextIdx][1] - baseCoords[cIdx][1]) * subFrac;
+
+    const wave = Math.sin(frac * Math.PI);
+    const speedKmh = i === 0 || i === totalSamples - 1 ? 0 : Math.round(42 + wave * 54 + Math.sin(i * 0.7) * 11);
+    const rpm = speedKmh === 0 ? 1400 : Math.round(Math.min(8400, 3200 + speedKmh * 56));
+    const gear = calculateEstimatedGear(rpm, speedKmh);
+    const tempC = Math.round(68 + frac * 34 + wave * 4);
+    const tpsPct = speedKmh === 0 ? 0 : Math.min(96, Math.round(24 + wave * 58));
+    const loadPct = speedKmh === 0 ? 15 : Math.min(98, Math.round(30 + wave * 62));
+    const altM = Math.round(34 + frac * 1416);
+    const volt = (14.1 + Math.sin(i * 0.4) * 0.15).toFixed(2);
+
+    if (tempC > maxT) maxT = tempC;
+    if (rpm > maxR) maxR = rpm;
+    if (speedKmh > maxS) maxS = speedKmh;
+
+    simPts.push({
+      isoTime: new Date(startMs + i * 2500).toISOString(),
+      elapsedSec: Math.round(i * 2.5),
+      lat: lat.toFixed(6),
+      lon: lon.toFixed(6),
+      altM,
+      rpm,
+      speedKmh,
+      gear,
+      tempC,
+      voltage: volt,
+      tpsPct,
+      loadPct,
+      mapKpa: Math.round(101 - (altM / 100)),
+      o2Volt: (0.45 + Math.sin(i) * 0.3).toFixed(2),
+      instKmGal: speedKmh > 0 ? (145 - wave * 28).toFixed(1) : '0.0'
+    });
+  }
+
+  bb.points = simPts;
+  bb.maxTempC = maxT;
+  bb.maxRpm = maxR;
+  bb.maxSpeed = maxS;
+  bb.minVolt = 13.9;
+  return bb.points;
 }

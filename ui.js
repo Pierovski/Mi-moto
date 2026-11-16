@@ -1,5 +1,5 @@
 import { TANK_CAPACITY_GAL, MAINT_RULES, TECHNICAL_GUIDES, DEFAULT_TIRES, ROUTE_PRESETS, DEFAULT_ORIGIN_COORDS } from './constants.js';
-import { BAJAJ_DTC_DICTIONARY, updateAltitudeDeltaCheck, liveEcuData } from './obd.js';
+import { BAJAJ_DTC_DICTIONARY, updateAltitudeDeltaCheck, liveEcuData, ensureBlackboxDemoOrSavedTrack } from './obd.js';
 import { appState, escapeHTML, playN160IgnitionSound, triggerHaptic } from './state.js';
 import {
   isWithinPeriod,
@@ -57,7 +57,11 @@ export const uiConfig = {
   liveGpsLon: null,
   liveGpsAlt: null,
   liveGpsSpeedKmh: null,
-  inspectedElevIdx: null
+  inspectedElevIdx: null,
+  replayActive: false,
+  replayPlaying: false,
+  replayIdx: 0,
+  replaySpeedMult: 1
 };
 
 function isRouteActive(route) {
@@ -381,11 +385,15 @@ export function checkDocsStatusUI() {
   const garageDocsWidget = document.getElementById('docs-garage-widget');
 
   const docs = appState.docs || {};
-  if (docs.plate && docs.plate.trim() !== '') {
-    plateBadge.textContent = docs.plate.trim().toUpperCase();
+  if (plateBadge) {
     plateBadge.classList.remove('hidden');
-  } else {
-    plateBadge.classList.add('hidden');
+    if (docs.plate && docs.plate.trim() !== '') {
+      plateBadge.textContent = docs.plate.trim().toUpperCase();
+      plateBadge.classList.add('has-plate');
+    } else {
+      plateBadge.textContent = 'N160 FI';
+      plateBadge.classList.remove('has-plate');
+    }
   }
 
   const status = evaluateDocsStatus();
@@ -475,6 +483,20 @@ export function renderMaintenanceCards() {
       `;
     } else {
       chainBanner.classList.add('hidden');
+    }
+  }
+
+  const fiStftBanner = document.getElementById('fi-stft-alert-banner');
+  if (fiStftBanner) {
+    const stftVal = Number(liveEcuData?.stftPct) || 0;
+    if (liveEcuData?.connected && Math.abs(stftVal) >= 8.5) {
+      fiStftBanner.classList.remove('hidden');
+      fiStftBanner.innerHTML = `
+        <strong>⚠️ Alerta Preventiva Inyección Bosch FI (STFT ${stftVal > 0 ? '+' : ''}${stftVal.toFixed(1)}%)</strong>
+        <span>La ECU está compensando mezcla fuera del rango ideal (±8%). Programa limpieza de cuerpo de aceleración (mariposa TPS/IACV), revisa microfiltro del inyector o posibles entradas de aire.</span>
+      `;
+    } else {
+      fiStftBanner.classList.add('hidden');
     }
   }
 
@@ -1055,6 +1077,21 @@ export function renderGarageSection() {
     });
   }
 
+  const isPillion = appState.rideLoadMode === 'pillion';
+  const loadSwitchBtn = document.getElementById('btn-toggle-load-mode');
+  if (loadSwitchBtn) {
+    loadSwitchBtn.classList.toggle('pillion-active', isPillion);
+    loadSwitchBtn.textContent = isPillion
+      ? '👥 Copiloto/Carga: 25 / 32 PSI • Nitrox Pos 4-5'
+      : '👤 Solo: 25 / 28 PSI • Nitrox Pos 2-3';
+  }
+  const chkTiresSub = document.getElementById('chk-tires-dynamic-sub');
+  if (chkTiresSub) {
+    chkTiresSub.textContent = isPillion
+      ? 'Modo Copiloto/Carga: Del 25 PSI • Tras 32 PSI • Monoshock Pos 4-5'
+      : 'Modo Solo: Del 25 PSI • Tras 28 PSI • Monoshock Pos 2-3';
+  }
+
   const tiresGrid = document.getElementById('tires-status-grid');
   tiresGrid.innerHTML = '';
   const monthlyRate = estimateMonthlyKmRate();
@@ -1111,7 +1148,7 @@ export function renderGarageSection() {
       ? `<span class="tire-spec-chip ${treadInfo.isBelowTwi ? 'dot-warn' : 'dot-ok'}">Cocada: ${treadInfo.currentMm.toFixed(1)} mm</span>`
       : '';
 
-    const psiLabel = posKey === 'front' ? 'DELANTERA (25 PSI)' : 'TRASERA (28 / 32 PSI)';
+    const psiLabel = posKey === 'front' ? 'DELANTERA (25 PSI EN FRÍO)' : (isPillion ? 'TRASERA (32 PSI • COPILOTO/CARGA)' : 'TRASERA (28 PSI • PILOTO SOLO)');
     const tireFillStyle =
       wearBarPct <= 0
         ? 'width: 0%; opacity: 0; background: transparent;'
@@ -1294,11 +1331,18 @@ export function renderRouteAndTCO() {
 
   if (capexDisp) capexDisp.textContent = `S/ ${fin.capexTotal.toFixed(2)}`;
   if (capexSub) {
-    capexSub.textContent = fin.bikePrice > 0 ? `Moto: S/ ${fin.bikePrice.toLocaleString('es-PE')}` : 'Sin precio moto';
+    capexSub.textContent = `Reventa Est.: S/ ${fin.estimatedResaleValue.toLocaleString('es-PE')} (${fin.retentionPct}%)`;
   }
   if (opexDisp) opexDisp.textContent = `S/ ${fin.opCostTotal.toFixed(2)}`;
   if (opexMini) opexMini.textContent = `S/ ${fin.realOpCostPerKm.toFixed(2)}/km`;
   if (tcoCapexRow) tcoCapexRow.textContent = `S/ ${fin.capexTotal.toFixed(2)}`;
+
+  const resaleEl = document.getElementById('tco-resale-est');
+  const retPctEl = document.getElementById('tco-retention-pct');
+  const pilotGearEl = document.getElementById('tco-pilot-gear');
+  if (resaleEl) resaleEl.textContent = `S/ ${fin.estimatedResaleValue.toFixed(2)}`;
+  if (retPctEl) retPctEl.textContent = `Retención ${fin.retentionPct}%`;
+  if (pilotGearEl) pilotGearEl.textContent = `S/ ${(fin.pilotGearCost || 0).toFixed(2)}`;
 
   document.getElementById('master-grand-total').textContent = `S/ ${fin.grandTotalInvested.toFixed(2)}`;
   document.getElementById('tco-fuel-all').textContent = `S/ ${fin.allFuel.toFixed(2)}`;
@@ -1415,6 +1459,7 @@ export function renderAllMain(triggerSweep = false) {
   renderLogs();
   renderFuelSection();
   renderRouteAndTCO();
+  renderNightDrainUI();
 }
 
 export function formatDmsCoord(lat, lon) {
@@ -1537,6 +1582,9 @@ let bikeLeafletMarker = null;
 let destLeafletMarker = null;
 let currentRoadLatLngs = [];
 let poiLayerGroup = null;
+let replayTrackPolyline = null;
+let replayTraveledPolyline = null;
+let replayTimer = null;
 
 export function calculateBearingDeg(lat1, lon1, lat2, lon2) {
   const toRad = (d) => (d * Math.PI) / 180;
@@ -1949,7 +1997,253 @@ export async function calculateRealRouteAndElevation({ destLat, destLon, name, r
   renderTacticalMapUI(liveEcuData, true);
 }
 
+
+// ================= REPRODUCTOR INTERACTIVO DE CAJA NEGRA (RACE REPLAY) =================
+function formatMmSs(totalSeconds) {
+  const s = Math.max(0, Math.round(Number(totalSeconds) || 0));
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
+}
+
+export function startBlackboxReplayMode() {
+  const pts = ensureBlackboxDemoOrSavedTrack(currentRoadLatLngs);
+  if (!pts || pts.length < 2) {
+    showToast('⚠️ Graba una sesión en ruta primero con 🔴 REC');
+    return false;
+  }
+
+  stopBlackboxReplayTimer();
+  uiConfig.replayActive = true;
+  uiConfig.replayPlaying = false;
+  uiConfig.replayIdx = 0;
+
+  const hud = document.getElementById('mo-race-replay-hud');
+  if (hud) hud.classList.remove('hidden');
+
+  const slider = document.getElementById('replay-scrubber');
+  if (slider) {
+    slider.max = String(pts.length - 1);
+    slider.value = '0';
+  }
+
+  if (!leafletMap) initLeafletSatelliteMap();
+
+  if (leafletMap) {
+    const trackCoords = pts.map((p) => [ parseFloat(p.lat), parseFloat(p.lon) ]);
+    if (replayTrackPolyline && leafletMap.hasLayer(replayTrackPolyline)) {
+      leafletMap.removeLayer(replayTrackPolyline);
+    }
+    if (replayTraveledPolyline && leafletMap.hasLayer(replayTraveledPolyline)) {
+      leafletMap.removeLayer(replayTraveledPolyline);
+    }
+
+    replayTrackPolyline = window.L.polyline(trackCoords, {
+      color: 'rgba(73, 191, 230, 0.45)',
+      weight: 5,
+      dashArray: '5, 5'
+    }).addTo(leafletMap);
+
+    replayTraveledPolyline = window.L.polyline([trackCoords[0]], {
+      color: '#58E800',
+      weight: 4.5,
+      opacity: 1.0
+    }).addTo(leafletMap);
+
+    leafletMap.fitBounds(replayTrackPolyline.getBounds(), { padding: [44, 44] });
+  }
+
+  renderReplayFrame(0, true);
+  return true;
+}
+
+export function stopBlackboxReplayTimer() {
+  if (replayTimer) {
+    clearInterval(replayTimer);
+    replayTimer = null;
+  }
+  uiConfig.replayPlaying = false;
+  const playBtn = document.getElementById('btn-replay-play');
+  if (playBtn) playBtn.textContent = '▶️';
+}
+
+export function closeBlackboxReplayMode() {
+  stopBlackboxReplayTimer();
+  uiConfig.replayActive = false;
+  uiConfig.inspectedElevIdx = null;
+
+  const hud = document.getElementById('mo-race-replay-hud');
+  if (hud) hud.classList.add('hidden');
+
+  if (leafletMap) {
+    if (replayTrackPolyline && leafletMap.hasLayer(replayTrackPolyline)) {
+      leafletMap.removeLayer(replayTrackPolyline);
+    }
+    if (replayTraveledPolyline && leafletMap.hasLayer(replayTraveledPolyline)) {
+      leafletMap.removeLayer(replayTraveledPolyline);
+    }
+  }
+  replayTrackPolyline = null;
+  replayTraveledPolyline = null;
+
+  renderTacticalMapUI(liveEcuData, true);
+}
+
+export function toggleBlackboxReplayPlay() {
+  const pts = liveEcuData.blackbox?.points || [];
+  if (!uiConfig.replayActive || pts.length < 2) return;
+
+  if (uiConfig.replayPlaying) {
+    stopBlackboxReplayTimer();
+    return;
+  }
+
+  if (uiConfig.replayIdx >= pts.length - 1) {
+    uiConfig.replayIdx = 0;
+  }
+
+  uiConfig.replayPlaying = true;
+  const playBtn = document.getElementById('btn-replay-play');
+  if (playBtn) playBtn.textContent = '⏸️';
+
+  const intervalMs = Math.max(90, Math.round(480 / (uiConfig.replaySpeedMult || 1)));
+  replayTimer = setInterval(() => {
+    if (!uiConfig.replayActive) {
+      stopBlackboxReplayTimer();
+      return;
+    }
+    if (uiConfig.replayIdx < pts.length - 1) {
+      uiConfig.replayIdx++;
+      renderReplayFrame(uiConfig.replayIdx, true);
+    } else {
+      stopBlackboxReplayTimer();
+      triggerHaptic(15);
+      showToast('🏁 Reproducción de ruta finalizada');
+    }
+  }, intervalMs);
+}
+
+export function cycleBlackboxReplaySpeed() {
+  const speeds = [1, 2, 4];
+  const currIdx = speeds.indexOf(uiConfig.replaySpeedMult || 1);
+  uiConfig.replaySpeedMult = speeds[(currIdx + 1) % speeds.length];
+
+  const spdBtn = document.getElementById('btn-replay-speed');
+  if (spdBtn) spdBtn.textContent = `${uiConfig.replaySpeedMult}x`;
+
+  if (uiConfig.replayPlaying) {
+    stopBlackboxReplayTimer();
+    toggleBlackboxReplayPlay();
+  }
+  return uiConfig.replaySpeedMult;
+}
+
+export function seekBlackboxReplayFrame(idx) {
+  const pts = liveEcuData.blackbox?.points || [];
+  if (!pts.length) return;
+  const clamped = Math.max(0, Math.min(pts.length - 1, parseInt(idx, 10) || 0));
+  uiConfig.replayIdx = clamped;
+  renderReplayFrame(clamped, true);
+}
+
+export function renderReplayFrame(idx, panMap = false) {
+  const pts = liveEcuData.blackbox?.points || [];
+  if (!pts.length) return;
+  const clampedIdx = Math.max(0, Math.min(pts.length - 1, idx));
+  const pt = pts[clampedIdx];
+  const lastPt = pts[pts.length - 1];
+
+  const slider = document.getElementById('replay-scrubber');
+  if (slider && Number(slider.value) !== clampedIdx) {
+    slider.value = String(clampedIdx);
+  }
+
+  const timeLbl = document.getElementById('replay-time-lbl');
+  if (timeLbl) {
+    timeLbl.textContent = `${formatMmSs(pt.elapsedSec)} / ${formatMmSs(lastPt.elapsedSec)}`;
+  }
+
+  const countLbl = document.getElementById('replay-point-counter');
+  if (countLbl) {
+    countLbl.textContent = `Pto ${clampedIdx + 1}/${pts.length}`;
+  }
+
+  const vitalsStrip = document.getElementById('replay-vitals-strip');
+  if (vitalsStrip) {
+    const tempColor = pt.tempC > 110 ? 'var(--amber-warn)' : 'var(--caribbean-bright)';
+    vitalsStrip.innerHTML =
+      `<strong style="color:#FFFFFF">${pt.speedKmh} km/h</strong> • ` +
+      `<span>${Number(pt.rpm).toLocaleString('es-PE')} RPM</span> • ` +
+      `<strong style="color:var(--neon-lime)">M:${escapeHTML(pt.gear || 'N')}</strong> • ` +
+      `<span>TPS ${pt.tpsPct}%</span> • ` +
+      `<span style="color:${tempColor}">${pt.tempC}°C</span> • ` +
+      `<span>${pt.voltage}V</span>`;
+  }
+
+  // Sincroniza las tarjetas inferiores del Mapa (Velocímetro, Marcha, Signos Vitales y Altímetro) con el punto histórico
+  const spdEl = document.getElementById('map-live-speed');
+  if (spdEl) spdEl.textContent = pt.speedKmh;
+
+  const hudGearEl = document.getElementById('map-hud-gear');
+  if (hudGearEl) {
+    hudGearEl.textContent = pt.gear || 'N';
+    hudGearEl.style.color = (pt.gear || 'N') === 'N' ? 'var(--neon-lime)' : '#FFFFFF';
+  }
+
+  const hudVitalsEl = document.getElementById('map-hud-vitals');
+  if (hudVitalsEl) {
+    hudVitalsEl.textContent = `▶️ REPLAY: 🌡️ ${pt.tempC}°C • 🔋 ${pt.voltage}V • ${Number(pt.rpm).toLocaleString('es-PE')} RPM • TPS ${pt.tpsPct}%`;
+  }
+
+  const elevEl = document.getElementById('map-current-elev');
+  if (elevEl) elevEl.textContent = `${Number(pt.altM || 34).toLocaleString('es-PE')} m`;
+
+  // Dibuja el perfil de elevación de la sesión grabada con el cursor sincronizado
+  const elevArr = pts.map((p) => Number(p.altM) || 34);
+  const progressRatio = pts.length > 1 ? clampedIdx / (pts.length - 1) : 0;
+  uiConfig.inspectedElevIdx = null;
+  renderElevationProfileSVG(elevArr, progressRatio, true);
+
+  // Mueve el pin de la moto en el mapa satelital y actualiza la estela recorrida
+  if (leafletMap) {
+    const lat = parseFloat(pt.lat);
+    const lon = parseFloat(pt.lon);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      if (clampedIdx < pts.length - 1) {
+        const nextPt = pts[clampedIdx + 1];
+        applyMapOrientationRotation(lat, lon, parseFloat(nextPt.lat), parseFloat(nextPt.lon));
+      }
+
+      const bikeIcon = window.L.divIcon({
+        className: '',
+        html: `<div class="n160-bike-pin" title="Replay N160 (${pt.speedKmh} km/h)">▲</div>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      });
+
+      if (!bikeLeafletMarker) {
+        bikeLeafletMarker = window.L.marker([lat, lon], { icon: bikeIcon }).addTo(leafletMap);
+      } else {
+        bikeLeafletMarker.setLatLng([lat, lon]);
+      }
+
+      if (replayTraveledPolyline) {
+        const traveledCoords = pts.slice(0, clampedIdx + 1).map((p) => [parseFloat(p.lat), parseFloat(p.lon)]);
+        replayTraveledPolyline.setLatLngs(traveledCoords);
+      }
+
+      if (panMap && uiConfig.followLock) {
+        leafletMap.panTo([lat, lon], { animate: true });
+      }
+    }
+  }
+}
+
 export function renderTacticalMapUI(ecuData = liveEcuData, fitMapBounds = false) {
+  if (uiConfig.replayActive) {
+    renderReplayFrame(uiConfig.replayIdx, false);
+    return;
+  }
   const activeEcu = ecuData || liveEcuData;
 
   const clockEl = document.getElementById('mo-live-clock');
@@ -2305,6 +2599,7 @@ export function renderObdLiveUI(data, forceMap = false) {
     if (bbPeaks) bbPeaks.textContent = `${bb.maxSpeed} km/h • ${bb.maxRpm} RPM`;
   }
 
+  renderNightDrainUI();
   if (!activeData || !activeData.connected) {
     card.classList.remove('obd-active', 'obd-shift-alert');
     statusPill.textContent = uiConfig.gpsWatchId !== null ? 'GPS VIVO' : 'OFFLINE';
@@ -2352,7 +2647,13 @@ export function renderObdLiveUI(data, forceMap = false) {
 
   document.getElementById('obd-speed-val').textContent = spd;
   document.getElementById('obd-peak-speed').textContent = peakSpd;
-  document.getElementById('obd-gear-val').textContent = gear;
+  const gearEl = document.getElementById('obd-gear-val');
+  gearEl.textContent = gear;
+  // Silencio Visual TFT: Verde Neón exclusivo para Neutro (N), Blanco Puro para marchas 1-5
+  gearEl.style.color = gear === 'N' ? 'var(--neon-lime)' : '#FFFFFF';
+  const mapGearEl = document.getElementById('map-hud-gear');
+  if (mapGearEl) mapGearEl.style.color = gear === 'N' ? 'var(--neon-lime)' : '#FFFFFF';
+
   document.getElementById('obd-rpm-val').textContent = rpm.toLocaleString('es-PE');
   document.getElementById('obd-peak-rpm').textContent = peakRpm.toLocaleString('es-PE');
 
@@ -2398,10 +2699,10 @@ export function renderObdLiveUI(data, forceMap = false) {
     if (rpmArc) rpmArc.setAttribute('stroke', 'var(--amber-warn)');
   } else {
     card.classList.remove('obd-shift-alert');
-    guardPill.textContent = isBreakin1k ? 'CUIDANDO <5k' : 'ÓPTIMO';
-    guardPill.style.background = 'rgba(88, 232, 0, 0.15)';
-    guardPill.style.color = 'var(--neon-lime)';
-    if (rpmArc) rpmArc.setAttribute('stroke', 'var(--neon-lime)');
+    guardPill.textContent = isBreakin1k ? 'CUIDANDO <5k' : (rpm >= 5500 ? 'TORQUE ÓPTIMO' : 'CRUCERO OK');
+    guardPill.style.background = rpm >= 5500 ? 'rgba(88, 232, 0, 0.15)' : 'rgba(73, 191, 230, 0.15)';
+    guardPill.style.color = rpm >= 5500 ? 'var(--neon-lime)' : 'var(--caribbean-bright)';
+    if (rpmArc) rpmArc.setAttribute('stroke', rpm >= 5500 ? 'var(--neon-lime)' : 'var(--caribbean-bright)');
   }
 
   const tempC = Number(activeData.tempC) || 0;
@@ -2419,8 +2720,8 @@ export function renderObdLiveUI(data, forceMap = false) {
     if (barTemp) barTemp.style.backgroundColor = 'var(--caribbean-bright)';
   } else if (tempC <= 110) {
     tempSub.textContent = '✅ Aceite/Culata OK';
-    tempEl.style.color = 'var(--neon-lime)';
-    if (barTemp) barTemp.style.backgroundColor = 'var(--neon-lime)';
+    tempEl.style.color = '#FFFFFF';
+    if (barTemp) barTemp.style.backgroundColor = 'var(--caribbean-bright)';
   } else if (tempC <= 115) {
     tempSub.textContent = '⚠️ Exigencia Alta';
     tempEl.style.color = 'var(--amber-warn)';
@@ -2446,12 +2747,16 @@ export function renderObdLiveUI(data, forceMap = false) {
     voltEl.style.color = 'var(--red-danger)';
     voltSub.textContent = '⚠️ Batería baja';
     if (barVolt) barVolt.style.backgroundColor = 'var(--red-danger)';
+  } else if (volt > 14.8) {
+    voltEl.style.color = 'var(--red-danger)';
+    voltSub.textContent = '🔥 Sobrecarga >14.8V';
+    if (barVolt) barVolt.style.backgroundColor = 'var(--red-danger)';
   } else if (volt >= 13.5 && volt <= 14.6) {
-    voltEl.style.color = 'var(--neon-lime)';
+    voltEl.style.color = '#FFFFFF';
     voltSub.textContent = '⚡ Estator OK';
     if (barVolt) barVolt.style.backgroundColor = 'var(--neon-lime)';
   } else {
-    voltEl.style.color = 'var(--caribbean-bright)';
+    voltEl.style.color = '#FFFFFF';
     voltSub.textContent = 'Reposo 12V OK';
     if (barVolt) barVolt.style.backgroundColor = 'var(--caribbean-bright)';
   }
@@ -2552,5 +2857,66 @@ export function renderObdLiveUI(data, forceMap = false) {
     if (etDetail && et.verdictDetail) {
       etDetail.textContent = et.verdictDetail;
     }
+  }
+}
+
+export function renderNightDrainUI() {
+  const nd = appState.nightDrainTest || {};
+  const baseEl = document.getElementById('nd-val-base');
+  const timeBaseEl = document.getElementById('nd-time-base');
+  const mornEl = document.getElementById('nd-val-morning');
+  const hoursEl = document.getElementById('nd-hours-elapsed');
+  const dropEl = document.getElementById('nd-val-drop');
+  const verdictSub = document.getElementById('nd-verdict-sub');
+  const summaryEl = document.getElementById('night-drain-summary');
+
+  if (!baseEl) return;
+
+  if (nd.baseVolt > 0) {
+    baseEl.textContent = `${Number(nd.baseVolt).toFixed(2)} V`;
+    if (nd.baseTimeMs > 0) {
+      const d = new Date(nd.baseTimeMs);
+      timeBaseEl.textContent = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+  } else {
+    baseEl.textContent = '-- V';
+    timeBaseEl.textContent = 'Sin muestra';
+  }
+
+  if (nd.morningVolt > 0 && nd.baseVolt > 0) {
+    mornEl.textContent = `${Number(nd.morningVolt).toFixed(2)} V`;
+    const hrs = Number(nd.hoursElapsed) || 0;
+    hoursEl.textContent = hrs > 0 ? `Tras ${hrs.toFixed(1)} h` : 'Evaluado';
+    const drop = Number(nd.dropVolt) || 0;
+    dropEl.textContent = `${drop >= 0 ? '-' : '+'}${Math.abs(drop).toFixed(2)} V`;
+
+    if (drop > 0.25) {
+      dropEl.style.color = 'var(--red-danger)';
+      verdictSub.textContent = '⚠️ Fuga Parásita';
+      if (summaryEl) {
+        summaryEl.textContent = `⚠️ ALERTA: Cayó ${drop.toFixed(2)}V en reposo. Revisa consumo parásito de alarma, GPS o relé (>3 mA).`;
+        summaryEl.style.color = 'var(--red-danger)';
+      }
+    } else if (drop > 0.16) {
+      dropEl.style.color = 'var(--amber-warn)';
+      verdictSub.textContent = 'Vigilar 4Ah';
+      if (summaryEl) {
+        summaryEl.textContent = `🟡 Caída moderada (${drop.toFixed(2)}V). Normal si tienes alarma activa, evita dejarla >5 días sin arrancar.`;
+        summaryEl.style.color = 'var(--amber-warn)';
+      }
+    } else {
+      dropEl.style.color = 'var(--neon-lime)';
+      verdictSub.textContent = '✅ Cero Fugas';
+      if (summaryEl) {
+        summaryEl.textContent = `✅ Retención excelente: solo varió ${drop.toFixed(2)}V durante la noche. Ramal FI sin fugas.`;
+        summaryEl.style.color = 'var(--neon-lime)';
+      }
+    }
+  } else {
+    mornEl.textContent = '-- V';
+    hoursEl.textContent = 'Reposo 8-12h';
+    dropEl.textContent = '-- V';
+    dropEl.style.color = '#FFFFFF';
+    verdictSub.textContent = 'Meta: ≤ 0.18V';
   }
 }

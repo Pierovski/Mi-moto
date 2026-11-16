@@ -134,14 +134,95 @@ export function playN160IgnitionSound() {
   } catch (e) {}
 }
 
+
+// ================= BÓVEDA OFFLINE INDEXEDDB (CERTIFICADO SOAT & TARJETA PROPIEDAD) =================
+const VAULT_DB_NAME = 'mi_moto_n160_vault_db';
+const VAULT_STORE_NAME = 'docs_media';
+
+function openVaultDB() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error('IndexedDB no disponible'));
+      return;
+    }
+    const req = window.indexedDB.open(VAULT_DB_NAME, 1);
+    req.onupgradeneeded = (ev) => {
+      const db = ev.target.result;
+      if (!db.objectStoreNames.contains(VAULT_STORE_NAME)) {
+        db.createObjectStore(VAULT_STORE_NAME);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function saveVaultDocMedia(docKey, base64Data) {
+  try {
+    const db = await openVaultDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(VAULT_STORE_NAME, 'readwrite');
+      tx.objectStore(VAULT_STORE_NAME).put(base64Data, docKey);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) {
+    console.warn('Reserva localStorage para doc:', e);
+    try {
+      localStorage.setItem(`mi_moto_vault_${docKey}`, base64Data);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+}
+
+export async function getVaultDocMedia(docKey) {
+  try {
+    const db = await openVaultDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(VAULT_STORE_NAME, 'readonly');
+      const req = tx.objectStore(VAULT_STORE_NAME).get(docKey);
+      req.onsuccess = () => resolve(req.result || localStorage.getItem(`mi_moto_vault_${docKey}`) || '');
+      req.onerror = () => resolve(localStorage.getItem(`mi_moto_vault_${docKey}`) || '');
+    });
+  } catch (e) {
+    return localStorage.getItem(`mi_moto_vault_${docKey}`) || '';
+  }
+}
+
+export async function deleteVaultDocMedia(docKey) {
+  try {
+    localStorage.removeItem(`mi_moto_vault_${docKey}`);
+    const db = await openVaultDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(VAULT_STORE_NAME, 'readwrite');
+      tx.objectStore(VAULT_STORE_NAME).delete(docKey);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+    });
+  } catch (e) {
+    return false;
+  }
+}
+
 export function createDefaultState() {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     onboarded: false,
     bikeModel: 'Bajaj Pulsar N160 FI',
     colorTheme: 'blue',
-    sunlightMode: false, // Nuevo modo de alto contraste solar para ruta
+    sunlightMode: false,
+    rideLoadMode: 'solo', // 'solo' (25/28 PSI) | 'pillion' (25/32 PSI + Monoshock Pos 4-5)
     bikePurchasePrice: 0,
+    nightDrainTest: {
+      baseVolt: 0,
+      baseTimeMs: 0,
+      morningVolt: 0,
+      morningTimeMs: 0,
+      hoursElapsed: 0,
+      dropVolt: 0
+    },
     loanModeActive: false,
     initialKm: 0,
     currentKm: 0,
@@ -177,6 +258,7 @@ export function createDefaultState() {
       air_spark: 0,
       brakes_abs: 0,
       valve_calib: 0,
+      fi_injector: 0,
       fork_oil: 0
     },
     lastServiceDate: {},
@@ -204,6 +286,7 @@ export function recalculateServiceKmFromLogs() {
     air_spark: baseKm,
     brakes_abs: baseKm,
     valve_calib: baseKm,
+    fi_injector: baseKm,
     fork_oil: baseKm
   };
   const freshDateMap = {};
@@ -274,7 +357,12 @@ export function migrateAndNormalizeState(raw) {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     colorTheme: raw.colorTheme === 'grey' ? 'white' : (raw.colorTheme || 'blue'),
     sunlightMode: Boolean(raw.sunlightMode),
+    rideLoadMode: raw.rideLoadMode === 'pillion' ? 'pillion' : 'solo',
     bikePurchasePrice: Math.max(0, Number(raw.bikePurchasePrice) || 0),
+    nightDrainTest: {
+      ...base.nightDrainTest,
+      ...(raw.nightDrainTest || {})
+    },
     loanModeActive: Boolean(raw.loanModeActive),
     initialKm: Math.max(0, inferredInitKm),
     currentKm: Math.max(0, Number(raw.currentKm) || 0),

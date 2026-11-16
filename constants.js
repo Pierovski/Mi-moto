@@ -58,6 +58,15 @@ export const MAINT_RULES = [
     infoKey: 'spec_torque'
   },
   {
+    id: 'fi_injector',
+    title: 'Cuerpo de Aceleración e Inyector Bosch FI',
+    subtitle: 'Limpieza de mariposa TPS, paso a paso IACV y microfiltro (Cada 10,000 km)',
+    intervalKm: 10000,
+    intervalMonths: 12,
+    onlyFirstTime: false,
+    infoKey: 'maint_fi_injector'
+  },
+  {
     id: 'fork_oil',
     title: 'Mantenimiento Barras Telescópicas (37 mm)',
     subtitle: 'Cambio de aceite hidráulico y retenes (Cada 15,000 km)',
@@ -314,6 +323,24 @@ export const TECHNICAL_GUIDES = {
     title: 'Grabador de Ruta + Sensores ECU (.GPX y .CSV)',
     how: 'Toca "🔴 Grabar Ruta" antes de rodar. Captura cada 2.5 segundos tu coordenada GPS, altitud msnm, RPM, velocidad real, temperatura EOT, voltaje 12V, apertura TPS, carga de motor y sonda O2. Al terminar, exporta tu archivo .GPX o .CSV.',
     why: 'Permite auditar en qué subida o curva calentó más el motor, dónde exigiste más el acelerador TPS y revivir el trazado satelital con telemetría completa.'
+  },
+  maint_fi_injector: {
+    category: 'SISTEMA DE INYECCIÓN BOSCH FI',
+    title: 'Limpieza de Cuerpo de Aceleración, IACV e Inyector',
+    how: 'Cada 10,000 km desmonta y limpia el cuerpo de aceleración con limpiador específico para sensores, limpia el cono de la válvula IACV (ralentí) y realiza ultrasonido o cambio de microfiltro al inyector.',
+    why: 'El hollín acumulado en el borde de la mariposa altera el ralentí y obliga a la ECU a elevar el ajuste STFT por encima de ±8%, aumentando el consumo de gasolina Premium.'
+  },
+  night_drain_guide: {
+    category: 'AUDITORÍA DE FUGA PARÁSITA 24/7',
+    title: 'Test de Drenaje Nocturno en Reposo (Batería 4Ah)',
+    how: 'Al guardar la moto por la noche, abre contacto sin arrancar y toca "🌙 Guardar Base Nocturna". A la mañana siguiente (tras 8 a 12 horas), vuelve a abrir contacto sin arrancar y toca "☀️ Comparar Mañana".',
+    why: 'Una batería VRLA de 4Ah sana pierde menos de 0.15V en toda la noche. Si cae más de 0.25V en reposo, tu alarma, GPS o un relé mal aislado está consumiendo corriente parásita (>3 mA).'
+  },
+  load_psi_guide: {
+    category: 'ERGONOMÍA, SUSPENSIÓN & AGARRE',
+    title: 'Modo Piloto Solo vs. Copiloto / Carga (PSI + Monoshock)',
+    how: 'Cambia con un toque entre "👤 Solo" (25 PSI del / 28 PSI tras • Monoshock muesca 2-3) y "👥 Copiloto / Carga" (25 PSI del / 32 PSI tras • Monoshock muesca 4-5).',
+    why: 'Subir 4 PSI en la rueda trasera y endurecer la precarga del monoshock Nitrox al llevar pasajero o maletas evita que la suspensión haga tope en baches y mantiene la geometría de frenado ABS.'
   }
 };
 

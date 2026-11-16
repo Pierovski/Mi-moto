@@ -20,7 +20,10 @@ import {
   getLocalISODate,
   escapeHTML,
   triggerHaptic,
-  compressImage
+  compressImage,
+  saveVaultDocMedia,
+  getVaultDocMedia,
+  deleteVaultDocMedia
 } from './state.js';
 import {
   getLastServiceRecord,
@@ -62,6 +65,12 @@ import {
   searchPlaceByName,
   searchAndPlotPoisOnMap,
   calculateRealRouteAndElevation,
+  renderNightDrainUI,
+  startBlackboxReplayMode,
+  closeBlackboxReplayMode,
+  toggleBlackboxReplayPlay,
+  cycleBlackboxReplaySpeed,
+  seekBlackboxReplayFrame,
   renderAllMain
 } from './ui.js';
 import {
@@ -628,6 +637,34 @@ function openTireModal(pos) {
 }
 
 // ================= DELEGACIÓN Y EVENTOS PRINCIPALES =================
+
+async function syncVaultDocsUI() {
+  const soatImg = await getVaultDocMedia('soat_cert');
+  const cardImg = await getVaultDocMedia('prop_card');
+
+  const soatBadge = document.getElementById('vault-soat-badge');
+  const btnViewSoat = document.getElementById('btn-vault-view-soat');
+  const btnDelSoat = document.getElementById('btn-vault-del-soat');
+
+  if (soatBadge) {
+    soatBadge.textContent = soatImg ? 'Guardado ✓' : 'Vacío';
+    soatBadge.className = `status-pill ${soatImg ? 'status-ok' : 'status-warn'}`;
+  }
+  btnViewSoat?.classList.toggle('hidden', !soatImg);
+  btnDelSoat?.classList.toggle('hidden', !soatImg);
+
+  const cardBadge = document.getElementById('vault-card-badge');
+  const btnViewCard = document.getElementById('btn-vault-view-card');
+  const btnDelCard = document.getElementById('btn-vault-del-card');
+
+  if (cardBadge) {
+    cardBadge.textContent = cardImg ? 'Guardado ✓' : 'Vacío';
+    cardBadge.className = `status-pill ${cardImg ? 'status-ok' : 'status-warn'}`;
+  }
+  btnViewCard?.classList.toggle('hidden', !cardImg);
+  btnDelCard?.classList.toggle('hidden', !cardImg);
+}
+
 function setupEventListeners() {
   window.addEventListener('popstate', () => {
     const modalPriority = [
@@ -673,6 +710,100 @@ function setupEventListeners() {
   if (cloudHeaderPill) {
     cloudHeaderPill.addEventListener('click', () => openModalById('modal-backup'));
   }
+
+  // Acceso directo desde la Placa en cabecera hacia la Guantera Digital
+  document.getElementById('header-plate-badge')?.addEventListener('click', () => {
+    document.getElementById('btn-open-docs-modal')?.click();
+    triggerHaptic(10);
+  });
+
+  // Menú desplegable compacto de herramientas en Cockpit (.mo-tools-popover)
+  const btnMoTools = document.getElementById('btn-mo-tools-toggle');
+  const moToolsPopover = document.getElementById('mo-tools-popover');
+  if (btnMoTools && moToolsPopover) {
+    btnMoTools.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      moToolsPopover.classList.toggle('hidden');
+      triggerHaptic(8);
+    });
+    document.addEventListener('click', (ev) => {
+      if (!moToolsPopover.classList.contains('hidden') && !ev.target.closest('.mo-tools-dropdown-wrap')) {
+        moToolsPopover.classList.add('hidden');
+      }
+    });
+  }
+
+  // Switch Rápido Piloto Solo vs. Copiloto / Carga (PSI + Monoshock Nitrox)
+  document.getElementById('btn-toggle-load-mode')?.addEventListener('click', () => {
+    appState.rideLoadMode = appState.rideLoadMode === 'pillion' ? 'solo' : 'pillion';
+    saveState();
+    renderGarageSection();
+    triggerHaptic(14);
+    showToast(
+      appState.rideLoadMode === 'pillion'
+        ? '👥 Modo Copiloto/Carga: 25 / 32 PSI • Monoshock Pos 4-5'
+        : '👤 Modo Piloto Solo: 25 / 28 PSI • Monoshock Pos 2-3'
+    );
+  });
+
+  // Auditoría de Drenaje Parásito Nocturno (Batería 4Ah en reposo)
+  document.getElementById('btn-night-save-base')?.addEventListener('click', () => {
+    let v = liveEcuData.connected && liveEcuData.voltage > 5 ? Number(liveEcuData.voltage) : 0;
+    if (!v) {
+      const manual = window.prompt('Ingresa el voltaje actual en reposo (vía multímetro o contacto OBD2):', '12.75');
+      if (manual === null) return;
+      v = parseFloat(String(manual).replace(',', '.'));
+    }
+    if (isNaN(v) || v < 8 || v > 16) {
+      showToast('⚠️ Ingresa un voltaje válido entre 8.0V y 16.0V');
+      return;
+    }
+    appState.nightDrainTest = {
+      baseVolt: Number(v.toFixed(2)),
+      baseTimeMs: Date.now(),
+      morningVolt: 0,
+      morningTimeMs: 0,
+      hoursElapsed: 0,
+      dropVolt: 0
+    };
+    saveState();
+    renderNightDrainUI();
+    triggerHaptic(15);
+    showToast(`🌙 Base nocturna guardada: ${v.toFixed(2)}V`);
+  });
+
+  document.getElementById('btn-night-compare-morning')?.addEventListener('click', () => {
+    const nd = appState.nightDrainTest || {};
+    if (!nd.baseVolt || nd.baseVolt <= 0) {
+      showToast('⚠️ Primero registra la "🌙 Base Noche" al apagar tu moto');
+      return;
+    }
+    let v = liveEcuData.connected && liveEcuData.voltage > 5 ? Number(liveEcuData.voltage) : 0;
+    if (!v) {
+      const manual = window.prompt(`Base anoche: ${nd.baseVolt.toFixed(2)}V. Ingresa el voltaje en frío de esta mañana:`, '12.62');
+      if (manual === null) return;
+      v = parseFloat(String(manual).replace(',', '.'));
+    }
+    if (isNaN(v) || v < 8 || v > 16) {
+      showToast('⚠️ Ingresa un voltaje válido entre 8.0V y 16.0V');
+      return;
+    }
+    const nowMs = Date.now();
+    const hours = nd.baseTimeMs > 0 ? Math.max(0.1, (nowMs - nd.baseTimeMs) / 3600000) : 8.0;
+    const drop = Number((nd.baseVolt - v).toFixed(2));
+
+    appState.nightDrainTest = {
+      ...nd,
+      morningVolt: Number(v.toFixed(2)),
+      morningTimeMs: nowMs,
+      hoursElapsed: Number(hours.toFixed(1)),
+      dropVolt: drop
+    };
+    saveState();
+    renderNightDrainUI();
+    triggerHaptic(20);
+    showToast(drop > 0.25 ? `⚠️ Fuga detectada (-${drop.toFixed(2)}V)` : `✅ Reposo evaluado (Δ ${drop.toFixed(2)}V)`);
+  });
 
   // Modo Alto Contraste Solar (Ruta a Mediodía)
   const toggleSunlightHandler = () => {
@@ -820,6 +951,47 @@ function setupEventListeners() {
       triggerHaptic(15);
       showToast('📊 Telemetría .CSV descargada');
     }
+  });
+
+  // Eventos del Reproductor Interactivo de Caja Negra (Race Replay en el Mapa)
+  const openRaceReplayHandler = () => {
+    const hadRecordedPts = (liveEcuData.blackbox?.points?.length || 0) >= 2;
+    activateMachineOutdoorsSubView('map');
+    document.getElementById('mo-tools-popover')?.classList.add('hidden');
+    setTimeout(() => {
+      if (startBlackboxReplayMode()) {
+        triggerHaptic(15);
+        showToast(
+          hadRecordedPts
+            ? `▶️ Race Replay: ${liveEcuData.blackbox.points.length} muestras cargadas`
+            : '▶️ Race Replay Demo cargado (desliza la barra o dale Play)'
+        );
+      }
+    }, 90);
+  };
+
+  document.getElementById('btn-bb-open-replay')?.addEventListener('click', openRaceReplayHandler);
+  document.getElementById('btn-mo-open-replay-top')?.addEventListener('click', openRaceReplayHandler);
+
+  document.getElementById('btn-replay-play')?.addEventListener('click', () => {
+    toggleBlackboxReplayPlay();
+    triggerHaptic(10);
+  });
+
+  document.getElementById('btn-replay-speed')?.addEventListener('click', () => {
+    const mult = cycleBlackboxReplaySpeed();
+    triggerHaptic(8);
+    showToast(`⏩ Velocidad Replay: ${mult}x`);
+  });
+
+  document.getElementById('replay-scrubber')?.addEventListener('input', (ev) => {
+    seekBlackboxReplayFrame(ev.target.value);
+  });
+
+  document.getElementById('btn-replay-close')?.addEventListener('click', () => {
+    closeBlackboxReplayMode();
+    triggerHaptic(10);
+    showToast('⏹ Saliste del modo Race Replay');
   });
 
   const btnScanDtc = document.getElementById('btn-obd-scan-dtc');
@@ -2295,7 +2467,74 @@ function setupEventListeners() {
     const sosInp = document.getElementById('doc-sos-phone');
     if (sosInp) sosInp.value = d.sosPhone || '';
     checkDocsStatusUI();
+    syncVaultDocsUI();
+    document.getElementById('vault-preview-box')?.classList.add('hidden');
     openModalById('modal-docs');
+  });
+
+  // Eventos de Bóveda Offline IndexedDB (Certificado SOAT y Tarjeta de Propiedad)
+  const soatVaultInput = document.getElementById('vault-soat-input');
+  const cardVaultInput = document.getElementById('vault-card-input');
+
+  document.getElementById('btn-vault-upload-soat')?.addEventListener('click', () => soatVaultInput?.click());
+  document.getElementById('btn-vault-upload-card')?.addEventListener('click', () => cardVaultInput?.click());
+
+  soatVaultInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    compressImage(file, 1280, async (base64) => {
+      await saveVaultDocMedia('soat_cert', base64);
+      await syncVaultDocsUI();
+      triggerHaptic(15);
+      showToast('📄 Certificado SOAT guardado offline');
+    });
+    e.target.value = '';
+  });
+
+  cardVaultInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    compressImage(file, 1280, async (base64) => {
+      await saveVaultDocMedia('prop_card', base64);
+      await syncVaultDocsUI();
+      triggerHaptic(15);
+      showToast('🪪 Tarjeta de Propiedad guardada offline');
+    });
+    e.target.value = '';
+  });
+
+  const showVaultPreview = async (docKey, title) => {
+    const data = await getVaultDocMedia(docKey);
+    if (!data) return;
+    const box = document.getElementById('vault-preview-box');
+    const img = document.getElementById('vault-preview-img');
+    const ttl = document.getElementById('vault-preview-title');
+    if (box && img && ttl) {
+      ttl.textContent = title;
+      img.src = data;
+      box.classList.remove('hidden');
+      triggerHaptic(10);
+    }
+  };
+
+  document.getElementById('btn-vault-view-soat')?.addEventListener('click', () => showVaultPreview('soat_cert', '📄 Certificado SOAT (Offline)'));
+  document.getElementById('btn-vault-view-card')?.addEventListener('click', () => showVaultPreview('prop_card', '🪪 Tarjeta de Propiedad (Offline)'));
+  document.getElementById('btn-close-vault-preview')?.addEventListener('click', () => {
+    document.getElementById('vault-preview-box')?.classList.add('hidden');
+  });
+
+  document.getElementById('btn-vault-del-soat')?.addEventListener('click', async () => {
+    await deleteVaultDocMedia('soat_cert');
+    await syncVaultDocsUI();
+    document.getElementById('vault-preview-box')?.classList.add('hidden');
+    showToast('Documento SOAT eliminado de la bóveda');
+  });
+
+  document.getElementById('btn-vault-del-card')?.addEventListener('click', async () => {
+    await deleteVaultDocMedia('prop_card');
+    await syncVaultDocsUI();
+    document.getElementById('vault-preview-box')?.classList.add('hidden');
+    showToast('Tarjeta eliminada de la bóveda');
   });
 
   document.getElementById('btn-cal-soat').addEventListener('click', () => {
