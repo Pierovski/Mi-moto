@@ -908,21 +908,16 @@
             </button>
           </nav>
 
-          <!-- Acciones Principales Despejadas + Menú Táctico -->
+          <!-- Acciones ECU y Pantalla Directas en Cabecera (1 Toque) -->
           <div class="mo-quick-actions">
             <button type="button" id="btn-obd-connect" class="mo-top-pill connect" title="Conectar Escáner OBD2">⚡ ECU</button>
+            <button type="button" id="btn-obd-sim" class="mo-top-pill" title="Simulador en Ruta">Demo</button>
             <button type="button" id="btn-obd-rec-toggle" class="mo-top-pill rec" title="Grabar Caja Negra">🔴 REC</button>
-            <div class="mo-tools-dropdown-wrap">
-              <button type="button" id="btn-mo-tools-toggle" class="mo-top-pill icon-only" title="Controles de Pantalla y Demo">⚙️</button>
-              <div id="mo-tools-popover" class="mo-tools-popover hidden">
-                <button type="button" id="btn-obd-sim" class="mo-top-pill" title="Simulador en Ruta">⚡ Modo Demo</button>
-                <button type="button" id="btn-mo-open-replay-top" class="mo-top-pill" title="Reproducir última sesión de Caja Negra en el Mapa">▶️ Replay Ruta</button>
-                <button type="button" id="btn-obd-sunlight" class="mo-top-pill" title="Modo Sol">☀️ Alto Contraste</button>
-                <button type="button" id="btn-obd-rotate" class="mo-top-pill" title="Girar Pantalla">🔄 Giro</button>
-                <button type="button" id="btn-obd-ride-mode" class="mo-top-pill" title="Pantalla Completa">⛶ Timón</button>
-                <button type="button" class="mo-top-pill" data-info-key="obd_ecu_guide">ⓘ Guía Cockpit</button>
-              </div>
-            </div>
+            <button type="button" id="btn-mo-open-replay-top" class="mo-top-pill" title="Reproducir Ruta Grabada">▶️</button>
+            <button type="button" id="btn-obd-rotate" class="mo-top-pill icon-only" title="Activar Modo Horizontal">🔄</button>
+            <button type="button" id="btn-obd-ride-mode" class="mo-top-pill icon-only" title="Pantalla Completa Timón">⛶</button>
+            <button type="button" id="btn-obd-sunlight" class="mo-top-pill icon-only" title="Modo Sol Alto Contraste">☀️</button>
+            <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_ecu_guide" title="Guía del Cockpit">ⓘ</button>
           </div>
         </header>
 

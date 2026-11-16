@@ -165,7 +165,7 @@ function applySunlightMode(enabled) {
   const topBtn = document.getElementById('btn-toggle-sunlight');
   const obdBtn = document.getElementById('btn-obd-sunlight');
   if (topBtn) topBtn.classList.toggle('sun-active', appState.sunlightMode);
-  if (obdBtn) obdBtn.textContent = appState.sunlightMode ? '🌙 Oscuro' : '☀️ Sol';
+  if (obdBtn) obdBtn.textContent = appState.sunlightMode ? '🌙' : '☀️';
 }
 
 function updateHeaderCloudIndicator(status = 'idle') {
@@ -216,11 +216,11 @@ function renderQuickPicksUI() {
 }
 
 async function exitEcuLandscapeIfNeeded() {
-  document.body.classList.remove('ecu-ride-mode', 'ecu-tab-active');
+  document.body.classList.remove('ecu-ride-mode', 'ecu-tab-active', 'ecu-force-landscape');
   const rideBtn = document.getElementById('btn-obd-ride-mode');
-  if (rideBtn) rideBtn.textContent = '⛶ Timón';
+  if (rideBtn) rideBtn.textContent = '⛶';
   const rotBtn = document.getElementById('btn-obd-rotate');
-  if (rotBtn) rotBtn.textContent = '🔄 Giro';
+  if (rotBtn) rotBtn.textContent = '🔄';
 
   try {
     if (screen.orientation && screen.orientation.unlock) {
@@ -1017,34 +1017,42 @@ function setupEventListeners() {
     });
   }
 
-  // Botón Rotación Horizontal Exclusiva para la Pestaña ECU
+  // Botón Rotación Horizontal Exclusiva para la Pestaña ECU (Con bloqueo nativo + Modo Widescreen Forzado)
   const btnRotateEcu = document.getElementById('btn-obd-rotate');
   if (btnRotateEcu) {
     btnRotateEcu.addEventListener('click', async () => {
-      const isLandscape = window.matchMedia('(orientation: landscape)').matches;
-      try {
-        if (!isLandscape) {
-          document.body.classList.add('ecu-ride-mode', 'ecu-tab-active');
+      const isNativeLandscape = window.matchMedia('(orientation: landscape)').matches;
+      const isForcedLandscape = document.body.classList.contains('ecu-force-landscape');
+      const currentlyHorizontal = isNativeLandscape || isForcedLandscape;
+
+      if (!currentlyHorizontal) {
+        document.body.classList.add('ecu-ride-mode', 'ecu-tab-active', 'ecu-force-landscape');
+        btnRotateEcu.textContent = '📱';
+        try {
           if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
             await document.documentElement.requestFullscreen();
           }
           if (screen.orientation && screen.orientation.lock) {
             await screen.orientation.lock('landscape');
           }
-          btnRotateEcu.textContent = '🔄 Vert';
-          showToast('🔄 Modo Horizontal ECU Activado');
-        } else {
+        } catch (err) {}
+        refreshLeafletSize();
+        triggerHaptic(15);
+        showToast('🔄 Modo Horizontal Widescreen Activado');
+      } else {
+        document.body.classList.remove('ecu-force-landscape', 'ecu-ride-mode');
+        btnRotateEcu.textContent = '🔄';
+        try {
           if (screen.orientation && screen.orientation.unlock) {
             screen.orientation.unlock();
           }
           if (document.fullscreenElement && document.exitFullscreen) {
             await document.exitFullscreen();
           }
-          btnRotateEcu.textContent = '🔄 Giro';
-          showToast('📱 Modo Vertical Restaurado');
-        }
-      } catch (err) {
-        showToast('💡 Gira tu teléfono horizontalmente (activa Giro Automático)');
+        } catch (err) {}
+        refreshLeafletSize();
+        triggerHaptic(12);
+        showToast('📱 Modo Vertical Restaurado');
       }
     });
   }
@@ -1477,7 +1485,7 @@ function setupEventListeners() {
   if (btnRideMode) {
     btnRideMode.addEventListener('click', async () => {
       const isRide = document.body.classList.toggle('ecu-ride-mode');
-      btnRideMode.textContent = isRide ? '↙ Salir' : '⛶ Timón';
+      btnRideMode.textContent = isRide ? '↙' : '⛶';
       try {
         if (isRide && document.documentElement.requestFullscreen && !document.fullscreenElement) {
           await document.documentElement.requestFullscreen();

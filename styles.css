@@ -2631,3 +2631,78 @@ body[data-sunlight="true"] .leaflet-tile-pane {
   box-shadow: 0 0 8px var(--neon-lime);
   cursor: pointer;
 }
+
+/* ================= ROTACIÓN HORIZONTAL FORZADA (FUNCIONA INCLUSO CON GIRO AUTOMÁTICO DESACTIVADO EN EL CELULAR) ================= */
+@media (orientation: portrait) {
+  body.ecu-tab-active.ecu-force-landscape .tabs-nav-5 {
+    display: none !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape #main-screen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 100vw !important;
+    width: 100dvh !important;
+    height: 100vw !important;
+    max-width: none !important;
+    max-height: none !important;
+    transform-origin: top left !important;
+    transform: rotate(90deg) !important;
+    z-index: 980 !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape #tab-ecu:not(.hidden) {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape .mo-nav-workspace {
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape .machine-map-canvas-box {
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape .mo-hud-4panel {
+    width: 222px !important;
+    height: 100% !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: repeat(4, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape #obd-live-panel:not(.hidden) {
+    display: grid !important;
+    grid-template-columns: 1.15fr 1.35fr !important;
+    grid-template-rows: 1fr auto auto !important;
+    gap: 6px !important;
+    overflow: hidden !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape .obd-machine-dials-grid {
+    grid-column: 1 / 2 !important;
+    grid-row: 1 / 2 !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape .obd-vitals-grid-4 {
+    grid-column: 2 / 3 !important;
+    grid-row: 1 / 2 !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape .obd-micro-grid-6 {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 / 3 !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape .obd-machine-footer-strip {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 / 4 !important;
+  }
+}
