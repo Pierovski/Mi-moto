@@ -14,8 +14,24 @@ import {
   computeFuelTelemetry,
   computeWorkshopRanking,
   evaluateDocsStatus,
-  computeMasterFinancials
+  computeMasterFinancials,
+  computeMonthlySpendSeries,
+  computeMonthlyPilotSummary,
+  computePriorityAlert
 } from './telemetry.js';
+
+
+function getThemeColors() {
+  const cs = getComputedStyle(document.body);
+  return {
+    neon: (cs.getPropertyValue('--neon-lime') || '#58E800').trim(),
+    accent: (cs.getPropertyValue('--caribbean-bright') || '#38D6FF').trim(),
+    bright: (cs.getPropertyValue('--caribbean-bright') || '#38D6FF').trim(),
+    ok: (cs.getPropertyValue('--status-ok') || '#22C55E').trim(),
+    warn: (cs.getPropertyValue('--amber-warn') || '#FF9F0A').trim(),
+    danger: (cs.getPropertyValue('--red-danger') || '#FF453A').trim()
+  };
+}
 
 let toastTimeout = null;
 let confirmCallback = null;
@@ -61,7 +77,9 @@ export const uiConfig = {
   replayActive: false,
   replayPlaying: false,
   replayIdx: 0,
-  replaySpeedMult: 1
+  replaySpeedMult: 1,
+  dismissedAlertId: null,
+  currentPriorityAlert: null
 };
 
 function isRouteActive(route) {
@@ -190,16 +208,24 @@ function bindSmartSearchHudOnce() {
     if (clearSearchBtn) clearSearchBtn.classList.add('hidden');
     clearActiveRouteOnMap();
     triggerHaptic(12);
-    showToast('🗺️ Ruta finalizada • Modo Exploración Libre');
+    showToast('Ruta finalizada • Modo Exploración Libre');
   });
 }
 
-// ================= GESTOR NATIVO DE MODALES =================
+// ================= GESTOR NATIVO DE MODALES APILADOS (SIN BUG POPSTATE) =================
+const openModalStack = [];
+let ignoreNextPopstateCount = 0;
+
 export function openModalById(modalId, pushHistory = true) {
   const el = document.getElementById(modalId);
   if (!el) return;
   const wasHidden = el.classList.contains('hidden');
   el.classList.remove('hidden');
+
+  const existingIdx = openModalStack.indexOf(modalId);
+  if (existingIdx !== -1) openModalStack.splice(existingIdx, 1);
+  openModalStack.push(modalId);
+
   if (wasHidden && pushHistory) {
     history.pushState({ modalOpen: modalId }, '');
   }
@@ -209,12 +235,43 @@ export function closeModalById(modalId, skipHistoryBack = false) {
   const el = document.getElementById(modalId);
   if (!el || el.classList.contains('hidden')) return;
   el.classList.add('hidden');
+
+  const stackIdx = openModalStack.lastIndexOf(modalId);
+  if (stackIdx !== -1) openModalStack.splice(stackIdx, 1);
+
   if (modalId === 'modal-confirm') {
     confirmCallback = null;
   }
   if (!skipHistoryBack && history.state && history.state.modalOpen) {
+    ignoreNextPopstateCount++;
     history.back();
   }
+}
+
+export function handlePopstateModalBack(fallbackPriorityList = []) {
+  if (ignoreNextPopstateCount > 0) {
+    ignoreNextPopstateCount--;
+    return false;
+  }
+
+  while (openModalStack.length > 0) {
+    const topId = openModalStack[openModalStack.length - 1];
+    const el = document.getElementById(topId);
+    if (el && !el.classList.contains('hidden')) {
+      closeModalById(topId, true);
+      return true;
+    }
+    openModalStack.pop();
+  }
+
+  for (const id of fallbackPriorityList) {
+    const el = document.getElementById(id);
+    if (el && !el.classList.contains('hidden')) {
+      closeModalById(id, true);
+      return true;
+    }
+  }
+  return false;
 }
 
 export function resetSweepFlag() {
@@ -365,6 +422,7 @@ export function renderImages() {
   const onbPhotoPh = document.getElementById('photo-placeholder');
   const banner = document.getElementById('main-bike-banner');
   const bannerImg = document.getElementById('banner-bike-img');
+  const heroShell = document.getElementById('hero-cockpit-shell');
 
   if (appState.bikePhotoBase64) {
     onbPhoto.src = appState.bikePhotoBase64;
@@ -372,8 +430,15 @@ export function renderImages() {
     onbPhotoPh.classList.add('hidden');
     bannerImg.src = appState.bikePhotoBase64;
     banner.classList.remove('hidden');
+    if (heroShell) heroShell.classList.add('has-photo');
   } else {
     banner.classList.add('hidden');
+    if (heroShell) heroShell.classList.remove('has-photo');
+  }
+
+  const heroBadgeRow = document.getElementById('hero-top-badge-row');
+  if (heroBadgeRow) {
+    heroBadgeRow.classList.toggle('hidden', !appState.bikePhotoBase64 && appState.currentKm >= 2000);
   }
 }
 
@@ -443,26 +508,27 @@ export function renderSparkline(points) {
     badge.style.color = 'var(--caribbean-bright)';
   } else if (diffLast > 0) {
     badge.textContent = `▲ Mejoró +${diffLast.toFixed(1)} km/gal`;
-    badge.style.color = 'var(--neon-lime)';
+    badge.style.color = 'var(--status-ok)';
   } else {
     badge.textContent = `▼ Varió ${diffLast.toFixed(1)} km/gal`;
     badge.style.color = 'var(--amber-warn)';
   }
 
+  const tc = getThemeColors();
   const circlesHtml = coords
-    .map((c, i) => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${i === coords.length - 1 ? 3.5 : 2.5}" fill="${i === coords.length - 1 ? '#58E800' : '#49BFE6'}" />`)
+    .map((c, i) => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${i === coords.length - 1 ? 3.5 : 2.5}" fill="${i === coords.length - 1 ? tc.neon : tc.accent}" stroke="${i === coords.length - 1 ? '#FFFFFF' : 'none'}" stroke-width="1.5" />`)
     .join('');
 
   wrap.innerHTML = `
     <svg viewBox="0 0 ${width} ${height}" width="100%" height="100%" preserveAspectRatio="none">
       <defs>
         <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#49BFE6" stop-opacity="0.32"/>
-          <stop offset="100%" stop-color="#49BFE6" stop-opacity="0.0"/>
+          <stop offset="0%" stop-color="${tc.accent}" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="${tc.accent}" stop-opacity="0.0"/>
         </linearGradient>
       </defs>
       <polygon points="${areaPoints}" fill="url(#sparkGrad)" />
-      <polyline fill="none" stroke="#49BFE6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polylinePoints}" />
+      <polyline fill="none" stroke="${tc.accent}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polylinePoints}" />
       ${circlesHtml}
     </svg>
   `;
@@ -478,7 +544,7 @@ export function renderMaintenanceCards() {
     if (chainHealth.stretchWarning) {
       chainBanner.classList.remove('hidden');
       chainBanner.innerHTML = `
-        <strong>⚠️ Alerta de Estiramiento en Cadena 428 O-Ring</strong>
+        <strong>Alerta de Estiramiento en Cadena 428 O-Ring</strong>
         <span>Has tenido que tensar el eje trasero 3 veces en solo <strong>${chainHealth.stretchSpanKm.toLocaleString('es-PE')} km</strong>. Inspecciona posible desgaste en dientes de catalina (45T) y piñón (14T) o eslabones rígidos.</span>
       `;
     } else {
@@ -492,7 +558,7 @@ export function renderMaintenanceCards() {
     if (liveEcuData?.connected && Math.abs(stftVal) >= 8.5) {
       fiStftBanner.classList.remove('hidden');
       fiStftBanner.innerHTML = `
-        <strong>⚠️ Alerta Preventiva Inyección Bosch FI (STFT ${stftVal > 0 ? '+' : ''}${stftVal.toFixed(1)}%)</strong>
+        <strong>Alerta Preventiva Inyección Bosch FI (STFT ${stftVal > 0 ? '+' : ''}${stftVal.toFixed(1)}%)</strong>
         <span>La ECU está compensando mezcla fuera del rango ideal (±8%). Programa limpieza de cuerpo de aceleración (mariposa TPS/IACV), revisa microfiltro del inyector o posibles entradas de aire.</span>
       `;
     } else {
@@ -529,7 +595,7 @@ export function renderMaintenanceCards() {
 
     let statusClass = 'status-ok';
     let statusText = 'AL DÍA';
-    let barColor = 'var(--neon-lime)';
+    let barColor = 'var(--status-ok)';
     let showCalBtn = false;
     let urgencyWeight = 0;
 
@@ -571,7 +637,7 @@ export function renderMaintenanceCards() {
         : '';
 
     const calBtnHtml = showCalBtn
-      ? `<button type="button" class="btn-cal-ics" data-cal-maint="${escapeHTML(rule.title)}" data-cal-targetkm="${nextTargetKm}" data-cal-daysleft="${daysLeft !== null ? daysLeft : ''}">📅 Agendar</button>`
+      ? `<button type="button" class="btn-cal-ics" data-cal-maint="${escapeHTML(rule.title)}" data-cal-targetkm="${nextTargetKm}" data-cal-daysleft="${daysLeft !== null ? daysLeft : ''}">Agendar</button>`
       : '';
 
     const fillStyle =
@@ -615,12 +681,37 @@ export function renderMaintenanceCards() {
     return a.originalIdx - b.originalIdx;
   });
 
-  evaluatedCards.forEach((item) => {
-    const card = document.createElement('div');
-    card.className = 'maint-card';
-    card.innerHTML = item.html;
-    grid.appendChild(card);
-  });
+  const attentionCards = evaluatedCards.filter((c) => c.urgencyWeight > 0);
+  const okCards = evaluatedCards.filter((c) => c.urgencyWeight === 0);
+
+  if (attentionCards.length > 0) {
+    const attHead = document.createElement('div');
+    attHead.className = 'maint-group-label warn';
+    attHead.textContent = `ATENCIÓN REQUERIDA (${attentionCards.length})`;
+    grid.appendChild(attHead);
+
+    attentionCards.forEach((item) => {
+      const card = document.createElement('div');
+      card.className = 'maint-card maint-urgent';
+      card.innerHTML = item.html;
+      grid.appendChild(card);
+    });
+  }
+
+  if (okCards.length > 0) {
+    if (attentionCards.length > 0) {
+      const okHead = document.createElement('div');
+      okHead.className = 'maint-group-label ok';
+      okHead.textContent = `AL DÍA (${okCards.length})`;
+      grid.appendChild(okHead);
+    }
+    okCards.forEach((item) => {
+      const card = document.createElement('div');
+      card.className = 'maint-card maint-healthy';
+      card.innerHTML = item.html;
+      grid.appendChild(card);
+    });
+  }
 
   const healthBadge = document.getElementById('bike-health-badge');
   const docsCheck = checkDocsStatusUI();
@@ -639,7 +730,7 @@ export function renderMaintenanceCards() {
     healthBadge.style.color = 'var(--amber-warn)';
   } else {
     healthBadge.textContent = `● Sistema 100% Óptimo`;
-    healthBadge.style.color = 'var(--neon-lime)';
+    healthBadge.style.color = 'var(--status-ok)';
   }
 }
 
@@ -715,9 +806,9 @@ export function renderLogs() {
   const sortedDesc = [...filtered].sort((a, b) => Number(b.km) - Number(a.km) || b.id - a.id);
 
   const chainActionLabels = {
-    lube_only: '🧴 Solo Limpieza/Lub',
-    lube_and_tension: '🔧 Lub + Tensión Eje',
-    kit_replace: '⚙️ Kit Nuevo 14T/45T'
+    lube_only: 'Solo Limpieza/Lub',
+    lube_and_tension: 'Lub + Tensión Eje',
+    kit_replace: 'Kit Nuevo 14T/45T'
   };
 
   sortedDesc.forEach((item) => {
@@ -727,7 +818,7 @@ export function renderLogs() {
     const parts = Number(item.partsCost ?? item.cost) || 0;
     const labor = Number(item.laborCost) || 0;
     if (item.workshop) {
-      badges.push(`<span class="tele-chip">🏪 ${escapeHTML(item.workshop)}</span>`);
+      badges.push(`<span class="tele-chip">Taller: ${escapeHTML(item.workshop)}</span>`);
     }
     if (item.typeId === 'chain_lube' && item.chainAction && chainActionLabels[item.chainAction]) {
       badges.push(`<span class="tele-chip">${chainActionLabels[item.chainAction]}</span>`);
@@ -771,21 +862,6 @@ export function renderLogs() {
 
 export function renderFuelSection() {
   document.getElementById('fuel-count-badge').textContent = appState.fuelLogs.length;
-
-  const loanBanner = document.getElementById('loan-mode-banner');
-  const loanTitle = document.getElementById('loan-mode-title');
-  const loanDesc = document.getElementById('loan-mode-desc');
-  const loanBtn = document.getElementById('btn-toggle-loan-mode');
-
-  if (loanBanner) {
-    const isLoan = Boolean(appState.loanModeActive);
-    loanBanner.classList.toggle('active', isLoan);
-    loanTitle.textContent = isLoan ? 'Modo Préstamo: ACTIVO (Aislando datos)' : 'Modo Préstamo: Desactivado';
-    loanDesc.textContent = isLoan
-      ? 'Las cargas registradas ahora no alterarán tu promedio histórico de km/gal'
-      : 'Actívalo si prestas la moto para no alterar tu promedio km/gal';
-    loanBtn.textContent = isLoan ? 'Desactivar' : 'Activar';
-  }
 
   const labelMap = {
     week: 'PREMIUM (SEMANA)',
@@ -859,7 +935,7 @@ export function renderFuelSection() {
       diagBanner.classList.remove('hidden');
       diagBanner.classList.toggle('ok', tele.diagnosticAlert.status === 'ok');
       diagBanner.innerHTML = `
-        <strong>${tele.diagnosticAlert.status === 'ok' ? '✅' : '⚠️'} Diagnóstico Preventivo FI: ${escapeHTML(tele.diagnosticAlert.title)}</strong>
+        <strong>Diagnóstico Preventivo FI: ${escapeHTML(tele.diagnosticAlert.title)}</strong>
         <span>${escapeHTML(tele.diagnosticAlert.advice)}</span>
       `;
     } else {
@@ -877,8 +953,8 @@ export function renderFuelSection() {
       const top = tele.stationRanking[0];
       stSub.innerHTML =
         top.realCostPerKm > 0
-          ? `🏆 Más rentable: <strong style="color:var(--neon-lime)">${escapeHTML(top.name)}</strong> (S/ ${top.realCostPerKm.toFixed(2)}/km • ${top.realKmPerGal.toFixed(1)} km/gal)`
-          : `🏆 Mejor precio galón: <strong style="color:var(--caribbean-bright)">${escapeHTML(top.name)}</strong> (S/ ${top.avgPrice.toFixed(2)}/gal)`;
+          ? `Más rentable: <strong style="color:var(--neon-lime)">${escapeHTML(top.name)}</strong> (S/ ${top.realCostPerKm.toFixed(2)}/km • ${top.realKmPerGal.toFixed(1)} km/gal)`
+          : `Mejor precio galón: <strong style="color:var(--caribbean-bright)">${escapeHTML(top.name)}</strong> (S/ ${top.avgPrice.toFixed(2)}/gal)`;
     } else {
       stSub.textContent = 'Elige o escribe el nombre del grifo al abastecer (ej. Primax, Repsol)';
     }
@@ -893,7 +969,7 @@ export function renderFuelSection() {
         div.className = 'rank-item-row';
         div.innerHTML = `
           <div class="log-left">
-            <h4><span class="rank-medal ${idx === 0 ? 'top1' : ''}">#${idx + 1}</span> ⛽ ${escapeHTML(st.name)}</h4>
+            <h4><span class="rank-medal ${idx === 0 ? 'top1' : ''}">#${idx + 1}</span> ${escapeHTML(st.name)}</h4>
             <div class="log-meta">${st.visits} carga(s) • Promedio: S/ ${st.avgPrice > 0 ? st.avgPrice.toFixed(2) : '--'}/gal</div>
             <div class="log-telemetry-badges">
               ${st.realKmPerGal > 0 ? `<span class="tele-chip neon">Rinde ${st.realKmPerGal.toFixed(1)} km/gal</span>` : `<span class="tele-chip">Acumulando tramo completo</span>`}
@@ -981,7 +1057,7 @@ export function renderFuelSection() {
     const chips = [];
 
     if (tInfo && tInfo.isLoan) {
-      chips.push(`<span class="mem-badge mem-up">🤝 Modo Préstamo (Aislado)</span>`);
+      chips.push(`<span class="mem-badge mem-up">Modo Préstamo (Aislado)</span>`);
     } else if (tInfo && tInfo.isBase) {
       chips.push(`<span class="tele-chip">Punto Base Inicial (1er Corte)</span>`);
     } else if (tInfo && tInfo.isPartial) {
@@ -1011,7 +1087,7 @@ export function renderFuelSection() {
         <h4>Premium • ${Number(f.gallons).toFixed(2)} gal</h4>
         <div class="log-meta">${escapeHTML(f.date)} • Odómetro: ${Number(f.km).toLocaleString('es-PE')} km</div>
         <div class="log-telemetry-badges">${chips.join('')}</div>
-        ${f.notes ? `<div class="log-notes">⛽ ${escapeHTML(f.notes)}</div>` : ''}
+        ${f.notes ? `<div class="log-notes">Grifo: ${escapeHTML(f.notes)}</div>` : ''}
       </div>
       <div class="log-right">
         <span class="log-cost">S/ ${Number(f.cost).toFixed(2)}</span>
@@ -1061,7 +1137,7 @@ export function renderGarageSection() {
       div.className = 'log-item';
       div.innerHTML = `
         <div class="log-left">
-          <h4>🚿 ${escapeHTML(w.type || 'Lavado')}</h4>
+          <h4>${escapeHTML(w.type || 'Lavado')}</h4>
           <div class="log-meta">${escapeHTML(w.date)} • ${Number(w.km).toLocaleString('es-PE')} km</div>
           ${w.notes ? `<div class="log-notes">${escapeHTML(w.notes)}</div>` : ''}
         </div>
@@ -1082,8 +1158,8 @@ export function renderGarageSection() {
   if (loadSwitchBtn) {
     loadSwitchBtn.classList.toggle('pillion-active', isPillion);
     loadSwitchBtn.textContent = isPillion
-      ? '👥 Copiloto/Carga: 25 / 32 PSI • Nitrox Pos 4-5'
-      : '👤 Solo: 25 / 28 PSI • Nitrox Pos 2-3';
+      ? 'Copiloto/Carga: 25 / 32 PSI • Nitrox Pos 4-5'
+      : 'Solo: 25 / 28 PSI • Nitrox Pos 2-3';
   }
   const chkTiresSub = document.getElementById('chk-tires-dynamic-sub');
   if (chkTiresSub) {
@@ -1121,7 +1197,7 @@ export function renderGarageSection() {
     const dotInfo = parseDotCode(tire.dot);
     let statusClass = 'status-ok';
     let statusText = `${lifeRemainingPct}% VIDA`;
-    let barColor = 'var(--neon-lime)';
+    let barColor = 'var(--status-ok)';
 
     if (wearRatio >= 1 || dotInfo.isOld || treadInfo.isBelowTwi) {
       statusClass = 'status-danger';
@@ -1159,7 +1235,7 @@ export function renderGarageSection() {
     card.innerHTML = `
       <div class="tire-card-header">
         <div>
-          <span class="tire-pos-badge">🛞 LLANTA ${psiLabel}</span>
+          <span class="tire-pos-badge">LLANTA ${psiLabel}</span>
           <div class="tire-brand-title">${escapeHTML(tire.brand)}</div>
           <div class="tire-meta-row">
             <span class="tire-spec-chip">${escapeHTML(tire.size)}</span>
@@ -1169,7 +1245,7 @@ export function renderGarageSection() {
           </div>
         </div>
         <div class="maint-top-right">
-          <button class="btn-quick-done" data-edit-tire="${posKey}">⚙️ Cambiar / Editar</button>
+          <button class="btn-quick-done" data-edit-tire="${posKey}">Editar / Cambiar</button>
           <span class="status-pill ${statusClass}">${statusText}</span>
         </div>
       </div>
@@ -1262,19 +1338,19 @@ export function renderGarageSection() {
     modsContainer.innerHTML = `<div class="empty-logs">Sin accesorios en esta categoría. Toca "+ Agregar" para registrar sliders, alarma o casco.</div>`;
   } else {
     const catLabels = {
-      protection: '🛡️ Protección / Sliders',
-      security: '🚨 Seguridad / Alarma',
-      electric: '⚡ Eléctrico / Cockpit',
-      gear: '🪖 Casco / Piloto'
+      protection: 'Protección / Sliders',
+      security: 'Seguridad / Alarma',
+      electric: 'Eléctrico / Cockpit',
+      gear: 'Casco / Piloto'
     };
 
     sortedMods.forEach((m) => {
       const badges = [`<span class="tele-chip">${catLabels[m.category] || 'Accesorio'}</span>`];
       const eMode = getModElecMode(m);
       if (eMode === 'direct_24_7') {
-        badges.push(`<span class="mem-badge mem-up">🔋 Directo 24/7 (Drenaje <3mA)</span>`);
+        badges.push(`<span class="mem-badge mem-up">Directo 24/7 (<3mA)</span>`);
       } else if (eMode === 'switched_acc') {
-        badges.push(`<span class="tele-chip neon">🔑 Bajo Llave ACC (Corta al apagar)</span>`);
+        badges.push(`<span class="tele-chip neon">Bajo Llave ACC</span>`);
       }
       if (m.category === 'gear' && m.date) {
         const buyYear = parseInt(m.date.split('-')[0], 10);
@@ -1319,9 +1395,11 @@ export function renderRouteAndTCO() {
   const fin = computeMasterFinancials(uiConfig.activeFinPeriod || 'all');
   const opexTagEl = document.querySelector('.co-card.opex .co-tag');
   if (opexTagEl) {
-    const tagMap = { all: '🔥 OPERATIVO (OPEX TOTAL)', month: '🔥 OPERATIVO (ESTE MES)', year: '🔥 OPERATIVO (ESTE AÑO)' };
+    const tagMap = { all: 'OPERATIVO (OPEX TOTAL)', month: 'OPERATIVO (ESTE MES)', year: 'OPERATIVO (ESTE AÑO)' };
     opexTagEl.textContent = tagMap[uiConfig.activeFinPeriod] || tagMap.all;
   }
+  renderMonthlyPilotSummary();
+  renderMonthlySpendChart();
 
   const capexDisp = document.getElementById('capex-total-display');
   const capexSub = document.getElementById('capex-bike-sub');
@@ -1425,6 +1503,258 @@ export function renderRouteAndTCO() {
   }
 }
 
+export function renderMonthlyPilotSummary() {
+  const monthEl = document.getElementById('pilot-sum-month');
+  const kmEl = document.getElementById('pilot-sum-km');
+  const bestEl = document.getElementById('pilot-sum-best');
+  const bestSubEl = document.getElementById('pilot-sum-best-sub');
+  const diyEl = document.getElementById('pilot-sum-diy');
+  const diySubEl = document.getElementById('pilot-sum-diy-sub');
+  if (!monthEl) return;
+
+  const s = computeMonthlyPilotSummary();
+  monthEl.textContent = s.monthName.toUpperCase();
+  if (kmEl) kmEl.innerHTML = `${s.monthKm.toLocaleString('es-PE')} <small>km</small>`;
+
+  if (bestEl) {
+    bestEl.innerHTML = s.bestKmPerGal > 0 ? `${s.bestKmPerGal.toFixed(1)} <small>km/gal</small>` : `-- <small>km/gal</small>`;
+  }
+  if (bestSubEl) {
+    bestSubEl.textContent =
+      s.bestKmPerGal > 0
+        ? (s.bestIsMonthly ? 'Récord este mes' : 'Récord histórico')
+        : 'Sin tramos aún';
+  }
+
+  if (diyEl) diyEl.textContent = `~S/ ${s.diyEstSaved.toLocaleString('es-PE')}`;
+  if (diySubEl) {
+    diySubEl.textContent =
+      s.diyCount > 0
+        ? `${s.diyCount} serv. ${s.diyIsMonthly ? 'este mes' : 'en casa'}`
+        : '0 serv. en casa';
+  }
+}
+
+export function renderFavoriteRouteChips() {
+  const wrap = document.getElementById('map-fav-chips-wrap');
+  const favs = Array.isArray(appState.favoriteRoutes) ? appState.favoriteRoutes : [];
+  const activeRoute = uiConfig.customRoute;
+
+  if (wrap) {
+    wrap.innerHTML = favs
+      .map((f) => {
+        const isAct =
+          isRouteActive(activeRoute) &&
+          Math.abs(Number(activeRoute.lat) - Number(f.lat)) < 0.002 &&
+          Math.abs(Number(activeRoute.lon) - Number(f.lon)) < 0.002;
+        return `<button type="button" class="mo-preset-chip fav-chip ${isAct ? 'active' : ''}" data-fav-id="${f.id}">★ ${escapeHTML(f.name)}</button>`;
+      })
+      .join('');
+  }
+
+  // Highlight star button inside collapsed active destination pill if already saved
+  const pillStar = document.getElementById('btn-pill-save-fav');
+  if (pillStar && isRouteActive(activeRoute)) {
+    const alreadySaved = favs.some(
+      (f) =>
+        Math.abs(Number(activeRoute.lat) - Number(f.lat)) < 0.003 &&
+        Math.abs(Number(activeRoute.lon) - Number(f.lon)) < 0.003
+    );
+    pillStar.classList.toggle('saved', alreadySaved);
+    pillStar.title = alreadySaved ? 'Destino guardado en Favoritos' : 'Guardar destino en Mis Rutas Favoritas';
+  }
+}
+
+export function renderFavoriteRoutesModalList() {
+  const listEl = document.getElementById('fav-routes-modal-list');
+  const countEl = document.getElementById('fav-routes-count');
+  const favs = Array.isArray(appState.favoriteRoutes) ? appState.favoriteRoutes : [];
+
+  if (countEl) countEl.textContent = favs.length;
+  if (!listEl) return;
+
+  if (favs.length === 0) {
+    listEl.innerHTML = `<div class="empty-logs">Aún no guardas rutas favoritas. Busca un lugar en el Mapa o usa tu GPS actual y guárdalo aquí.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = favs
+    .map(
+      (f) => `
+      <div class="log-item">
+        <div class="log-left">
+          <h4>★ ${escapeHTML(f.name)}</h4>
+          <div class="log-meta">${escapeHTML(f.region || 'Destino guardado')} • ${Number(f.lat).toFixed(4)}, ${Number(f.lon).toFixed(4)}</div>
+        </div>
+        <div class="log-right">
+          <div class="log-btn-group">
+            <button type="button" class="btn-edit-log" data-go-fav="${f.id}">Trazar</button>
+            <button type="button" class="btn-del-log" data-del-fav="${f.id}">Borrar</button>
+          </div>
+        </div>
+      </div>`
+    )
+    .join('');
+}
+
+export function renderSprintTimerUI(activeData = liveEcuData) {
+  const card = document.getElementById('obd-sprint-card');
+  if (!card) return;
+
+  const sp = activeData?.sprint || { status: 'idle', elapsedSec: 0, time060: null, time080: null };
+  const recs = appState.sprintRecords || {};
+
+  const statusPill = document.getElementById('sprint-status-pill');
+  const timerEl = document.getElementById('sprint-live-timer');
+  const val060 = document.getElementById('sprint-val-060');
+  const val080 = document.getElementById('sprint-val-080');
+  const best060 = document.getElementById('sprint-best-060');
+  const best080 = document.getElementById('sprint-best-080');
+  const toggleBtn = document.getElementById('btn-sprint-toggle');
+
+  const statusMeta = {
+    idle: { text: 'LISTO', cls: 'status-idle', btn: 'Armar' },
+    waiting_stop: { text: 'DETENTE A 0', cls: 'status-warn', btn: 'Cancelar' },
+    armed: { text: 'ARMADO • ¡DALE!', cls: 'status-ok', btn: 'Cancelar' },
+    running: { text: 'CORRIENDO', cls: 'status-warn', btn: 'Cancelar' },
+    done: { text: 'COMPLETADO', cls: 'status-ok', btn: 'Nuevo' }
+  };
+  const sm = statusMeta[sp.status] || statusMeta.idle;
+
+  card.classList.toggle('sprint-armed', sp.status === 'armed');
+  card.classList.toggle('sprint-running', sp.status === 'running');
+
+  if (statusPill) {
+    statusPill.textContent = sm.text;
+    statusPill.className = `status-pill ${sm.cls}`;
+  }
+  if (timerEl) {
+    timerEl.textContent = Number(sp.elapsedSec || 0).toFixed(2);
+  }
+  if (val060) {
+    const shown060 = sp.time060 !== null ? sp.time060 : recs.last060;
+    val060.textContent = shown060 !== null && shown060 !== undefined ? `${Number(shown060).toFixed(2)}s` : '--';
+  }
+  if (val080) {
+    const shown080 = sp.time080 !== null ? sp.time080 : recs.last080;
+    val080.textContent = shown080 !== null && shown080 !== undefined ? `${Number(shown080).toFixed(2)}s` : '--';
+  }
+  if (best060) {
+    best060.textContent = recs.best060 !== null && recs.best060 !== undefined ? `Récord: ${Number(recs.best060).toFixed(2)}s` : 'Récord: --';
+  }
+  if (best080) {
+    best080.textContent = recs.best080 !== null && recs.best080 !== undefined ? `Récord: ${Number(recs.best080).toFixed(2)}s` : 'Récord: --';
+  }
+  if (toggleBtn) {
+    toggleBtn.textContent = sm.btn;
+  }
+}
+
+export function renderMonthlySpendChart() {
+  const wrap = document.getElementById('fin-monthly-svg-wrap');
+  const totalBadge = document.getElementById('fin-monthly-total-6m');
+  if (!wrap) return;
+
+  const series = computeMonthlySpendSeries(6);
+  if (totalBadge) {
+    totalBadge.textContent = `S/ ${Math.round(series.total6m).toLocaleString('es-PE')}`;
+  }
+
+  const w = 340;
+  const h = 112;
+  const padTop = 20;
+  const padBottom = 22;
+  const padX = 14;
+  const chartH = h - padTop - padBottom;
+  const colW = (w - padX * 2) / series.months.length;
+  const barW = Math.min(24, colW * 0.46);
+  const maxVal = Math.max(10, series.maxTotal);
+
+  if (series.total6m <= 0) {
+    wrap.innerHTML = `<div class="monthly-empty-hint">Registra cargas en Grifo o servicios en Taller para visualizar tu evolución mensual.</div>`;
+    return;
+  }
+
+  const gridLines = [0, 0.5, 1]
+    .map((ratio) => {
+      const y = (padTop + chartH * (1 - ratio)).toFixed(1);
+      return `<line x1="${padX}" y1="${y}" x2="${w - padX}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="${ratio === 0 ? 'none' : '3 3'}" stroke-width="1"/>`;
+    })
+    .join('');
+
+  const barsHtml = series.months
+    .map((m, idx) => {
+      const cx = padX + colW * idx + colW / 2;
+      const x = cx - barW / 2;
+      const totalH = (m.total / maxVal) * chartH;
+      const fuelH = (m.fuel / maxVal) * chartH;
+      const maintH = (m.maint / maxVal) * chartH;
+      const otherH = (m.other / maxVal) * chartH;
+
+      let currY = padTop + chartH;
+      let segs = '';
+
+      if (fuelH > 0.5) {
+        currY -= fuelH;
+        segs += `<rect x="${x.toFixed(1)}" y="${currY.toFixed(1)}" width="${barW.toFixed(1)}" height="${fuelH.toFixed(1)}" rx="2.5" fill="var(--neon-lime)" />`;
+      }
+      if (maintH > 0.5) {
+        currY -= maintH;
+        segs += `<rect x="${x.toFixed(1)}" y="${currY.toFixed(1)}" width="${barW.toFixed(1)}" height="${maintH.toFixed(1)}" rx="2.5" fill="var(--caribbean-bright)" />`;
+      }
+      if (otherH > 0.5) {
+        currY -= otherH;
+        segs += `<rect x="${x.toFixed(1)}" y="${currY.toFixed(1)}" width="${barW.toFixed(1)}" height="${otherH.toFixed(1)}" rx="2.5" fill="var(--amber-warn)" />`;
+      }
+
+      if (m.total <= 0) {
+        segs = `<rect x="${x.toFixed(1)}" y="${(padTop + chartH - 2).toFixed(1)}" width="${barW.toFixed(1)}" height="2" rx="1" fill="rgba(255,255,255,0.12)" />`;
+      }
+
+      const valLabel =
+        m.total > 0
+          ? `<text x="${cx.toFixed(1)}" y="${Math.max(11, padTop + chartH - totalH - 5).toFixed(1)}" fill="#D2DAE4" font-size="9.5" font-weight="700" text-anchor="middle">${Math.round(m.total)}</text>`
+          : '';
+
+      const isLatest = idx === series.months.length - 1;
+      const monthLabel = `<text x="${cx.toFixed(1)}" y="${(h - 5).toFixed(1)}" fill="${isLatest ? '#FFFFFF' : '#7C8B9E'}" font-size="10" font-weight="${isLatest ? '800' : '600'}" text-anchor="middle">${m.label}</text>`;
+
+      return `${segs}${valLabel}${monthLabel}`;
+    })
+    .join('');
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+      ${gridLines}
+      ${barsHtml}
+    </svg>
+  `;
+}
+
+export function renderPriorityBanner() {
+  const banner = document.getElementById('smart-priority-banner');
+  if (!banner) return;
+
+  const alert = computePriorityAlert();
+  uiConfig.currentPriorityAlert = alert;
+
+  if (!alert || uiConfig.dismissedAlertId === alert.id) {
+    banner.classList.add('hidden');
+    return;
+  }
+
+  banner.classList.remove('hidden', 'severity-warn', 'severity-danger');
+  banner.classList.add(alert.severity === 'danger' ? 'severity-danger' : 'severity-warn');
+
+  const titleEl = document.getElementById('priority-alert-title');
+  const detailEl = document.getElementById('priority-alert-detail');
+  const ctaBtn = document.getElementById('btn-priority-action');
+
+  if (titleEl) titleEl.textContent = alert.title;
+  if (detailEl) detailEl.textContent = alert.detail;
+  if (ctaBtn) ctaBtn.textContent = alert.ctaLabel || 'Ver';
+}
+
 export function renderAllMain(triggerSweep = false) {
   renderImages();
   bindSmartSearchHudOnce();
@@ -1440,13 +1770,19 @@ export function renderAllMain(triggerSweep = false) {
   }
 
   const breakinPill = document.getElementById('breakin-pill');
+  const heroBadgeRow = document.getElementById('hero-top-badge-row');
+  const inBreakin = appState.currentKm < 2000;
   if (breakinPill) {
-    if (appState.currentKm < 2000) {
+    if (inBreakin) {
       breakinPill.classList.remove('hidden');
       breakinPill.textContent = `ASENTAMIENTO (${appState.currentKm}/2000) ⓘ`;
     } else {
       breakinPill.classList.add('hidden');
     }
+  }
+  if (heroBadgeRow) {
+    const hasPhoto = Boolean(appState.bikePhotoBase64);
+    heroBadgeRow.classList.toggle('hidden', !hasPhoto && !inBreakin);
   }
 
   document.querySelectorAll('.ride-chk').forEach((chk, idx) => {
@@ -1460,6 +1796,8 @@ export function renderAllMain(triggerSweep = false) {
   renderFuelSection();
   renderRouteAndTCO();
   renderNightDrainUI();
+  renderPriorityBanner();
+  renderFavoriteRouteChips();
 }
 
 export function formatDmsCoord(lat, lon) {
@@ -1520,12 +1858,13 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0, routeAct
   const dotY = pts[lowIdx].y + (pts[highIdx].y - pts[lowIdx].y) * frac;
   const midE = Math.round((minE + maxE) / 2);
 
+  const tc = getThemeColors();
   wrap.innerHTML = `
     <svg id="elev-interactive-svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">
       <defs>
         <linearGradient id="elevFillGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#58E800" stop-opacity="0.38"/>
-          <stop offset="100%" stop-color="#58E800" stop-opacity="0.02"/>
+          <stop offset="0%" stop-color="${tc.neon}" stop-opacity="0.36"/>
+          <stop offset="100%" stop-color="${tc.neon}" stop-opacity="0.02"/>
         </linearGradient>
       </defs>
       <line x1="${padLeft}" y1="${padY}" x2="${w - padRight}" y2="${padY}" stroke="rgba(210,218,228,0.12)" stroke-dasharray="2 2" stroke-width="0.8"/>
@@ -1535,10 +1874,10 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0, routeAct
       <text x="1" y="${(h / 2 + 2).toFixed(1)}" fill="#7C8B9E" font-size="6.8" font-weight="700">${midE}</text>
       <text x="1" y="${h - 2}" fill="#7C8B9E" font-size="6.8" font-weight="700">${Math.round(minE)}</text>
       <polygon points="${areaStr}" fill="url(#elevFillGrad)" />
-      <polyline fill="none" stroke="#58E800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polyStr}" />
+      <polyline fill="none" stroke="${tc.neon}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polyStr}" />
       <line x1="${dotX.toFixed(1)}" y1="${padY}" x2="${dotX.toFixed(1)}" y2="${h - padY}" stroke="rgba(255,255,255,0.28)" stroke-dasharray="1.5 1.5" stroke-width="0.8"/>
-      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4.5" fill="rgba(88,232,0,0.32)" />
-      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="2.6" fill="#FFFFFF" stroke="#58E800" stroke-width="1.4" />
+      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4.5" fill="${tc.neon}" fill-opacity="0.32" />
+      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="2.6" fill="#FFFFFF" stroke="${tc.neon}" stroke-width="1.4" />
     </svg>
   `;
 
@@ -1559,7 +1898,7 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0, routeAct
 
       renderElevationProfileSVG(elevArray, progressRatio, true);
       triggerHaptic(8);
-      showToast(`⛰️ Km ${pickedKm}: ${pickedAlt.toLocaleString('es-PE')} msnm`);
+      showToast(`Km ${pickedKm}: ${pickedAlt.toLocaleString('es-PE')} msnm`);
 
       if (elevInspectResetTimer) clearTimeout(elevInspectResetTimer);
       elevInspectResetTimer = setTimeout(() => {
@@ -1645,7 +1984,7 @@ export function toggleFollowLockMode() {
   const btn = document.getElementById('btn-map-follow-lock');
   if (btn) {
     btn.classList.toggle('active', uiConfig.followLock);
-    btn.textContent = uiConfig.followLock ? '🔒' : '🔓';
+    btn.innerHTML = uiConfig.followLock ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
   }
   if (uiConfig.followLock) {
     centerMapOnBike();
@@ -1675,6 +2014,9 @@ function removeRouteLayersFromLeaflet() {
 }
 
 export function clearActiveRouteOnMap() {
+  if (uiConfig.replayActive) {
+    closeBlackboxReplayMode(false);
+  }
   if (elevInspectResetTimer) {
     clearTimeout(elevInspectResetTimer);
     elevInspectResetTimer = null;
@@ -1767,7 +2109,7 @@ export function initLeafletSatelliteMap(onMapClickCallback) {
       const btn = document.getElementById('btn-map-follow-lock');
       if (btn) {
         btn.classList.remove('active');
-        btn.textContent = '🔓';
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
       }
     }
   });
@@ -1891,7 +2233,7 @@ export async function searchAndPlotPoisOnMap(poiQuery, iconEmoji = '⛽') {
         name: poi.name,
         region: poi.region
       });
-      showToast(`🏁 Trazando ruta hacia ${poi.name}`);
+      showToast(`Trazando ruta hacia ${poi.name}`);
     });
     if (poiLayerGroup) poiLayerGroup.addLayer(marker);
   });
@@ -1973,6 +2315,9 @@ export async function calculateRealRouteAndElevation({ destLat, destLon, name, r
     clearTimeout(elevInspectResetTimer);
     elevInspectResetTimer = null;
   }
+  if (uiConfig.replayActive) {
+    closeBlackboxReplayMode(false);
+  }
   uiConfig.inspectedElevIdx = null;
   uiConfig.searchExpanded = false;
 
@@ -2007,9 +2352,13 @@ function formatMmSs(totalSeconds) {
 }
 
 export function startBlackboxReplayMode() {
+  if (liveEcuData.blackbox?.recording) {
+    showToast('Detén primero la grabación REC para abrir el Replay');
+    return false;
+  }
   const pts = ensureBlackboxDemoOrSavedTrack(currentRoadLatLngs);
   if (!pts || pts.length < 2) {
-    showToast('⚠️ Graba una sesión en ruta primero con 🔴 REC');
+    showToast('Graba una sesión en ruta primero con REC');
     return false;
   }
 
@@ -2045,7 +2394,7 @@ export function startBlackboxReplayMode() {
     }).addTo(leafletMap);
 
     replayTraveledPolyline = window.L.polyline([trackCoords[0]], {
-      color: '#58E800',
+      color: getThemeColors().neon,
       weight: 4.5,
       opacity: 1.0
     }).addTo(leafletMap);
@@ -2064,10 +2413,10 @@ export function stopBlackboxReplayTimer() {
   }
   uiConfig.replayPlaying = false;
   const playBtn = document.getElementById('btn-replay-play');
-  if (playBtn) playBtn.textContent = '▶️';
+  if (playBtn) playBtn.textContent = '▶';
 }
 
-export function closeBlackboxReplayMode() {
+export function closeBlackboxReplayMode(reRenderMap = true) {
   stopBlackboxReplayTimer();
   uiConfig.replayActive = false;
   uiConfig.inspectedElevIdx = null;
@@ -2086,7 +2435,9 @@ export function closeBlackboxReplayMode() {
   replayTrackPolyline = null;
   replayTraveledPolyline = null;
 
-  renderTacticalMapUI(liveEcuData, true);
+  if (reRenderMap) {
+    renderTacticalMapUI(liveEcuData, true);
+  }
 }
 
 export function toggleBlackboxReplayPlay() {
@@ -2104,7 +2455,7 @@ export function toggleBlackboxReplayPlay() {
 
   uiConfig.replayPlaying = true;
   const playBtn = document.getElementById('btn-replay-play');
-  if (playBtn) playBtn.textContent = '⏸️';
+  if (playBtn) playBtn.textContent = '⏸';
 
   const intervalMs = Math.max(90, Math.round(480 / (uiConfig.replaySpeedMult || 1)));
   replayTimer = setInterval(() => {
@@ -2118,7 +2469,7 @@ export function toggleBlackboxReplayPlay() {
     } else {
       stopBlackboxReplayTimer();
       triggerHaptic(15);
-      showToast('🏁 Reproducción de ruta finalizada');
+      showToast('Reproducción de ruta finalizada');
     }
   }, intervalMs);
 }
@@ -2187,12 +2538,12 @@ export function renderReplayFrame(idx, panMap = false) {
   const hudGearEl = document.getElementById('map-hud-gear');
   if (hudGearEl) {
     hudGearEl.textContent = pt.gear || 'N';
-    hudGearEl.style.color = (pt.gear || 'N') === 'N' ? 'var(--neon-lime)' : '#FFFFFF';
+    hudGearEl.style.color = (pt.gear || 'N') === 'N' ? 'var(--status-ok)' : '#FFFFFF';
   }
 
   const hudVitalsEl = document.getElementById('map-hud-vitals');
   if (hudVitalsEl) {
-    hudVitalsEl.textContent = `▶️ REPLAY: 🌡️ ${pt.tempC}°C • 🔋 ${pt.voltage}V • ${Number(pt.rpm).toLocaleString('es-PE')} RPM • TPS ${pt.tpsPct}%`;
+    hudVitalsEl.textContent = `REPLAY • ${pt.tempC}°C • ${pt.voltage}V • ${Number(pt.rpm).toLocaleString('es-PE')} RPM • TPS ${pt.tpsPct}%`;
   }
 
   const elevEl = document.getElementById('map-current-elev');
@@ -2263,6 +2614,7 @@ export function renderTacticalMapUI(ecuData = liveEcuData, fitMapBounds = false)
   const tankState = getTankTelemetryState(tele, sessKm);
 
   syncSmartSearchHudState(hasActiveRoute);
+  renderFavoriteRouteChips();
 
   let progressRatio = hasActiveRoute && route.distKm > 0 ? Math.min(1, sessKm / route.distKm) : 0;
   if (hasActiveRoute && activeEcu?.mode === 'sim') {
@@ -2353,9 +2705,10 @@ export function renderTacticalMapUI(ecuData = liveEcuData, fitMapBounds = false)
         }
 
         if (!routeNeonPolyline) {
-          routeNeonPolyline = window.L.polyline(polyCoords, { color: '#58E800', weight: 4.2, opacity: 1.0 }).addTo(leafletMap);
+          routeNeonPolyline = window.L.polyline(polyCoords, { color: getThemeColors().neon, weight: 4.2, opacity: 1.0 }).addTo(leafletMap);
         } else {
           routeNeonPolyline.setLatLngs(polyCoords);
+          routeNeonPolyline.setStyle({ color: getThemeColors().neon });
         }
 
         if (!bikeLeafletMarker) {
@@ -2381,7 +2734,8 @@ export function renderTacticalMapUI(ecuData = liveEcuData, fitMapBounds = false)
         if (tankState.hasFuelData) {
           // Radio geodésico real basado en la autonomía restante del tanque (con factor de tortuosidad vial 0.76)
           const rMid = Math.max(1500, Math.round((tankState.remKm || 0) * 1000 * 0.76));
-          const ringColor = tankState.remKm >= route.distKm * 2 ? '#58E800' : (tankState.remKm >= route.distKm ? '#FF9F0A' : '#FF453A');
+          const tcMap = getThemeColors();
+          const ringColor = tankState.remKm >= route.distKm * 2 ? tcMap.neon : (tankState.remKm >= route.distKm ? tcMap.warn : tcMap.danger);
 
           if (!safeRangeCircle) {
             safeRangeCircle = window.L.circle(bikeLatLng, {
@@ -2422,9 +2776,9 @@ export function renderTacticalMapUI(ecuData = liveEcuData, fitMapBounds = false)
       const tVal = activeEcu.tempC > 0 ? `${activeEcu.tempC}°C` : '--°C';
       const vVal = activeEcu.voltage > 0 ? `${activeEcu.voltage.toFixed(1)}V` : '--V';
       const rVal = (Number(activeEcu.rpm) || 0).toLocaleString('es-PE');
-      hudVitalsEl.textContent = `🌡️ ${tVal} • 🔋 ${vVal} • ${rVal} RPM`;
+      hudVitalsEl.textContent = `${tVal} • ${vVal} • ${rVal} RPM`;
     } else {
-      hudVitalsEl.textContent = uiConfig.gpsWatchId !== null ? '🟢 Velocidad GPS Satelital' : '⚡ Conecta ECU o activa Demo';
+      hudVitalsEl.textContent = uiConfig.gpsWatchId !== null ? 'GPS Satelital activo' : 'Conecta ECU o activa Demo';
     }
   }
 
@@ -2442,11 +2796,11 @@ export function renderTacticalMapUI(ecuData = liveEcuData, fitMapBounds = false)
   if (needGalEl) {
     needGalEl.textContent = hasActiveRoute
       ? `Req: ${neededGal.toFixed(2)} gal (S/ ${neededSoles.toFixed(2)})`
-      : 'Toca 🔍 para elegir destino';
+      : 'Toca la lupa para elegir destino';
   }
   if (terrainEl) {
     const extraPct = Math.round(((route.terrainFactor || 1) - 1) * 100);
-    const gpsTxt = uiConfig.gpsWatchId !== null ? '🟢 GPS Vivo' : '🛰️ Satélite';
+    const gpsTxt = uiConfig.gpsWatchId !== null ? 'GPS Vivo' : 'Satélite';
     terrainEl.textContent = hasActiveRoute
       ? `${extraPct > 0 ? `Ascenso (+${extraPct}% FI)` : 'Costa (0%)'} • ${gpsTxt}`
       : `Modo Libre • ${gpsTxt}`;
@@ -2463,8 +2817,8 @@ export function renderTacticalMapUI(ecuData = liveEcuData, fitMapBounds = false)
   const safePctEl = document.getElementById('map-safe-pct');
   if (safeRangeEl) {
     safeRangeEl.innerHTML = tankState.hasFuelData
-      ? `⛽ ~${tankState.remKm} <small>km</small>`
-      : `⛽ 0 <small>km</small>`;
+      ? `~${tankState.remKm} <small>km</small>`
+      : `0 <small>km</small>`;
   }
   if (safeBarEl) {
     safeBarEl.style.width = `${tankState.tankPct}%`;
@@ -2579,18 +2933,27 @@ export function renderObdLiveUI(data, forceMap = false) {
     const bbTemp = document.getElementById('bb-val-maxtemp');
     const bbPeaks = document.getElementById('bb-val-peaks');
 
+    const sheetRecLbl = document.getElementById('sheet-rec-label');
     if (topRecBtn) {
-      topRecBtn.textContent = bb.recording ? `⏹ REC (${bb.points.length})` : '🔴 REC';
       topRecBtn.classList.toggle('recording-active', bb.recording);
     }
+    if (sheetRecLbl) {
+      sheetRecLbl.textContent = bb.recording ? `Detener REC (${bb.points.length})` : 'Grabar REC';
+    }
     if (diagRecBtn) {
-      diagRecBtn.textContent = bb.recording ? '⏹ Detener Grabación' : '🔴 Grabar Ruta';
+      diagRecBtn.textContent = bb.recording ? `Detener (${bb.points.length})` : 'Grabar Ruta';
+    }
+    const sheetLiveDot = document.getElementById('mo-sheet-live-dot');
+    if (sheetLiveDot) {
+      const hasLiveActivity = Boolean(bb.recording || activeData?.connected);
+      sheetLiveDot.classList.toggle('hidden', !hasLiveActivity);
+      sheetLiveDot.classList.toggle('rec-pulse', Boolean(bb.recording));
     }
     if (bbSummary) {
       bbSummary.textContent = bb.recording
-        ? `🔴 GRABANDO EN VIVO: ${bb.points.length} puntos capturados (GPS + 14 sensores ECU)`
+        ? `GRABANDO EN VIVO: ${bb.points.length} puntos capturados (GPS + 14 sensores ECU)`
         : bb.points.length > 0
-        ? `✅ Sesión lista (${bb.points.length} puntos). Descarga tu ruta en .GPX o .CSV`
+        ? `Sesión lista (${bb.points.length} puntos). Descarga tu ruta en .GPX o .CSV`
         : 'Listo para grabar trazado satelital y parámetros del motor cada 2.5s';
       bbSummary.style.color = bb.recording ? 'var(--red-danger)' : 'var(--neon-lime)';
     }
@@ -2600,12 +2963,17 @@ export function renderObdLiveUI(data, forceMap = false) {
   }
 
   renderNightDrainUI();
+  renderSprintTimerUI(activeData);
   if (!activeData || !activeData.connected) {
     card.classList.remove('obd-active', 'obd-shift-alert');
     statusPill.textContent = uiConfig.gpsWatchId !== null ? 'GPS VIVO' : 'OFFLINE';
-    statusPill.className = 'status-pill status-ok';
-    if (btnConnect) btnConnect.textContent = '⚡ ECU';
-    if (btnSim) btnSim.textContent = 'Demo';
+    statusPill.className = uiConfig.gpsWatchId !== null ? 'status-pill status-ok' : 'status-pill status-idle';
+    const ecuLblOff = document.getElementById('sheet-ecu-label');
+    const demoLblOff = document.getElementById('sheet-demo-label');
+    if (ecuLblOff) ecuLblOff.textContent = 'Conectar ECU';
+    if (demoLblOff) demoLblOff.textContent = 'Modo Demo';
+    if (btnConnect) btnConnect.classList.remove('active-tile');
+    if (btnSim) btnSim.classList.remove('active-tile');
 
     const gpsSpd = Math.round(Number(uiConfig.liveGpsSpeedKmh) || 0);
     const gpsSpdPct = Math.min(100, Math.round((gpsSpd / 140) * 100));
@@ -2627,16 +2995,22 @@ export function renderObdLiveUI(data, forceMap = false) {
 
   card.classList.add('obd-active');
 
+  const ecuLblOn = document.getElementById('sheet-ecu-label');
+  const demoLblOn = document.getElementById('sheet-demo-label');
   if (activeData.mode === 'sim') {
     statusPill.textContent = 'DEMO';
     statusPill.className = 'status-pill status-warn';
-    if (btnSim) btnSim.textContent = '⏹ Salir';
-    if (btnConnect) btnConnect.textContent = '⚡ ECU';
+    if (demoLblOn) demoLblOn.textContent = 'Detener Demo';
+    if (ecuLblOn) ecuLblOn.textContent = 'Conectar ECU';
+    if (btnSim) btnSim.classList.add('active-tile');
+    if (btnConnect) btnConnect.classList.remove('active-tile');
   } else {
     statusPill.textContent = 'ONLINE';
     statusPill.className = 'status-pill status-ok';
-    if (btnConnect) btnConnect.textContent = '⏹ Cortar';
-    if (btnSim) btnSim.textContent = 'Demo';
+    if (ecuLblOn) ecuLblOn.textContent = 'Desconectar ECU';
+    if (demoLblOn) demoLblOn.textContent = 'Modo Demo';
+    if (btnConnect) btnConnect.classList.add('active-tile');
+    if (btnSim) btnSim.classList.remove('active-tile');
   }
 
   const rpm = Number(activeData.rpm) || 0;
@@ -2650,9 +3024,9 @@ export function renderObdLiveUI(data, forceMap = false) {
   const gearEl = document.getElementById('obd-gear-val');
   gearEl.textContent = gear;
   // Silencio Visual TFT: Verde Neón exclusivo para Neutro (N), Blanco Puro para marchas 1-5
-  gearEl.style.color = gear === 'N' ? 'var(--neon-lime)' : '#FFFFFF';
+  gearEl.style.color = gear === 'N' ? 'var(--status-ok)' : '#FFFFFF';
   const mapGearEl = document.getElementById('map-hud-gear');
-  if (mapGearEl) mapGearEl.style.color = gear === 'N' ? 'var(--neon-lime)' : '#FFFFFF';
+  if (mapGearEl) mapGearEl.style.color = gear === 'N' ? 'var(--status-ok)' : '#FFFFFF';
 
   document.getElementById('obd-rpm-val').textContent = rpm.toLocaleString('es-PE');
   document.getElementById('obd-peak-rpm').textContent = peakRpm.toLocaleString('es-PE');
@@ -2700,7 +3074,7 @@ export function renderObdLiveUI(data, forceMap = false) {
   } else {
     card.classList.remove('obd-shift-alert');
     guardPill.textContent = isBreakin1k ? 'CUIDANDO <5k' : (rpm >= 5500 ? 'TORQUE ÓPTIMO' : 'CRUCERO OK');
-    guardPill.style.background = rpm >= 5500 ? 'rgba(88, 232, 0, 0.15)' : 'rgba(73, 191, 230, 0.15)';
+    guardPill.style.background = rpm >= 5500 ? 'var(--neon-soft)' : 'var(--accent-soft)';
     guardPill.style.color = rpm >= 5500 ? 'var(--neon-lime)' : 'var(--caribbean-bright)';
     if (rpmArc) rpmArc.setAttribute('stroke', rpm >= 5500 ? 'var(--neon-lime)' : 'var(--caribbean-bright)');
   }
@@ -2715,19 +3089,19 @@ export function renderObdLiveUI(data, forceMap = false) {
   if (barTemp) barTemp.style.width = `${tempPct}%`;
 
   if (tempC < 45) {
-    tempSub.textContent = '❄️ Frío (Calentar)';
+    tempSub.textContent = 'Frío (Calentar)';
     tempEl.style.color = 'var(--caribbean-bright)';
     if (barTemp) barTemp.style.backgroundColor = 'var(--caribbean-bright)';
   } else if (tempC <= 110) {
-    tempSub.textContent = '✅ Aceite/Culata OK';
+    tempSub.textContent = 'Aceite/Culata OK';
     tempEl.style.color = '#FFFFFF';
     if (barTemp) barTemp.style.backgroundColor = 'var(--caribbean-bright)';
   } else if (tempC <= 115) {
-    tempSub.textContent = '⚠️ Exigencia Alta';
+    tempSub.textContent = 'Exigencia Alta';
     tempEl.style.color = 'var(--amber-warn)';
     if (barTemp) barTemp.style.backgroundColor = 'var(--amber-warn)';
   } else {
-    tempSub.textContent = '🔥 Alerta EOT >115°C';
+    tempSub.textContent = 'Alerta EOT >115°C';
     tempEl.style.color = 'var(--red-danger)';
     if (barTemp) barTemp.style.backgroundColor = 'var(--red-danger)';
   }
@@ -2745,16 +3119,16 @@ export function renderObdLiveUI(data, forceMap = false) {
     voltSub.textContent = 'Leyendo pin 16...';
   } else if (volt < 12.2) {
     voltEl.style.color = 'var(--red-danger)';
-    voltSub.textContent = '⚠️ Batería baja';
+    voltSub.textContent = 'Batería baja';
     if (barVolt) barVolt.style.backgroundColor = 'var(--red-danger)';
   } else if (volt > 14.8) {
     voltEl.style.color = 'var(--red-danger)';
-    voltSub.textContent = '🔥 Sobrecarga >14.8V';
+    voltSub.textContent = 'Sobrecarga >14.8V';
     if (barVolt) barVolt.style.backgroundColor = 'var(--red-danger)';
   } else if (volt >= 13.5 && volt <= 14.6) {
     voltEl.style.color = '#FFFFFF';
-    voltSub.textContent = '⚡ Estator OK';
-    if (barVolt) barVolt.style.backgroundColor = 'var(--neon-lime)';
+    voltSub.textContent = 'Estator OK';
+    if (barVolt) barVolt.style.backgroundColor = 'var(--status-ok)';
   } else {
     voltEl.style.color = '#FFFFFF';
     voltSub.textContent = 'Reposo 12V OK';
@@ -2808,14 +3182,14 @@ export function renderObdLiveUI(data, forceMap = false) {
 
   if (codes.length === 0) {
     dtcSummary.textContent = activeData.lastDtcScan
-      ? `✅ 0 Fallas en ECU (Escaneado ${activeData.lastDtcScan})`
-      : '✅ 0 Códigos de falla detectados en la ECU';
-    dtcSummary.style.color = 'var(--neon-lime)';
+      ? `0 Fallas en ECU (Escaneado ${activeData.lastDtcScan})`
+      : '0 Códigos de falla detectados en la ECU';
+    dtcSummary.style.color = 'var(--status-ok)';
     dtcListEl.classList.add('hidden');
     dtcListEl.innerHTML = '';
     if (btnClearDtc) btnClearDtc.classList.add('hidden');
   } else {
-    dtcSummary.textContent = `⚠️ ${codes.length} Falla(s) activa(s) en Check Engine`;
+    dtcSummary.textContent = `${codes.length} Falla(s) activa(s) en Check Engine`;
     dtcSummary.style.color = 'var(--red-danger)';
     dtcListEl.classList.remove('hidden');
     if (btnClearDtc) btnClearDtc.classList.remove('hidden');
@@ -2838,7 +3212,7 @@ export function renderObdLiveUI(data, forceMap = false) {
     const etCharge = document.getElementById('et-val-charge');
 
     if (btnStartEt) {
-      btnStartEt.textContent = et.active ? `⏳ ${et.remainingSec}s...` : '⚡ Test 15s';
+      btnStartEt.textContent = et.active ? `${et.remainingSec}s...` : 'Test 15s';
       btnStartEt.disabled = et.active;
     }
     if (etRest) etRest.textContent = et.restingVolt > 0 ? `${et.restingVolt.toFixed(2)} V` : '-- V';
@@ -2852,7 +3226,7 @@ export function renderObdLiveUI(data, forceMap = false) {
           ? 'var(--red-danger)'
           : et.verdictStatus === 'warn'
           ? 'var(--amber-warn)'
-          : 'var(--neon-lime)';
+          : 'var(--status-ok)';
     }
     if (etDetail && et.verdictDetail) {
       etDetail.textContent = et.verdictDetail;
@@ -2892,24 +3266,24 @@ export function renderNightDrainUI() {
 
     if (drop > 0.25) {
       dropEl.style.color = 'var(--red-danger)';
-      verdictSub.textContent = '⚠️ Fuga Parásita';
+      verdictSub.textContent = 'Fuga Parásita';
       if (summaryEl) {
-        summaryEl.textContent = `⚠️ ALERTA: Cayó ${drop.toFixed(2)}V en reposo. Revisa consumo parásito de alarma, GPS o relé (>3 mA).`;
+        summaryEl.textContent = `ALERTA: Cayó ${drop.toFixed(2)}V en reposo. Revisa consumo parásito de alarma, GPS o relé (>3 mA).`;
         summaryEl.style.color = 'var(--red-danger)';
       }
     } else if (drop > 0.16) {
       dropEl.style.color = 'var(--amber-warn)';
       verdictSub.textContent = 'Vigilar 4Ah';
       if (summaryEl) {
-        summaryEl.textContent = `🟡 Caída moderada (${drop.toFixed(2)}V). Normal si tienes alarma activa, evita dejarla >5 días sin arrancar.`;
+        summaryEl.textContent = `Caída moderada (${drop.toFixed(2)}V). Normal si tienes alarma activa, evita dejarla >5 días sin arrancar.`;
         summaryEl.style.color = 'var(--amber-warn)';
       }
     } else {
-      dropEl.style.color = 'var(--neon-lime)';
-      verdictSub.textContent = '✅ Cero Fugas';
+      dropEl.style.color = 'var(--status-ok)';
+      verdictSub.textContent = 'Cero Fugas';
       if (summaryEl) {
-        summaryEl.textContent = `✅ Retención excelente: solo varió ${drop.toFixed(2)}V durante la noche. Ramal FI sin fugas.`;
-        summaryEl.style.color = 'var(--neon-lime)';
+        summaryEl.textContent = `Retención excelente: solo varió ${drop.toFixed(2)}V durante la noche. Ramal FI sin fugas.`;
+        summaryEl.style.color = 'var(--status-ok)';
       }
     }
   } else {

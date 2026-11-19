@@ -1,16 +1,26 @@
 :root {
-  /* Paleta Apex Edition: Deep Obsidian & Satin Caribbean Blue (N160 FI) */
-  --bg-chassis: #060A0F;
-  --bg-engine: #0E1520;
-  --bg-elevated: #141E2D;
-  --caribbean-deep: #0C465C;
-  --caribbean-primary: #1E88A8;
-  --caribbean-bright: #49BFE6;
+  /* Paleta Pulsar N160 FI - Caribbean Blue (Celeste Metálico + Verde Neón Energético + Grafito Mate) */
+  --bg-chassis: #06090E;
+  --bg-engine: #0D141F;
+  --bg-elevated: #141F30;
+  --caribbean-deep: #0B556B;
+  --caribbean-primary: #0EA5C6;
+  --caribbean-bright: #38D6FF;
   --neon-lime: #58E800;
-  --neon-dark-txt: #05090D;
-  --alloy-silver: #D2DAE4;
+  --neon-soft: rgba(88, 232, 0, 0.14);
+  --neon-border: rgba(88, 232, 0, 0.42);
+  --accent-primary: #58E800;
+  --accent-glow: rgba(56, 214, 255, 0.28);
+  --accent-soft: rgba(14, 165, 198, 0.15);
+  --accent-border: rgba(56, 214, 255, 0.36);
+  --neon-dark-txt: #041008;
+  --status-ok: #58E800;
+  --status-ok-soft: rgba(88, 232, 0, 0.13);
+  --status-ok-border: rgba(88, 232, 0, 0.36);
+  --alloy-silver: #CBD5E1;
   --alloy-muted: #7C8B9E;
-  --border-subtle: rgba(73, 191, 230, 0.16);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-accent: rgba(56, 214, 255, 0.28);
   --amber-warn: #FF9F0A;
   --red-danger: #FF453A;
 
@@ -29,8 +39,8 @@
 body {
   background-color: var(--bg-chassis);
   background-image: 
-    radial-gradient(circle at 50% 0%, rgba(30, 136, 168, 0.22) 0%, transparent 56%),
-    radial-gradient(circle at 85% 95%, rgba(88, 232, 0, 0.05) 0%, transparent 42%);
+    radial-gradient(circle at 50% 0%, rgba(14, 165, 198, 0.22) 0%, transparent 54%),
+    radial-gradient(circle at 88% 95%, rgba(88, 232, 0, 0.06) 0%, transparent 42%);
   color: #FFFFFF;
   min-height: 100vh;
   padding-bottom: 84px !important;
@@ -195,7 +205,7 @@ body {
 .logo-upload-box img { width: 100%; height: 100%; object-fit: contain; }
 .logo-placeholder { font-size: 10px; color: var(--alloy-silver); line-height: 1.3; }
 .brand-emblem-wrap { margin-bottom: 18px; }
-.mi-moto-tag { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 2.2px; color: var(--neon-lime); }
+.mi-moto-tag { display: block; font-size: 10px; font-weight: 800; letter-spacing: 2.2px; color: var(--neon-lime); }
 .n160-fi-sub { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--caribbean-bright); }
 .selector-section { width: 100%; text-align: left; }
 .section-label { display: block; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; color: var(--alloy-muted); margin-bottom: 8px; }
@@ -221,7 +231,7 @@ body {
 }
 
 .bike-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.badge-fi { display: inline-block; background: rgba(30, 136, 168, 0.25); color: var(--caribbean-bright); font-size: 9px; font-weight: 800; letter-spacing: 0.8px; padding: 2px 7px; border-radius: 4px; margin-bottom: 4px; }
+.badge-fi { display: inline-block; background: rgba(30, 136, 168, 0.25); color: var(--caribbean-bright); font-size: 10px; font-weight: 800; letter-spacing: 0.8px; padding: 2px 7px; border-radius: 4px; margin-bottom: 4px; }
 .bike-card-header p { font-size: 11px; color: var(--alloy-silver); }
 
 .check-circle {
@@ -292,7 +302,7 @@ input:focus { border-color: var(--caribbean-bright); }
   font-weight: 900;
   letter-spacing: 1px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(88, 232, 0, 0.25);
+  box-shadow: 0 4px 18px rgba(88, 232, 0, 0.28);
 }
 
 .btn-neon {
@@ -319,9 +329,9 @@ input:focus { border-color: var(--caribbean-bright); }
 
 .btn-action-sleek {
   padding: 6px 12px;
-  border: 1px solid rgba(88, 232, 0, 0.42);
+  border: 1px solid var(--neon-border);
   border-radius: 8px;
-  background: rgba(88, 232, 0, 0.1);
+  background: var(--neon-soft);
   color: var(--neon-lime);
   font-size: 11px;
   font-weight: 700;
@@ -454,7 +464,7 @@ input:focus { border-color: var(--caribbean-bright); }
   transform: scale(0.95);
 }
 
-.health-indicator { display: block; font-size: 10px; font-weight: 600; color: var(--neon-lime); margin-top: 1px; }
+.health-indicator { display: block; font-size: 10px; font-weight: 600; color: var(--status-ok); margin-top: 1px; }
 
 .bike-banner {
   position: relative;
@@ -492,29 +502,29 @@ input:focus { border-color: var(--caribbean-bright); }
 .pulsar-banner-script small { color: var(--caribbean-bright); font-size: 11px; margin-left: 3px; }
 
 .breakin-pill {
-  background: rgba(88, 232, 0, 0.15);
+  background: var(--accent-soft);
   color: var(--neon-lime);
-  border: 1px solid rgba(88, 232, 0, 0.45);
+  border: 1px solid var(--accent-border);
   padding: 3px 8px;
   border-radius: 5px;
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 800;
   cursor: pointer;
 }
 
 /* ================= COCKPIT DIGITAL + BARRIDO ================= */
 .cockpit-card {
-  background: linear-gradient(135deg, #0F1B28 0%, #122B3D 100%);
-  border: 1px solid var(--caribbean-primary);
-  border-radius: 15px;
-  padding: 11px 14px;
+  background: linear-gradient(135deg, #0D1622 0%, #102334 100%);
+  border: 1px solid var(--border-accent);
+  border-radius: 13px;
+  padding: 9px 13px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 11px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.38);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.34);
 }
 
 .cockpit-card::after {
@@ -523,8 +533,9 @@ input:focus { border-color: var(--caribbean-bright); }
   bottom: 0;
   left: 16px;
   width: 56px;
-  height: 2.5px;
-  background: var(--neon-lime);
+  height: 2px;
+  background: var(--accent-primary);
+  opacity: 0.85;
 }
 
 .cockpit-card.sweep-active::after {
@@ -537,14 +548,14 @@ input:focus { border-color: var(--caribbean-bright); }
   100% { left: 16px; width: 56px; box-shadow: none; }
 }
 
-.cockpit-label { display: block; font-size: 9px; font-weight: 800; letter-spacing: 0.7px; color: var(--caribbean-bright); margin-bottom: 2px; }
+.cockpit-label { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.7px; color: var(--caribbean-bright); margin-bottom: 2px; }
 .odo-value-row, .trip-value-row { display: flex; align-items: baseline; gap: 4px; }
-#current-km-display { font-family: var(--font-speed); font-size: 25px; font-weight: 800; color: #FFFFFF; font-variant-numeric: tabular-nums; }
+#current-km-display { font-family: var(--font-speed); font-size: 22px; font-weight: 800; color: #FFFFFF; font-variant-numeric: tabular-nums; }
 .odo-value-row small, .trip-value-row small { font-size: 11px; font-weight: 700; color: var(--alloy-silver); }
 .cockpit-divider { width: 1px; height: 30px; background: var(--border-subtle); }
 .cockpit-trip { cursor: pointer; padding: 2px 6px; border-radius: 6px; }
 .reset-hint { color: var(--neon-lime); font-weight: 700; margin-left: 3px; }
-#trip-a-display { font-family: var(--font-speed); font-size: 20px; font-weight: 700; color: var(--alloy-silver); }
+#trip-a-display { font-family: var(--font-speed); font-size: 18px; font-weight: 700; color: var(--alloy-silver); }
 
 .btn-cockpit-update {
   padding: 8px 13px;
@@ -555,6 +566,7 @@ input:focus { border-color: var(--caribbean-bright); }
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(88, 232, 0, 0.28);
 }
 
 /* ================= DOCK DE 5 MÓDULOS AMPLIOS ================= */
@@ -568,13 +580,13 @@ input:focus { border-color: var(--caribbean-bright); }
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 5px;
-  background: rgba(10, 16, 24, 0.96);
+  background: rgba(9, 14, 22, 0.96);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-radius: 18px 18px 0 0;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: none;
-  padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
+  padding: 7px 10px calc(7px + env(safe-area-inset-bottom, 0px));
   z-index: 950;
   box-shadow: 0 -8px 26px rgba(0, 0, 0, 0.72);
 }
@@ -584,8 +596,8 @@ input:focus { border-color: var(--caribbean-bright); }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 7px 4px;
+  gap: 4px;
+  padding: 6px 4px;
   border: none;
   border-radius: 10px;
   background: transparent;
@@ -597,15 +609,21 @@ input:focus { border-color: var(--caribbean-bright); }
   text-align: center;
 }
 
-.tab-btn .nav-ico {
-  font-size: 16px;
-  line-height: 1.1;
+.tab-btn .nav-svg {
+  opacity: 0.72;
+  transition: transform 0.16s ease, opacity 0.16s ease, color 0.16s ease;
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, var(--caribbean-primary), var(--caribbean-deep));
+  background: var(--accent-soft);
   color: #FFFFFF;
-  box-shadow: 0 2px 10px rgba(30, 136, 168, 0.34);
+  box-shadow: inset 0 0 0 1px var(--border-accent);
+}
+
+.tab-btn.active .nav-svg {
+  color: var(--caribbean-bright);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .subtabs-bar {
@@ -630,7 +648,7 @@ input:focus { border-color: var(--caribbean-bright); }
   margin-bottom: 11px;
 }
 
-.subtab-spec-btn, .subtab-route-btn, .subtab-garage-btn {
+.subtab-spec-btn, .subtab-maint-btn, .subtab-garage-btn {
   padding: 6.5px 4px;
   border: none;
   border-radius: 7px;
@@ -641,7 +659,7 @@ input:focus { border-color: var(--caribbean-bright); }
   cursor: pointer;
 }
 
-.subtab-spec-btn.active, .subtab-route-btn.active, .subtab-garage-btn.active {
+.subtab-spec-btn.active, .subtab-maint-btn.active, .subtab-garage-btn.active {
   background: var(--bg-engine);
   color: var(--caribbean-bright);
   border: 1px solid rgba(73, 191, 230, 0.28);
@@ -720,7 +738,8 @@ input:focus { border-color: var(--caribbean-bright); }
   background: var(--bg-engine);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
 }
 
 .maint-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -732,15 +751,16 @@ input:focus { border-color: var(--caribbean-bright); }
   background: rgba(30, 136, 168, 0.16);
   border: 1px solid rgba(73, 191, 230, 0.32);
   color: var(--caribbean-bright);
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   padding: 3.5px 8px;
   border-radius: 6px;
   cursor: pointer;
 }
 
-.status-pill { font-size: 9px; font-weight: 800; padding: 2.5px 6px; border-radius: 4px; }
-.status-ok { background: rgba(88, 232, 0, 0.12); color: var(--neon-lime); }
+.status-pill { font-size: 10px; font-weight: 800; padding: 2.5px 6px; border-radius: 4px; }
+.status-ok { background: var(--status-ok-soft); color: var(--status-ok); }
+.status-idle { background: rgba(148, 163, 184, 0.14); color: var(--alloy-silver); }
 .status-warn { background: rgba(255, 159, 10, 0.16); color: var(--amber-warn); }
 .status-danger { background: rgba(255, 69, 58, 0.16); color: var(--red-danger); }
 
@@ -760,27 +780,27 @@ input:focus { border-color: var(--caribbean-bright); }
   margin-bottom: 10px;
 }
 
-.fin-label { display: block; font-size: 9px; font-weight: 700; color: var(--alloy-muted); }
+.fin-label { display: block; font-size: 10px; font-weight: 700; color: var(--alloy-muted); }
 .fin-val { font-family: var(--font-speed); font-size: 17px; font-weight: 800; color: #FFFFFF; }
 .carib-txt { color: var(--caribbean-bright) !important; }
 .neon-txt { color: var(--neon-lime) !important; }
 
 /* Tarjetas de Neumáticos */
 .tire-card {
-  background: linear-gradient(155deg, #101926 0%, #0C131D 100%);
+  background: linear-gradient(155deg, #101926 0%, #0B121C 100%);
   border: 1px solid var(--border-subtle);
-  border-left: 3px solid var(--caribbean-primary);
+  border-left: 2.5px solid var(--caribbean-primary);
   border-radius: 13px;
-  padding: 11px 13px;
+  padding: 13px 14px;
 }
 
 .tire-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.tire-pos-badge { display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: 0.7px; color: var(--caribbean-bright); margin-bottom: 2px; }
+.tire-pos-badge { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.7px; color: var(--caribbean-bright); margin-bottom: 2px; }
 .tire-brand-title { font-size: 13.5px; font-weight: 800; color: #FFFFFF; }
 .tire-meta-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 
 .tire-spec-chip {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   background: rgba(210, 218, 228, 0.08);
   border: 1px solid rgba(210, 218, 228, 0.18);
@@ -803,7 +823,7 @@ input:focus { border-color: var(--caribbean-bright); }
   margin-top: 7px;
 }
 
-.tm-box span { display: block; font-size: 8.5px; font-weight: 700; color: var(--alloy-muted); }
+.tm-box span { display: block; font-size: 10px; font-weight: 700; color: var(--alloy-muted); }
 .tm-box strong { font-family: var(--font-speed); font-size: 13px; font-weight: 800; color: #FFFFFF; }
 
 .mod-filter-bar { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 9px; padding-bottom: 2px; }
@@ -817,11 +837,11 @@ input:focus { border-color: var(--caribbean-bright); }
 .log-meta { font-size: 10px; color: var(--alloy-silver); margin-top: 2px; }
 .log-telemetry-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 
-.tele-chip { background: rgba(30, 136, 168, 0.15); border: 1px solid rgba(73, 191, 230, 0.28); color: var(--caribbean-bright); font-size: 9.5px; font-weight: 700; padding: 1.5px 6px; border-radius: 4px; }
-.tele-chip.neon { background: rgba(88, 232, 0, 0.1); border-color: rgba(88, 232, 0, 0.3); color: var(--neon-lime); }
+.tele-chip { background: rgba(30, 136, 168, 0.15); border: 1px solid rgba(73, 191, 230, 0.28); color: var(--caribbean-bright); font-size: 10px; font-weight: 700; padding: 1.5px 6px; border-radius: 4px; }
+.tele-chip.neon { background: var(--status-ok-soft); border-color: var(--status-ok-border); color: var(--status-ok); }
 
-.mem-badge { font-size: 9.5px; font-weight: 700; padding: 1.5px 6px; border-radius: 4px; }
-.mem-down { background: rgba(88, 232, 0, 0.11); border: 1px solid rgba(88, 232, 0, 0.3); color: var(--neon-lime); }
+.mem-badge { font-size: 10px; font-weight: 700; padding: 1.5px 6px; border-radius: 4px; }
+.mem-down { background: var(--status-ok-soft); border: 1px solid var(--status-ok-border); color: var(--status-ok); }
 .mem-up { background: rgba(255, 159, 10, 0.14); border: 1px solid rgba(255, 159, 10, 0.35); color: var(--amber-warn); }
 .mem-same { background: rgba(210, 218, 228, 0.08); border: 1px solid rgba(210, 218, 228, 0.2); color: var(--alloy-silver); }
 
@@ -829,8 +849,8 @@ input:focus { border-color: var(--caribbean-bright); }
 .log-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
 .log-cost { font-family: var(--font-speed); font-size: 15px; font-weight: 800; color: #FFFFFF; }
 .log-btn-group { display: flex; gap: 4px; }
-.btn-edit-log { background: rgba(30, 136, 168, 0.14); border: 1px solid rgba(73, 191, 230, 0.3); color: var(--caribbean-bright); font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 5px; cursor: pointer; }
-.btn-del-log { background: rgba(255, 69, 58, 0.1); border: 1px solid rgba(255, 69, 58, 0.25); color: #FF6961; font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 5px; cursor: pointer; }
+.btn-edit-log { background: rgba(30, 136, 168, 0.14); border: 1px solid rgba(73, 191, 230, 0.3); color: var(--caribbean-bright); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; cursor: pointer; }
+.btn-del-log { background: rgba(255, 69, 58, 0.1); border: 1px solid rgba(255, 69, 58, 0.25); color: #FF6961; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; cursor: pointer; }
 .empty-logs { text-align: center; padding: 14px; background: #070C14; border: 1px dashed var(--border-subtle); border-radius: 10px; color: var(--alloy-muted); font-size: 11px; }
 
 /* ================= COMBUSTIBLE Y SPARKLINE ================= */
@@ -839,31 +859,31 @@ input:focus { border-color: var(--caribbean-bright); }
 .period-btn.active { background: var(--caribbean-primary); color: #FFFFFF; }
 
 .fuel-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.stat-card { background: var(--bg-engine); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 10px 12px; }
-.stat-card.highlight { border-top: 2.5px solid var(--neon-lime); }
-.stat-label { display: block; font-size: 9px; font-weight: 800; color: var(--alloy-muted); }
+.stat-card { background: var(--bg-engine); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 12px 14px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22); }
+.stat-card.highlight { border-top: 2px solid var(--accent-primary); }
+.stat-label { display: block; font-size: 10px; font-weight: 800; color: var(--alloy-muted); }
 .stat-big { display: block; font-family: var(--font-speed); font-size: 20px; font-weight: 800; color: #FFFFFF; margin: 3px 0; }
 .stat-big.carib { color: var(--caribbean-bright); }
 .stat-sub { display: block; font-size: 10px; color: var(--alloy-silver); }
 
 .telemetry-grid-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.tele-box { background: var(--bg-engine); border: 1px solid var(--border-subtle); border-left: 2.5px solid var(--caribbean-primary); border-radius: 11px; padding: 9px 11px; }
-.tele-label { display: block; font-size: 9px; font-weight: 800; color: var(--alloy-muted); }
+.tele-box { background: var(--bg-engine); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 11px 13px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22); }
+.tele-label { display: block; font-size: 10px; font-weight: 800; color: var(--alloy-muted); }
 .tele-val { display: block; font-family: var(--font-speed); font-size: 18.5px; font-weight: 800; color: #FFFFFF; margin: 2px 0; }
 .tele-val.neon { color: var(--neon-lime); }
 .tele-val.carib { color: var(--caribbean-bright); }
 .tele-val small { font-size: 11px; font-weight: 600; color: var(--alloy-silver); }
-.tele-sub { display: block; font-size: 9.5px; color: var(--alloy-muted); }
+.tele-sub { display: block; font-size: 10px; color: var(--alloy-muted); }
 
 .sparkline-box { background: var(--bg-engine); border: 1px solid var(--border-subtle); border-radius: 11px; padding: 9px 12px; margin-bottom: 10px; }
 .sparkline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.sparkline-title { font-size: 9px; font-weight: 800; letter-spacing: 0.6px; color: var(--alloy-silver); }
-.sparkline-trend { font-size: 9.5px; font-weight: 700; color: var(--neon-lime); }
+.sparkline-title { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; color: var(--alloy-silver); }
+.sparkline-trend { font-size: 10px; font-weight: 700; color: var(--neon-lime); }
 .sparkline-svg-container { width: 100%; height: 50px; }
 .tele-tip-banner { background: rgba(30, 136, 168, 0.11); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 9px 11px; font-size: 10.5px; color: var(--alloy-silver); line-height: 1.4; }
 
 /* ================= FINANZAS MAESTRAS, RUTA, CHECKLIST Y FICHA ================= */
-.route-calc-card, .tco-card, .specs-box { background: var(--bg-engine); border: 1px solid var(--border-subtle); border-radius: 13px; padding: 12px; margin-bottom: 10px; }
+.route-calc-card, .tco-card, .specs-box { background: var(--bg-engine); border: 1px solid var(--border-subtle); border-radius: 13px; padding: 13px 14px; margin-bottom: 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24); }
 
 .expense-split-bar {
   display: flex;
@@ -887,8 +907,8 @@ input:focus { border-color: var(--caribbean-bright); }
 .route-desc { font-size: 11px; color: var(--alloy-muted); margin-bottom: 9px; line-height: 1.35; }
 .route-results-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-top: 11px; }
 .route-res-box { background: #05080D; border: 1px solid var(--border-subtle); border-radius: 9px; padding: 8px; text-align: center; }
-.route-res-box.highlight { border-color: rgba(88, 232, 0, 0.45); }
-.route-res-box span { display: block; font-size: 8.5px; font-weight: 800; color: var(--alloy-muted); margin-bottom: 3px; }
+.route-res-box.highlight { border-color: var(--accent-border); }
+.route-res-box span { display: block; font-size: 10px; font-weight: 800; color: var(--alloy-muted); margin-bottom: 3px; }
 .route-res-box strong { font-family: var(--font-speed); font-size: 15px; font-weight: 800; color: #FFFFFF; }
 .route-res-box.highlight strong { color: var(--neon-lime); }
 
@@ -910,21 +930,21 @@ input:focus { border-color: var(--caribbean-bright); }
 .chk-info small { font-size: 10px; color: var(--alloy-muted); }
 
 .quick-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.quick-card { background: var(--bg-engine); border: 1px solid var(--border-subtle); border-top: 2.5px solid var(--caribbean-primary); border-radius: 11px; padding: 10px 11px; }
+.quick-card { background: var(--bg-engine); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 11px 12px; }
 .qc-top-row { display: flex; justify-content: space-between; align-items: center; }
-.qc-label { display: block; font-size: 9px; font-weight: 800; color: var(--alloy-muted); }
+.qc-label { display: block; font-size: 10px; font-weight: 800; color: var(--alloy-muted); }
 .qc-value { display: block; font-family: var(--font-speed); font-size: 19px; font-weight: 800; margin: 3px 0 2px; }
 .qc-value small { font-size: 11px; color: var(--neon-lime); }
-.qc-sub { display: block; font-size: 9.5px; color: var(--alloy-silver); }
+.qc-sub { display: block; font-size: 10px; color: var(--alloy-silver); }
 
 .specs-box h3 { font-size: 12px; color: var(--caribbean-bright); margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px solid var(--border-subtle); }
 .oem-header-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 5px; margin-bottom: 8px; }
 .oem-header-row h3 { border: none; margin: 0; padding: 0; }
-.copy-hint { font-size: 9.5px; color: var(--alloy-muted); }
+.copy-hint { font-size: 10px; color: var(--alloy-muted); }
 .oem-list { display: flex; flex-direction: column; gap: 7px; }
 .oem-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #05090E; border: 1px solid var(--border-subtle); border-radius: 9px; padding: 8px 10px; cursor: pointer; }
 .oem-item strong { display: block; font-size: 11.5px; color: #FFFFFF; }
-.oem-item small { font-size: 9.5px; color: var(--alloy-muted); }
+.oem-item small { font-size: 10px; color: var(--alloy-muted); }
 .oem-code-pill { font-family: var(--font-speed); font-size: 11.5px; font-weight: 800; background: rgba(30, 136, 168, 0.2); border: 1px solid var(--caribbean-bright); color: var(--caribbean-bright); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
 .spec-row { display: flex; justify-content: space-between; padding: 6.5px 0; border-bottom: 1px solid rgba(210, 218, 228, 0.07); font-size: 11px; }
 .spec-row:last-child { border-bottom: none; }
@@ -944,11 +964,11 @@ input:focus { border-color: var(--caribbean-bright); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.info-modal-tag { display: block; font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--neon-lime); margin-bottom: 2px; }
+.info-modal-tag { display: block; font-size: 10px; font-weight: 800; letter-spacing: 1px; color: var(--neon-lime); margin-bottom: 2px; }
 .info-guide-body { display: flex; flex-direction: column; gap: 9px; margin-top: 6px; }
 .info-section-box { background: #05090E; border: 1px solid var(--border-subtle); border-left: 3px solid var(--caribbean-bright); border-radius: 9px; padding: 10px 12px; }
 .info-section-box.why { border-left-color: var(--neon-lime); }
-.info-sub-label { display: block; font-size: 9px; font-weight: 800; letter-spacing: 0.6px; color: var(--caribbean-bright); margin-bottom: 4px; }
+.info-sub-label { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.6px; color: var(--caribbean-bright); margin-bottom: 4px; }
 .info-section-box.why .info-sub-label { color: var(--neon-lime); }
 .info-section-box p { font-size: 11.5px; color: var(--alloy-silver); line-height: 1.48; margin: 0; }
 
@@ -957,7 +977,7 @@ input:focus { border-color: var(--caribbean-bright); }
 .modal-pulsar-title { font-family: var(--font-speed); font-style: italic; font-size: 17px; font-weight: 800; color: #FFFFFF; }
 .btn-close-x { background: #05080D; border: 1px solid var(--border-subtle); color: var(--alloy-silver); width: 26px; height: 26px; border-radius: 7px; cursor: pointer; font-size: 12px; }
 .modal-card p { font-size: 11.5px; color: var(--alloy-silver); margin-bottom: 10px; }
-.modal-label { display: block; font-size: 9.5px; font-weight: 800; letter-spacing: 0.5px; color: var(--caribbean-bright); margin: 6px 0 3px; }
+.modal-label { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; color: var(--caribbean-bright); margin: 6px 0 3px; }
 
 .custom-service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
 .service-option { background: #05080D; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 7px 9px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
@@ -965,7 +985,7 @@ input:focus { border-color: var(--caribbean-bright); }
 .service-option.selected { background: rgba(30, 136, 168, 0.22); border-color: var(--caribbean-bright); }
 .service-option.selected .srv-dot { background: var(--neon-lime); box-shadow: 0 0 6px var(--neon-lime); }
 .srv-text strong { display: block; font-size: 11px; color: #FFFFFF; }
-.srv-text small { font-size: 9.5px; color: var(--alloy-muted); }
+.srv-text small { font-size: 10px; color: var(--alloy-muted); }
 
 .fuel-type-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
 .fuel-type-pills-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 4px; }
@@ -984,7 +1004,15 @@ body[data-theme="red"] {
   --caribbean-primary: #C81E2B;
   --caribbean-bright: #FF4D5A;
   --neon-lime: #FFB800;
-  --border-subtle: rgba(255, 77, 90, 0.18);
+  --neon-soft: rgba(255, 184, 0, 0.14);
+  --neon-border: rgba(255, 184, 0, 0.42);
+  --accent-primary: #FFB800;
+  --accent-glow: rgba(255, 77, 90, 0.26);
+  --accent-soft: rgba(255, 77, 90, 0.14);
+  --accent-border: rgba(255, 77, 90, 0.42);
+  --neon-dark-txt: #05090D;
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-accent: rgba(255, 77, 90, 0.28);
   background-image: 
     radial-gradient(circle at 50% 0%, rgba(200, 30, 43, 0.24) 0%, transparent 56%),
     radial-gradient(circle at 85% 95%, rgba(255, 184, 0, 0.06) 0%, transparent 42%);
@@ -995,7 +1023,14 @@ body[data-theme="black"] {
   --caribbean-primary: #3A4659;
   --caribbean-bright: #94A3B8;
   --neon-lime: #00E5FF;
-  --border-subtle: rgba(148, 163, 184, 0.18);
+  --neon-soft: rgba(0, 229, 255, 0.14);
+  --neon-border: rgba(0, 229, 255, 0.42);
+  --accent-primary: #00E5FF;
+  --accent-glow: rgba(56, 189, 248, 0.24);
+  --accent-soft: rgba(56, 189, 248, 0.14);
+  --accent-border: rgba(56, 189, 248, 0.38);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-accent: rgba(148, 163, 184, 0.28);
   background-image: 
     radial-gradient(circle at 50% 0%, rgba(58, 70, 89, 0.25) 0%, transparent 56%),
     radial-gradient(circle at 85% 95%, rgba(0, 229, 255, 0.05) 0%, transparent 42%);
@@ -1005,8 +1040,15 @@ body[data-theme="white"] {
   --caribbean-deep: #2A3442;
   --caribbean-primary: #64748B;
   --caribbean-bright: #F8FAFC;
-  --neon-lime: #38BDF8;
-  --border-subtle: rgba(248, 250, 252, 0.22);
+  --neon-lime: #00E5FF;
+  --neon-soft: rgba(0, 229, 255, 0.14);
+  --neon-border: rgba(0, 229, 255, 0.42);
+  --accent-primary: #00E5FF;
+  --accent-glow: rgba(56, 189, 248, 0.24);
+  --accent-soft: rgba(56, 189, 248, 0.14);
+  --accent-border: rgba(56, 189, 248, 0.38);
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-accent: rgba(248, 250, 252, 0.30);
   background-image: 
     radial-gradient(circle at 50% 0%, rgba(248, 250, 252, 0.16) 0%, transparent 56%),
     radial-gradient(circle at 85% 95%, rgba(56, 189, 248, 0.06) 0%, transparent 42%);
@@ -1029,7 +1071,7 @@ body[data-theme="white"] {
   align-items: center;
   gap: 5px;
   color: var(--alloy-silver);
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1073,7 +1115,7 @@ body[data-theme="white"] {
 
 .cloud-live-pill.syncing { border-color: var(--caribbean-bright); color: var(--caribbean-bright); }
 .cloud-live-pill.syncing .cloud-live-dot { background: var(--caribbean-bright); box-shadow: 0 0 8px var(--caribbean-bright); animation: pulseCloud 0.8s infinite alternate; }
-.cloud-live-pill.ok .cloud-live-dot { background: var(--neon-lime); box-shadow: 0 0 6px var(--neon-lime); }
+.cloud-live-pill.ok .cloud-live-dot { background: var(--status-ok); box-shadow: 0 0 6px var(--status-ok); }
 .cloud-live-pill.error { border-color: var(--red-danger); color: var(--red-danger); }
 .cloud-live-pill.error .cloud-live-dot { background: var(--red-danger); }
 
@@ -1082,61 +1124,11 @@ body[data-theme="white"] {
   to { transform: scale(1.25); opacity: 1; }
 }
 
-/* Switch de Modo Préstamo */
-.loan-mode-strip {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(255, 159, 10, 0.08);
-  border: 1px solid rgba(255, 159, 10, 0.3);
-  border-radius: 10px;
-  padding: 7px 11px;
-  margin-bottom: 10px;
-}
-
-.loan-mode-strip.active {
-  background: rgba(255, 159, 10, 0.18);
-  border-color: var(--amber-warn);
-}
-
-.loan-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #FFFFFF;
-}
-
-.loan-left small {
-  display: block;
-  font-size: 9.5px;
-  font-weight: 500;
-  color: var(--alloy-silver);
-}
-
-.btn-loan-toggle {
-  padding: 5px 10px;
-  border-radius: 7px;
-  border: 1px solid rgba(255, 159, 10, 0.45);
-  background: #05080D;
-  color: var(--amber-warn);
-  font-size: 10px;
-  font-weight: 800;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.loan-mode-strip.active .btn-loan-toggle {
-  background: var(--amber-warn);
-  color: #05090D;
-}
-
 .btn-cal-ics {
-  background: rgba(88, 232, 0, 0.12);
-  border: 1px solid rgba(88, 232, 0, 0.38);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   color: var(--neon-lime);
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   padding: 2.5px 7px;
   border-radius: 5px;
@@ -1156,9 +1148,9 @@ body[data-theme="white"] {
 }
 
 .diag-alert-box.ok {
-  background: rgba(88, 232, 0, 0.08);
-  border-color: rgba(88, 232, 0, 0.3);
-  border-left-color: var(--neon-lime);
+  background: var(--status-ok-soft);
+  border-color: var(--status-ok-border);
+  border-left-color: var(--status-ok);
 }
 
 .diag-alert-box strong {
@@ -1190,9 +1182,9 @@ body[data-theme="white"] {
 }
 
 .rank-medal.top1 {
-  background: rgba(88, 232, 0, 0.18);
-  color: var(--neon-lime);
-  border: 1px solid rgba(88, 232, 0, 0.4);
+  background: var(--status-ok-soft);
+  color: var(--status-ok);
+  border: 1px solid var(--status-ok-border);
 }
 
 .capex-opex-grid {
@@ -1211,12 +1203,12 @@ body[data-theme="white"] {
 
 .co-card.capex { border-top: 2.5px solid var(--caribbean-bright); }
 .co-card.opex { border-top: 2.5px solid var(--neon-lime); }
-.co-tag { display: block; font-size: 8.5px; font-weight: 800; letter-spacing: 0.5px; color: var(--alloy-muted); }
+.co-tag { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; color: var(--alloy-muted); }
 .co-val { display: block; font-family: var(--font-speed); font-size: 17px; font-weight: 800; color: #FFFFFF; margin: 2px 0; }
-.co-sub { display: flex; justify-content: space-between; align-items: center; font-size: 9.5px; color: var(--alloy-silver); }
+.co-sub { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: var(--alloy-silver); }
 
 .quick-picks-row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 5px; margin-bottom: 4px; }
-.quick-pick-label { font-size: 9px; font-weight: 800; color: var(--alloy-muted); }
+.quick-pick-label { font-size: 10px; font-weight: 800; color: var(--alloy-muted); }
 .quick-pick-pill { background: rgba(30, 136, 168, 0.15); border: 1px solid var(--border-subtle); color: var(--caribbean-bright); font-size: 10px; font-weight: 700; padding: 2.5px 8px; border-radius: 99px; cursor: pointer; transition: all 0.15s ease; }
 .quick-pick-pill:active { background: var(--caribbean-primary); color: #FFFFFF; transform: scale(0.96); }
 
@@ -1243,9 +1235,11 @@ body.ecu-ride-mode {
 }
 
 body.ecu-tab-active .app-header,
+body.ecu-tab-active #hero-cockpit-shell,
 body.ecu-tab-active #main-bike-banner,
 body.ecu-tab-active #cockpit-cluster,
 body.ecu-ride-mode .app-header,
+body.ecu-ride-mode #hero-cockpit-shell,
 body.ecu-ride-mode #main-bike-banner,
 body.ecu-ride-mode #cockpit-cluster,
 body.ecu-ride-mode .tabs-nav-5 {
@@ -1285,17 +1279,15 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 /* 1. Cabecera Unificada TFT (1 Sola Línea) */
 .mo-unified-topbar {
   background: linear-gradient(180deg, #0D1622 0%, #070B12 100%);
-  border-bottom: 1px solid rgba(73, 191, 230, 0.2);
-  padding: 5px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: hidden;
 }
-.mo-unified-topbar::-webkit-scrollbar { display: none; }
 
 .mo-top-brand {
   display: flex;
@@ -1335,7 +1327,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .mo-brand-sub {
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: #8E9BAE;
@@ -1397,24 +1389,30 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .mo-top-pill {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: #D2DAE4;
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 800;
-  padding: 5px 8px;
-  border-radius: 7px;
+  padding: 6px 9px;
+  border-radius: 8px;
   cursor: pointer;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .mo-top-pill.icon-only {
-  padding: 5px 7px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
 }
 
 .mo-top-pill.connect {
-  background: rgba(88, 232, 0, 0.15);
-  border-color: rgba(88, 232, 0, 0.5);
-  color: #58E800;
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent-primary);
 }
 
 .mo-top-pill.rec {
@@ -1508,7 +1506,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   background: rgba(7, 12, 19, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1.5px solid rgba(88, 232, 0, 0.55);
+  border: 1.5px solid var(--accent-border);
   border-radius: 99px;
   padding: 4px 6px 4px 5px;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.72);
@@ -1576,7 +1574,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .mo-active-dest-texts small {
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--caribbean-bright);
   white-space: nowrap;
@@ -1660,7 +1658,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .mo-pro-search-btn {
   background: var(--neon-lime);
-  color: #05090D;
+  color: var(--neon-dark-txt);
   border: none;
   border-radius: 99px;
   padding: 4.5px 11px;
@@ -1703,10 +1701,10 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .map-search-item:hover, .map-search-item:active { background: rgba(30, 136, 168, 0.26); }
 .map-search-item strong { display: block; color: var(--neon-lime); font-size: 11px; }
-.map-search-item small { display: block; color: var(--alloy-silver); font-size: 9px; margin-top: 1px; }
+.map-search-item small { display: block; color: var(--alloy-silver); font-size: 10px; margin-top: 1px; }
 .map-search-dist-pill {
   font-family: var(--font-speed);
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 800;
   color: var(--caribbean-bright);
   background: rgba(30, 136, 168, 0.18);
@@ -1735,7 +1733,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   color: #E2E8F0;
   padding: 4px 8.5px;
   border-radius: 99px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
@@ -1783,11 +1781,11 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .mo-compass-circle.active {
   border-color: var(--neon-lime);
-  background: rgba(88, 232, 0, 0.18);
+  background: var(--accent-soft);
 }
 
-.mo-compass-arrow { font-size: 6.5px; color: #FF453A; line-height: 1; transition: transform 0.3s ease; }
-.mo-compass-circle strong { font-size: 8px; line-height: 1; }
+.mo-compass-arrow { font-size: 7.5px; color: #FF453A; line-height: 1; transition: transform 0.3s ease; }
+.mo-compass-circle strong { font-size: 10px; line-height: 1; }
 
 .mo-zoom-pill-group {
   background: rgba(8, 13, 20, 0.90);
@@ -1834,7 +1832,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #D2DAE4;
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 700;
   padding: 3.5px 7.5px;
   border-radius: 99px;
@@ -1843,9 +1841,9 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .mo-mini-action.gps.active {
-  background: rgba(88, 232, 0, 0.18);
-  border-color: #58E800;
-  color: #58E800;
+  background: var(--accent-soft);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 /* ================= PANEL TFT DE 4 TARJETAS DE TELEMETRÍA EN RUTA ================= */
@@ -1858,35 +1856,24 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .mo-hud-card {
   background: linear-gradient(160deg, #0D1520 0%, #070B11 100%);
-  border: 1px solid rgba(73, 191, 230, 0.18);
+  border: 1px solid var(--border-subtle);
+  border-left-width: 2px;
   border-radius: 11px;
-  padding: 7px 9px;
+  padding: 9px 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   min-width: 0;
 }
 
-.mo-hud-card.speed-hud {
-  border-left: 3px solid var(--neon-lime);
-}
-
-.mo-hud-card.route-hud {
-  border-left: 3px solid var(--caribbean-bright);
-}
-
-.mo-hud-card.fuel-hud {
-  border-left: 3px solid var(--caribbean-primary);
-}
-
-.mo-hud-card.elev-card {
-  cursor: pointer;
-  border-left: 3px solid var(--amber-warn);
-}
+.mo-hud-card.speed-hud { border-left-color: var(--accent-primary); }
+.mo-hud-card.route-hud { border-left-color: var(--caribbean-bright); }
+.mo-hud-card.fuel-hud { border-left-color: rgba(255, 255, 255, 0.18); }
+.mo-hud-card.elev-card { cursor: pointer; border-left-color: rgba(255, 159, 10, 0.65); }
 
 .mo-hud-tag {
   font-family: var(--font-speed);
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 800;
   color: var(--caribbean-bright);
   background: rgba(30, 136, 168, 0.18);
@@ -1920,14 +1907,14 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .mo-hud-speed-row small {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   color: #8E9BAE;
 }
 
 .mo-tft-gear-badge {
-  background: rgba(88, 232, 0, 0.12);
-  border: 1px solid rgba(88, 232, 0, 0.4);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   border-radius: 7px;
   padding: 2px 7px;
   display: flex;
@@ -1938,7 +1925,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .mo-tft-gear-badge span {
-  font-size: 6px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.4px;
   color: #94A3B8;
@@ -1955,7 +1942,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 #map-hud-vitals {
   display: block;
   font-family: var(--font-speed);
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 700;
   color: #B0BCCB;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
@@ -1982,14 +1969,14 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .mo-card-primary-val small {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   color: #94A3B8;
 }
 
 .mo-hud-pill-stat {
   font-family: var(--font-speed);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   color: var(--caribbean-bright);
   background: rgba(30, 136, 168, 0.16);
@@ -2004,7 +1991,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   justify-content: space-between;
   align-items: center;
   gap: 4px;
-  font-size: 8px;
+  font-size: 10px;
   color: #8E9BAE;
 }
 
@@ -2012,7 +1999,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   display: flex;
   flex-direction: column;
   gap: 1.5px;
-  font-size: 8px;
+  font-size: 10px;
   color: #94A3B8;
 }
 
@@ -2031,16 +2018,16 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 /* Pines del Mapa Leaflet */
 .leaflet-tile-pane { filter: brightness(0.88) contrast(1.12) saturate(0.96); }
-.leaflet-control-attribution { font-size: 7px !important; background: rgba(5, 8, 13, 0.65) !important; color: var(--alloy-muted) !important; }
+.leaflet-control-attribution { font-size: 8px !important; background: rgba(5, 8, 13, 0.65) !important; color: var(--alloy-muted) !important; }
 .leaflet-control-attribution a { color: var(--caribbean-bright) !important; }
 
 .n160-bike-pin {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: #2563EB;
+  background: linear-gradient(135deg, var(--caribbean-bright), var(--caribbean-primary));
   border: 2.5px solid #FFFFFF;
-  box-shadow: 0 0 14px rgba(37, 99, 235, 0.95);
+  box-shadow: 0 0 14px var(--accent-glow);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2057,7 +2044,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   border-radius: 50%;
   background: rgba(6, 10, 15, 0.94);
   border: 2px solid var(--neon-lime);
-  box-shadow: 0 0 12px rgba(88, 232, 0, 0.85);
+  box-shadow: 0 0 12px var(--accent-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2102,8 +2089,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   gap: 6px;
 }
 
-.obd-dial-card,
-.obd-hero-gear-box {
+.obd-dial-card {
   background: linear-gradient(165deg, #080E17 0%, #0C1522 100%);
   border: 1px solid rgba(73, 191, 230, 0.22);
   border-radius: 12px;
@@ -2114,10 +2100,15 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .obd-hero-gear-box {
+  border-radius: 12px;
+  padding: 7px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
   text-align: center;
-  border-color: rgba(88, 232, 0, 0.35);
-  background: radial-gradient(circle at 50% 40%, rgba(88, 232, 0, 0.14) 0%, #070C14 85%);
+  border: 1px solid var(--neon-border);
+  background: radial-gradient(circle at 50% 40%, var(--neon-soft) 0%, #070C14 85%);
 }
 
 .obd-svg-dial-wrap {
@@ -2143,7 +2134,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 #obd-rpm-arc.torque-glow {
-  filter: drop-shadow(0 0 8px rgba(88, 232, 0, 0.85));
+  filter: drop-shadow(0 0 8px var(--accent-border));
 }
 
 .obd-dial-center-txt {
@@ -2170,7 +2161,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 #obd-rpm-val { color: #FFFFFF; }
 
 .obd-dial-center-txt small {
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 800;
   color: var(--alloy-muted);
   text-transform: uppercase;
@@ -2181,15 +2172,15 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 8px;
+  font-size: 10px;
   color: var(--alloy-silver);
   border-top: 1px solid rgba(210, 218, 228, 0.07);
   padding-top: 3px;
 }
 
-.obd-hero-tag { font-size: 8px; font-weight: 800; letter-spacing: 0.5px; color: var(--alloy-muted); }
+.obd-hero-tag { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; color: var(--alloy-muted); }
 .obd-gear-number { font-family: var(--font-speed); font-size: 34px; font-weight: 900; line-height: 0.95; color: var(--neon-lime); margin: 2px 0; }
-.obd-guard-pill { font-size: 7.5px; font-weight: 800; padding: 2px 5px; border-radius: 4px; background: rgba(88, 232, 0, 0.15); color: var(--neon-lime); white-space: nowrap; }
+.obd-guard-pill { font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 4px; background: var(--accent-soft); color: var(--neon-lime); white-space: nowrap; }
 .rpm-scale-danger { color: var(--red-danger); font-weight: 700; }
 
 .obd-vitals-grid-4 {
@@ -2218,7 +2209,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 .obd-vital-val small { font-size: 10px; color: var(--alloy-silver); }
 
 .machine-bar-row { display: flex; align-items: center; gap: 5px; margin: 3px 0 4px; }
-.machine-bar-row small { font-size: 7.5px; font-weight: 800; color: var(--alloy-muted); }
+.machine-bar-row small { font-size: 10px; font-weight: 800; color: var(--alloy-muted); }
 .machine-bar-track { flex: 1; height: 4px; background: #121D2B; border-radius: 99px; overflow: hidden; }
 .machine-bar-fill { height: 100%; width: 0%; background: var(--neon-lime); border-radius: 99px; transition: width 0.25s ease, background-color 0.25s ease; }
 
@@ -2235,9 +2226,9 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   padding: 5px 7px;
 }
 
-.micro-lbl { display: block; font-size: 7.5px; font-weight: 800; letter-spacing: 0.4px; color: var(--alloy-muted); }
+.micro-lbl { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.4px; color: var(--alloy-muted); }
 .obd-micro-cell strong { display: block; font-family: var(--font-speed); font-size: 12.5px; font-weight: 800; color: #FFFFFF; margin: 1px 0; font-variant-numeric: tabular-nums; }
-.obd-micro-cell small { display: block; font-size: 8px; color: var(--alloy-silver); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.obd-micro-cell small { display: block; font-size: 10px; color: var(--alloy-silver); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .obd-machine-footer-strip {
   display: grid;
@@ -2251,7 +2242,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 }
 
 .obd-footer-stat strong { display: block; font-family: var(--font-speed); font-size: 12px; font-weight: 800; color: #FFFFFF; }
-.obd-footer-stat small { display: block; font-size: 7.5px; color: var(--alloy-silver); }
+.obd-footer-stat small { display: block; font-size: 10px; color: var(--alloy-silver); }
 
 .obd-dtc-strip { background: #070C14; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 9px 11px; }
 .obd-dtc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -2262,8 +2253,8 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 
 .obd-box-head { display: flex; justify-content: space-between; align-items: center; gap: 4px; width: 100%; }
 .obd-box-head.center { justify-content: center; gap: 5px; }
-.obd-mini-info { width: 16px !important; height: 16px !important; font-size: 9px !important; }
-.obd-micro-info { width: 14px !important; height: 14px !important; font-size: 8px !important; }
+.obd-mini-info { width: 16px !important; height: 16px !important; font-size: 10px !important; }
+.obd-micro-info { width: 14px !important; height: 14px !important; font-size: 10px !important; }
 
 .mo-altitude-alert-strip {
   display: flex;
@@ -2274,7 +2265,7 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
   border: 1px solid var(--amber-warn);
   border-radius: 8px;
   padding: 5px 9px;
-  font-size: 9.5px;
+  font-size: 10px;
   color: #FFFFFF;
   flex-shrink: 0;
 }
@@ -2284,9 +2275,9 @@ body.ecu-ride-mode #tab-ecu:not(.hidden) {
 .blackbox-card { border-left: 3px solid var(--caribbean-bright); }
 .elec-test-metrics-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 7px; }
 .et-metric-box { background: #050910; border: 1px solid rgba(73, 191, 230, 0.18); border-radius: 8px; padding: 6px 8px; text-align: center; }
-.et-metric-box span { display: block; font-size: 7.5px; font-weight: 800; color: var(--alloy-muted); letter-spacing: 0.4px; }
+.et-metric-box span { display: block; font-size: 10px; font-weight: 800; color: var(--alloy-muted); letter-spacing: 0.4px; }
 .et-metric-box strong { display: block; font-family: var(--font-speed); font-size: 14px; font-weight: 800; color: #FFFFFF; margin: 2px 0; }
-.et-metric-box small { display: block; font-size: 7.5px; color: var(--caribbean-bright); }
+.et-metric-box small { display: block; font-size: 10px; color: var(--caribbean-bright); }
 
 /* Regla de los 0.8 Segundos en Modo Timón (ecu-ride-mode) */
 body.ecu-ride-mode #obd-rpm-val,
@@ -2311,9 +2302,13 @@ body[data-sunlight="true"] .obd-micro-cell,
 body[data-sunlight="true"] .mo-hud-card,
 body[data-sunlight="true"] .mo-collapsed-lupa-pill,
 body[data-sunlight="true"] .mo-map-bottom-toolbar,
-body[data-sunlight="true"] .mo-pro-search-bar {
+body[data-sunlight="true"] .mo-pro-search-bar,
+body[data-sunlight="true"] .obd-sprint-card,
+body[data-sunlight="true"] .pilot-summary-card,
+body[data-sunlight="true"] .monthly-chart-card,
+body[data-sunlight="true"] .hero-cockpit-shell.has-photo .cockpit-card {
   background: #000000 !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
 }
 
 body[data-sunlight="true"] #obd-rpm-arc,
@@ -2384,39 +2379,6 @@ body[data-sunlight="true"] .leaflet-tile-pane {
 
 
 /* ================= MEJORAS V3.7: SILENCIO VISUAL TFT, POPOVER COCKPIT, BÓVEDA OFFLINE & CARGA ================= */
-.mo-tools-dropdown-wrap {
-  position: relative;
-  display: inline-flex;
-}
-
-.mo-tools-popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  background: rgba(10, 16, 26, 0.98);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--caribbean-bright);
-  border-radius: 11px;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 148px;
-  z-index: 1200;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85);
-}
-
-.mo-tools-popover .mo-top-pill {
-  width: 100%;
-  text-align: left;
-  padding: 7px 10px;
-  font-size: 10.5px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .obd-micro-cell.interactive-cell {
   cursor: pointer;
   transition: border-color 0.15s ease, transform 0.12s ease;
@@ -2479,7 +2441,7 @@ body[data-sunlight="true"] .leaflet-tile-pane {
 }
 
 .vault-doc-slot small {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--alloy-muted);
   line-height: 1.25;
 }
@@ -2550,11 +2512,11 @@ body[data-sunlight="true"] .leaflet-tile-pane {
 }
 
 .mo-replay-badge {
-  background: rgba(88, 232, 0, 0.16);
-  border: 1px solid rgba(88, 232, 0, 0.45);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   color: var(--neon-lime);
   font-family: var(--font-speed);
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 900;
   padding: 2px 6px;
   border-radius: 5px;
@@ -2569,13 +2531,13 @@ body[data-sunlight="true"] .leaflet-tile-pane {
 }
 
 #replay-point-counter {
-  font-size: 8.5px;
+  font-size: 10px;
   color: var(--alloy-muted);
 }
 
 .mo-replay-vitals-strip {
   font-family: var(--font-speed);
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--alloy-silver);
   background: rgba(255, 255, 255, 0.04);
@@ -2704,5 +2666,838 @@ body[data-sunlight="true"] .leaflet-tile-pane {
   body.ecu-tab-active.ecu-force-landscape .obd-machine-footer-strip {
     grid-column: 1 / -1 !important;
     grid-row: 3 / 4 !important;
+  }
+
+  /* Mantener modales (SOS, Confirmaciones, Guías) y notificaciones HUD derechos al usar Rotación Forzada */
+  body.ecu-tab-active.ecu-force-landscape .modal-backdrop {
+    top: 0 !important;
+    left: 100vw !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100dvh !important;
+    height: 100vw !important;
+    transform-origin: top left !important;
+    transform: rotate(90deg) !important;
+  }
+
+  body.ecu-tab-active.ecu-force-landscape .hud-toast {
+    top: 50% !important;
+    left: auto !important;
+    right: 14px !important;
+    transform: translate(50%, -50%) rotate(90deg) !important;
+    animation: none !important;
+  }
+}
+
+/* ================= COMPONENTES v5.1 (PALETA N160 CELESTE, NUEVAS VISTAS Y RESPONSIVE 360px) ================= */
+.ui-svg {
+  display: block;
+}
+
+/* Jerarquía visual en Taller: Atención vs. Al Día */
+.maint-group-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  padding: 2px 4px;
+  margin-top: 2px;
+}
+
+.maint-group-label.warn {
+  color: var(--amber-warn);
+}
+
+.maint-group-label.ok {
+  color: var(--alloy-muted);
+  margin-top: 8px;
+}
+
+.maint-card.maint-urgent {
+  border-color: rgba(255, 159, 10, 0.30);
+  background: linear-gradient(160deg, #131B28 0%, #0D141F 100%);
+}
+
+.maint-card.maint-healthy {
+  opacity: 0.94;
+}
+
+/* Switch de Modo Préstamo dentro de #modal-fuel */
+.fuel-loan-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 159, 10, 0.07);
+  border: 1px solid rgba(255, 159, 10, 0.24);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.fuel-loan-check-row input {
+  display: none;
+}
+
+.fuel-loan-check-row input:checked + .chk-box {
+  background: var(--amber-warn);
+  border-color: var(--amber-warn);
+}
+
+.fuel-loan-check-row input:checked + .chk-box::after {
+  content: '✓';
+  color: #05090D;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.fuel-loan-check-row strong {
+  display: block;
+  font-size: 11.5px;
+  color: #FFFFFF;
+}
+
+.fuel-loan-check-row small {
+  display: block;
+  font-size: 10px;
+  color: var(--alloy-silver);
+}
+
+/* Indicador de Nube: Conflicto */
+.cloud-live-pill.conflict {
+  border-color: var(--amber-warn);
+  color: var(--amber-warn);
+  background: rgba(255, 159, 10, 0.10);
+}
+
+.cloud-live-pill.conflict .cloud-live-dot {
+  background: var(--amber-warn);
+  box-shadow: 0 0 7px var(--amber-warn);
+}
+
+/* Enlace de recuperación de contraseña */
+.auth-reset-link {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 6px 4px 10px;
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Banner de Alerta Proactiva */
+.priority-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255, 159, 10, 0.10);
+  border: 1px solid rgba(255, 159, 10, 0.34);
+  border-left: 3px solid var(--amber-warn);
+  border-radius: 12px;
+  padding: 9px 11px;
+  margin-bottom: 11px;
+  animation: tabFadeIn 0.2s ease-out;
+}
+
+.priority-alert-banner.severity-danger {
+  background: rgba(255, 69, 58, 0.11);
+  border-color: rgba(255, 69, 58, 0.36);
+  border-left-color: var(--red-danger);
+}
+
+.priority-alert-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+}
+
+.priority-alert-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+  background: var(--amber-warn);
+  box-shadow: 0 0 8px var(--amber-warn);
+}
+
+.priority-alert-banner.severity-danger .priority-alert-dot {
+  background: var(--red-danger);
+  box-shadow: 0 0 8px var(--red-danger);
+}
+
+.priority-alert-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.priority-alert-texts strong {
+  font-size: 12px;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.25;
+}
+
+.priority-alert-texts small {
+  font-size: 10.5px;
+  color: var(--alloy-silver);
+  line-height: 1.3;
+}
+
+.priority-alert-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-priority-cta {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  background: var(--amber-warn);
+  color: #05090D;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.priority-alert-banner.severity-danger .btn-priority-cta {
+  background: var(--red-danger);
+  color: #FFFFFF;
+}
+
+.btn-priority-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(5, 8, 13, 0.55);
+  color: var(--alloy-silver);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.ecu-tab-active #smart-priority-banner,
+body.ecu-ride-mode #smart-priority-banner {
+  display: none !important;
+}
+
+/* Gráfico de Barras de Gasto Mensual (6 Meses) */
+.monthly-chart-card {
+  background: var(--bg-engine);
+  border: 1px solid var(--border-subtle);
+  border-radius: 13px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.monthly-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.monthly-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--alloy-silver);
+}
+
+.leg-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+}
+
+.leg-dot.fuel { background: var(--accent-primary); }
+.leg-dot.maint { background: var(--caribbean-bright); }
+.leg-dot.other { background: var(--amber-warn); }
+
+.monthly-total-badge {
+  font-family: var(--font-speed);
+  font-size: 15px;
+  font-weight: 800;
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+
+.monthly-svg-wrap {
+  width: 100%;
+  height: 114px;
+}
+
+.monthly-empty-hint {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+  color: var(--alloy-muted);
+  border: 1px dashed var(--border-subtle);
+  border-radius: 9px;
+  padding: 12px;
+}
+
+/* Controles de Cabecera Cockpit y Bottom Sheet */
+.mo-top-pill.active-rot {
+  background: var(--accent-soft);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.mo-top-pill.sos-btn {
+  background: rgba(255, 69, 58, 0.16);
+  border-color: rgba(255, 69, 58, 0.45);
+  color: #FF6961;
+  font-family: var(--font-speed);
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  height: 32px;
+  padding: 0 9px;
+}
+
+.mo-top-pill.sheet-trigger {
+  position: relative;
+  background: var(--accent-soft);
+  border-color: var(--border-accent);
+  color: var(--caribbean-bright);
+}
+
+.mo-sheet-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-ok);
+  box-shadow: 0 0 6px var(--status-ok);
+}
+
+.mo-sheet-dot.rec-pulse {
+  background: var(--red-danger);
+  box-shadow: 0 0 8px var(--red-danger);
+  animation: recPulse 0.9s infinite alternate;
+}
+
+.mo-search-svg {
+  color: var(--alloy-muted);
+  flex-shrink: 0;
+}
+
+.sheet-backdrop {
+  align-items: flex-end;
+  padding: 0;
+}
+
+.mo-sheet-card {
+  max-width: 500px;
+  width: 100%;
+  border-radius: 20px 20px 0 0;
+  border-bottom: none;
+  border-color: rgba(255, 255, 255, 0.12);
+  padding: 10px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+}
+
+.mo-sheet-handle {
+  width: 38px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.22);
+  margin: 0 auto 12px;
+}
+
+.mo-sheet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.mo-sheet-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  background: #080E16;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 11px 12px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+
+.mo-sheet-tile:active {
+  transform: scale(0.98);
+}
+
+.mo-sheet-tile svg {
+  color: var(--caribbean-bright);
+  flex-shrink: 0;
+}
+
+.mo-sheet-tile strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.mo-sheet-tile small {
+  display: block;
+  font-size: 10px;
+  color: var(--alloy-muted);
+  margin-top: 2px;
+}
+
+.mo-sheet-tile.connect svg {
+  color: var(--accent-primary);
+}
+
+.mo-sheet-tile.rec svg {
+  color: #FF6961;
+}
+
+.mo-sheet-tile.active-tile {
+  background: var(--accent-soft);
+  border-color: var(--caribbean-bright);
+}
+
+.mo-sheet-tile.connect.active-tile {
+  background: var(--status-ok-soft);
+  border-color: var(--status-ok);
+}
+
+.mo-sheet-tile.rec.recording-active {
+  background: rgba(255, 69, 58, 0.18);
+  border-color: var(--red-danger);
+}
+
+.mo-sheet-guide-btn {
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+  font-size: 11.5px;
+}
+
+/* Protección Responsive en Celulares Angostos (360px - 430px vertical): Cero recortes en cabecera del Cockpit */
+@media (max-width: 430px) and (orientation: portrait) {
+  .mo-unified-topbar {
+    padding: 5px 8px;
+    gap: 5px;
+  }
+  .mo-mode-tab {
+    padding: 6px 10px;
+  }
+  .mo-mode-tab span {
+    display: none;
+  }
+}
+
+@media (orientation: landscape) {
+  .sheet-backdrop {
+    align-items: center;
+    padding: 14px;
+  }
+  .mo-sheet-card {
+    border-radius: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    max-width: 460px;
+  }
+  .mo-sheet-handle {
+    display: none;
+  }
+}
+
+@media (orientation: portrait) {
+  body.ecu-tab-active.ecu-force-landscape .sheet-backdrop {
+    align-items: center;
+    padding: 14px;
+  }
+  body.ecu-tab-active.ecu-force-landscape .mo-sheet-card {
+    border-radius: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    max-width: 460px;
+  }
+  body.ecu-tab-active.ecu-force-landscape .mo-sheet-handle {
+    display: none;
+  }
+}
+
+
+/* ================= v5.2 APEX: PORTADA HERO FUSIONADA, RUTAS FAVORITAS, SPRINT Y RESUMEN PILOTO ================= */
+
+/* 1. Portada Hero Fusionada con Odómetro Glassmorphism */
+.hero-cockpit-shell {
+  position: relative;
+  margin-bottom: 12px;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.hero-cockpit-shell.has-photo {
+  min-height: 162px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border: 1px solid var(--border-accent);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.52);
+}
+
+.hero-photo-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.hero-photo-layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 55%;
+  display: block;
+}
+
+.hero-photo-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 9, 14, 0.52) 0%,
+    rgba(6, 9, 14, 0.18) 38%,
+    rgba(6, 9, 14, 0.88) 78%,
+    rgba(6, 9, 14, 0.96) 100%
+  );
+}
+
+.hero-cockpit-shell.has-photo .hero-top-badge-row {
+  position: absolute;
+  top: 8px;
+  left: 11px;
+  right: 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+}
+
+.hero-cockpit-shell:not(.has-photo) .hero-top-badge-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.hero-cockpit-shell:not(.has-photo) .hero-top-badge-row .pulsar-banner-script {
+  display: none;
+}
+
+.hero-cockpit-shell.has-photo .cockpit-card {
+  position: relative;
+  z-index: 3;
+  margin-bottom: 0;
+  margin: 0 7px 7px;
+  background: rgba(9, 15, 24, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 214, 255, 0.24);
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.hero-cockpit-shell:not(.has-photo) .cockpit-card {
+  margin-bottom: 0;
+}
+
+
+
+/* 2. Tarjeta Resumen Mensual de Piloto (Finanzas) */
+.pilot-summary-card {
+  background: linear-gradient(145deg, #0E1826 0%, #091019 100%);
+  border: 1px solid var(--border-accent);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 11px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.30);
+}
+
+.pilot-summary-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 9px;
+}
+
+.pilot-sum-pill {
+  font-family: var(--font-speed);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--neon-lime);
+  background: var(--neon-soft);
+  border: 1px solid var(--neon-border);
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+
+.pilot-summary-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.pilot-kpi-box {
+  background: rgba(6, 9, 14, 0.72);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 8px 7px;
+  text-align: center;
+}
+
+.pilot-kpi-box span {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--alloy-muted);
+}
+
+.pilot-kpi-box strong {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 15px;
+  font-weight: 900;
+  color: #FFFFFF;
+  margin: 3px 0 1px;
+}
+
+.pilot-kpi-box strong small {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--alloy-silver);
+}
+
+.pilot-kpi-box > small {
+  display: block;
+  font-size: 10px;
+  color: var(--alloy-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 3. Mis Rutas Favoritas en el Mapa */
+.mo-fav-chips-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mo-preset-chip.fav-add {
+  background: var(--neon-soft);
+  border-color: var(--neon-border);
+  color: var(--neon-lime);
+  font-weight: 800;
+}
+
+.mo-preset-chip.fav-chip {
+  border-color: rgba(56, 214, 255, 0.35);
+  color: #FFFFFF;
+}
+
+.mo-pill-fav-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #CBD5E1;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.mo-pill-fav-btn.saved {
+  border-color: var(--neon-border);
+  background: var(--neon-soft);
+  color: var(--neon-lime);
+}
+
+/* 4. Cronómetro de Aceleración Sprint (0-60 / 0-80 km/h) */
+.obd-sprint-card {
+  display: grid;
+  grid-template-columns: 1.05fr 1.35fr auto;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(155deg, #0D1623 0%, #070C14 100%);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--caribbean-bright);
+  border-radius: 11px;
+  padding: 8px 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.obd-sprint-card.sprint-armed {
+  border-left-color: var(--neon-lime);
+  box-shadow: 0 0 14px rgba(88, 232, 0, 0.18);
+}
+
+.obd-sprint-card.sprint-running {
+  border-left-color: var(--amber-warn);
+  box-shadow: 0 0 14px rgba(255, 159, 10, 0.22);
+}
+
+.obd-sprint-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.obd-sprint-live-row {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.obd-sprint-live-row strong {
+  font-family: var(--font-speed);
+  font-size: 21px;
+  font-weight: 900;
+  color: var(--neon-lime);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.obd-sprint-live-row small {
+  font-size: 10px;
+  color: var(--alloy-muted);
+  font-weight: 700;
+}
+
+.obd-sprint-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.sprint-split-box {
+  background: #05090F;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.sprint-split-box span {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--alloy-muted);
+}
+
+.sprint-split-box strong {
+  display: block;
+  font-family: var(--font-speed);
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #FFFFFF;
+  margin: 1px 0;
+}
+
+.sprint-split-box small {
+  display: block;
+  font-size: 10px;
+  color: var(--caribbean-bright);
+}
+
+.obd-sprint-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Ajuste de grilla horizontal (Nativo y Forzado) para incluir la tarjeta Sprint sin desbordes */
+@media (orientation: landscape) {
+  body.ecu-tab-active #obd-live-panel:not(.hidden) {
+    grid-template-rows: 1fr auto auto auto !important;
+    overflow-y: auto !important;
+  }
+  body.ecu-tab-active .obd-sprint-card {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 / 3 !important;
+  }
+  body.ecu-tab-active .obd-micro-grid-6 {
+    grid-row: 3 / 4 !important;
+  }
+  body.ecu-tab-active .obd-machine-footer-strip {
+    grid-row: 4 / 5 !important;
+  }
+}
+
+@media (orientation: portrait) {
+  body.ecu-tab-active.ecu-force-landscape #obd-live-panel:not(.hidden) {
+    grid-template-rows: 1fr auto auto auto !important;
+    overflow-y: auto !important;
+  }
+  body.ecu-tab-active.ecu-force-landscape .obd-sprint-card {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 / 3 !important;
+  }
+  body.ecu-tab-active.ecu-force-landscape .obd-micro-grid-6 {
+    grid-row: 3 / 4 !important;
+  }
+  body.ecu-tab-active.ecu-force-landscape .obd-machine-footer-strip {
+    grid-row: 4 / 5 !important;
+  }
+}
+
+@media (max-width: 420px) and (orientation: portrait) {
+  .obd-sprint-card {
+    grid-template-columns: 1fr auto;
+    row-gap: 7px;
+  }
+  .obd-sprint-left {
+    grid-column: 1 / 2;
+  }
+  .obd-sprint-actions {
+    grid-column: 2 / 3;
+    flex-direction: row;
+    gap: 8px;
+  }
+  .obd-sprint-metrics {
+    grid-column: 1 / -1;
   }
 }

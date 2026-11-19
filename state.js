@@ -223,7 +223,14 @@ export function createDefaultState() {
       hoursElapsed: 0,
       dropVolt: 0
     },
-    loanModeActive: false,
+    favoriteRoutes: [],
+    sprintRecords: {
+      best060: null,
+      best080: null,
+      last060: null,
+      last080: null,
+      updatedAt: ''
+    },
     initialKm: 0,
     currentKm: 0,
     tripBaseKm: 0,
@@ -363,7 +370,11 @@ export function migrateAndNormalizeState(raw) {
       ...base.nightDrainTest,
       ...(raw.nightDrainTest || {})
     },
-    loanModeActive: Boolean(raw.loanModeActive),
+    favoriteRoutes: Array.isArray(raw.favoriteRoutes) ? raw.favoriteRoutes : [],
+    sprintRecords: {
+      ...base.sprintRecords,
+      ...(raw.sprintRecords || {})
+    },
     initialKm: Math.max(0, inferredInitKm),
     currentKm: Math.max(0, Number(raw.currentKm) || 0),
     tripBaseKm: Number(raw.tripBaseKm) || 0,
@@ -449,7 +460,7 @@ export function saveState(triggerCloud = true) {
     console.error('Error guardando estado local:', e);
   }
 
-  // Auto-guardado silencioso en la nube (Debounce de 2.5s enviando payload ligero para no saturar datos móviles en ruta)
+  // Auto-guardado silencioso en la nube (Sin imágenes Base64 y con protección anti-sobrescritura)
   if (triggerCloud && getCurrentUser() && navigator.onLine) {
     if (autoSyncTimer) clearTimeout(autoSyncTimer);
     window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'syncing' }));
@@ -458,22 +469,27 @@ export function saveState(triggerCloud = true) {
       try {
         const cloudPayload = {
           ...appState,
-          logoBase64: appState.logoBase64 || localStorage.getItem(LOGO_STORAGE_KEY) || '',
-          bikePhotoBase64: appState.bikePhotoBase64 || localStorage.getItem(PHOTO_STORAGE_KEY) || ''
+          logoBase64: '',
+          bikePhotoBase64: ''
         };
-        await pushStateToCloud(cloudPayload);
+        await pushStateToCloud(cloudPayload, { forceOverwrite: false });
         window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'ok' }));
       } catch (err) {
-        console.warn('Auto-sync postergado:', err);
-        window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'error' }));
+        if (err?.code === 'CLOUD_CONFLICT_HIGHER_DATA') {
+          console.warn('Auto-sync pausado por protección anti-sobrescritura:', err.cloudMeta);
+          window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'conflict' }));
+        } else {
+          console.warn('Auto-sync postergado:', err);
+          window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: 'error' }));
+        }
       }
     }, 2500);
   }
 }
 
-export function replaceFullState(newStateObj) {
+export function replaceFullState(newStateObj, triggerCloud = false) {
   appState = migrateAndNormalizeState(newStateObj);
   recalculateServiceKmFromLogs();
   recalculateWashFromLogs();
-  saveState();
+  saveState(triggerCloud);
 }

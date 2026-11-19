@@ -37,7 +37,7 @@
       </div>
 
       <div class="brand-emblem-wrap">
-        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA V3.5</span>
+        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA V5.2.2 APEX</span>
         <h1 class="pulsar-script-logo">pulsar</h1>
         <span class="n160-fi-sub">N160 FI • DUAL CHANNEL ABS</span>
       </div>
@@ -77,7 +77,7 @@
           <div class="bike-photo-box" id="photo-trigger">
             <img id="onboarding-bike-photo" src="" alt="Pulsar N160" class="hidden">
             <div id="photo-placeholder" class="photo-placeholder">
-              <span>📷 Toca para cargar la foto de tu Pulsar N160</span>
+              <span>Toca para cargar la foto de tu Pulsar N160</span>
             </div>
             <input type="file" id="photo-input" accept="image/*" class="hidden">
           </div>
@@ -95,7 +95,7 @@
         </div>
 
         <button id="btn-start-app" class="btn-neon-full">
-          ENCENDER TABLERO ⚡
+          ENCENDER TABLERO
         </button>
       </div>
     </div>
@@ -104,7 +104,7 @@
   <!-- ================= PANTALLA 2: PANEL PRINCIPAL ================= -->
   <section id="main-screen" class="screen hidden">
     
-    <!-- Cabecera Limpia (Estado de Nube, Modo Sol y Ajustes) -->
+    <!-- Cabecera Minimalista TFT (Iconos SVG Lineales) -->
     <header class="app-header">
       <div class="header-left">
         <div class="mini-logo-wrap" id="header-logo-btn" title="Cambiar icono">
@@ -120,133 +120,305 @@
         </div>
       </div>
       <div class="header-actions">
-        <button type="button" id="btn-toggle-sunlight" class="btn-icon-sleek" title="Modo Alto Contraste Solar (Ruta)">
-          ☀️
+        <button type="button" id="btn-toggle-sunlight" class="btn-icon-sleek" title="Modo Alto Contraste Solar (Ruta)" aria-label="Modo Sol">
+          <svg class="ui-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
         </button>
         <button type="button" id="cloud-live-indicator" class="cloud-live-pill" title="Cuenta y sincronización en la nube">
           <span class="cloud-live-dot" id="cloud-live-dot"></span>
           <span id="cloud-live-text">Local</span>
         </button>
-        <button id="btn-open-backup-modal" class="btn-icon-sleek" title="Ajustes, Tema, Cuenta y Respaldo">
+        <button id="btn-open-backup-modal" class="btn-icon-sleek" title="Ajustes, Tema, Cuenta y Respaldo" aria-label="Ajustes">
           <span id="docs-alert-dot" class="notif-dot hidden"></span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <svg class="ui-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
     </header>
 
-    <!-- Banner de la Moto -->
-    <div id="main-bike-banner" class="bike-banner hidden">
-      <img id="banner-bike-img" src="" alt="Mi Pulsar N160">
-      <div class="banner-overlay">
+    <!-- Portada Hero Fusionada con Odómetro (Tu Moto en Inicio + Glassmorphism) -->
+    <div id="hero-cockpit-shell" class="hero-cockpit-shell">
+      <div id="main-bike-banner" class="hero-photo-layer hidden">
+        <img id="banner-bike-img" src="" alt="Mi Pulsar N160">
+        <div class="hero-photo-scrim"></div>
+      </div>
+
+      <div id="hero-top-badge-row" class="hero-top-badge-row">
         <span class="pulsar-banner-script">pulsar <small id="banner-edition-sub">FI • ABS</small></span>
         <button type="button" id="breakin-pill" class="breakin-pill" data-info-key="breakin_guide">
           ASENTAMIENTO ⓘ
         </button>
       </div>
+
+      <div id="cockpit-cluster" class="cockpit-card">
+        <div class="cockpit-main">
+          <span class="cockpit-label">ODÓMETRO</span>
+          <div class="odo-value-row">
+            <span id="current-km-display">0</span>
+            <small>km</small>
+          </div>
+        </div>
+
+        <div class="cockpit-divider"></div>
+
+        <div class="cockpit-trip" id="trip-reset-trigger" title="Toca para reiniciar TRIP A">
+          <span class="cockpit-label">TRIP A <small class="reset-hint">↻</small></span>
+          <div class="trip-value-row">
+            <span id="trip-a-display">0</span>
+            <small>km</small>
+          </div>
+        </div>
+
+        <button id="btn-open-km-modal" class="btn-cockpit-update">
+          + Km
+        </button>
+      </div>
     </div>
 
-    <!-- Tablero Digital con Barrido + Sonido Underbelly -->
-    <div id="cockpit-cluster" class="cockpit-card">
-      <div class="cockpit-main">
-        <span class="cockpit-label">ODÓMETRO TOTAL</span>
-        <div class="odo-value-row">
-          <span id="current-km-display">0</span>
-          <small>km</small>
+    <!-- Banner de Alerta Proactiva (Solo aparece si falta <150 km para servicio o <=15d SOAT/Brevete) -->
+    <div id="smart-priority-banner" class="priority-alert-banner hidden" role="alert">
+      <div class="priority-alert-content">
+        <span class="priority-alert-dot"></span>
+        <div class="priority-alert-texts">
+          <strong id="priority-alert-title">Alerta Próxima</strong>
+          <small id="priority-alert-detail"></small>
         </div>
       </div>
-
-      <div class="cockpit-divider"></div>
-
-      <div class="cockpit-trip" id="trip-reset-trigger" title="Toca para reiniciar TRIP A">
-        <span class="cockpit-label">TRIP A <small class="reset-hint">↻ Reset</small></span>
-        <div class="trip-value-row">
-          <span id="trip-a-display">0</span>
-          <small>km</small>
-        </div>
+      <div class="priority-alert-actions">
+        <button type="button" id="btn-priority-action" class="btn-priority-cta">Ver</button>
+        <button type="button" id="btn-priority-dismiss" class="btn-priority-close" title="Ocultar por hoy" aria-label="Cerrar alerta">✕</button>
       </div>
-
-      <button id="btn-open-km-modal" class="btn-cockpit-update">
-        + Km
-      </button>
     </div>
 
-    <!-- Barra de Navegación Inferior Fija -->
+    <!-- Barra de Navegación Inferior Fija (Iconografía SVG Lineal Premium) -->
     <nav class="tabs-nav-5" aria-label="Navegación Principal">
       <button class="tab-btn active" data-tab="tab-maint">
-        <span class="nav-ico">🔧</span>
+        <svg class="nav-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
         <span>Taller</span>
       </button>
       <button class="tab-btn" data-tab="tab-fuel">
-        <span class="nav-ico">⛽</span>
+        <svg class="nav-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="15" y1="22" y2="22"/><line x1="4" x2="14" y1="9" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>
         <span>Grifo</span>
       </button>
       <button class="tab-btn" data-tab="tab-garage">
-        <span class="nav-ico">🛡️</span>
+        <svg class="nav-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <span>Garaje</span>
       </button>
       <button class="tab-btn" data-tab="tab-route">
-        <span class="nav-ico">📊</span>
+        <svg class="nav-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
         <span>Finanzas</span>
       </button>
       <button class="tab-btn" data-tab="tab-ecu" id="nav-btn-ecu">
-        <span class="nav-ico">⚡</span>
+        <svg class="nav-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
         <span>Cockpit</span>
       </button>
     </nav>
 
-    <!-- ================= PESTAÑA 1: TALLER ================= -->
+    <!-- ================= PESTAÑA 1: TALLER (SEMÁFORO / FICHA OEM / BITÁCORA) ================= -->
     <div id="tab-maint" class="tab-content">
-      <div class="section-header-row">
-        <span class="section-title-sleek">SEMÁFORO DE MANTENIMIENTOS</span>
-        <div style="display:flex;gap:6px;">
-          <button type="button" id="btn-open-specs-shortcut" class="btn-quick-done" title="Ver Ficha Técnica, Códigos OEM y Torques">🔩 Ficha & OEM</button>
+      <div class="subtabs-bar-3">
+        <button type="button" class="subtab-maint-btn active" data-maintsub="sub-maint-status">
+          Semáforo
+        </button>
+        <button type="button" class="subtab-maint-btn" data-maintsub="sub-maint-specs">
+          Ficha & OEM
+        </button>
+        <button type="button" class="subtab-maint-btn" data-maintsub="sub-maint-logs">
+          Bitácora (<span id="maint-count-badge">0</span>)
+        </button>
+      </div>
+
+      <!-- SUBPESTAÑA 1A: SEMÁFORO DE MANTENIMIENTOS -->
+      <div id="sub-maint-status" class="maint-panel">
+        <div class="section-header-row">
+          <span class="section-title-sleek">ESTADO DE MANTENIMIENTOS</span>
           <button id="btn-open-log-modal-top" class="btn-action-sleek">+ Servicio</button>
         </div>
+
+        <div id="chain-stretch-alert-banner" class="diag-alert-box hidden"></div>
+        <div id="fi-stft-alert-banner" class="diag-alert-box hidden"></div>
+
+        <div id="maint-alerts-grid" class="alerts-grid"></div>
       </div>
 
-      <div id="chain-stretch-alert-banner" class="diag-alert-box hidden"></div>
-      <div id="fi-stft-alert-banner" class="diag-alert-box hidden"></div>
+      <!-- SUBPESTAÑA 1B: FICHA TÉCNICA, CÓDIGOS OEM Y TORQUES -->
+      <div id="sub-maint-specs" class="maint-panel hidden">
+        <div class="subtabs-bar-3">
+        <button class="subtab-spec-btn active" data-specsub="sub-spec-quick">Grifo / Taller</button>
+        <button class="subtab-spec-btn" data-specsub="sub-spec-oem">Repuestos y Torques</button>
+        <button class="subtab-spec-btn" data-specsub="sub-spec-full">Ficha Motor</button>
+      </div>
 
-      <div id="maint-alerts-grid" class="alerts-grid"></div>
-
-      <div class="progressive-drawer-card" style="margin-top: 12px;">
-        <div class="drawer-summary-row">
-          <div>
-            <span class="section-title-sleek">RANKING DE TALLERES & MECÁNICA</span>
-            <div class="maint-sub" id="workshop-diy-summary">Historial por taller y servicios hechos por ti</div>
+      <div id="sub-spec-quick" class="spec-panel">
+        <div class="quick-cards-grid">
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">LLANTA DELANTERA</span>
+              <button type="button" class="btn-info-dot" data-info-key="chk_tires">ⓘ</button>
+            </div>
+            <strong class="qc-value">25 <small>PSI</small></strong>
+            <span class="qc-sub">Medida: 100/80-17</span>
           </div>
-          <button type="button" id="btn-toggle-workshop-rank" class="btn-drawer-toggle">
-            Talleres (<span id="workshop-count-badge">0</span>) <span id="workshop-saved-arrow">▾</span>
-          </button>
-        </div>
-        <div id="drawer-workshop-rank" class="drawer-body hidden">
-          <div id="workshop-rank-container" class="compact-scroll-list" style="max-height: 180px;"></div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">LLANTA TRASERA</span>
+              <button type="button" class="btn-info-dot" data-info-key="chk_tires">ⓘ</button>
+            </div>
+            <strong class="qc-value">28 / 32 <small>PSI</small></strong>
+            <span class="qc-sub">Solo: 28 • Copiloto: 32</span>
+          </div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">ACEITE MOTOR</span>
+              <button type="button" class="btn-info-dot" data-info-key="spec_oil">ⓘ</button>
+            </div>
+            <strong class="qc-value">20W-50</strong>
+            <span class="qc-sub">API SL / JASO MA2</span>
+          </div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">CANTIDAD ACEITE</span>
+              <button type="button" class="btn-info-dot" data-info-key="spec_oil">ⓘ</button>
+            </div>
+            <strong class="qc-value">1.0 <small>Litro</small></strong>
+            <span class="qc-sub">Desarme total: 1.2 L</span>
+          </div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">TANQUE GASOLINA</span>
+              <button type="button" class="btn-info-dot" data-info-key="spec_fuel">ⓘ</button>
+            </div>
+            <strong class="qc-value">14 <small>Litros</small></strong>
+            <span class="qc-sub">3.70 Galones (Solo Premium)</span>
+          </div>
+
+          <div class="quick-card">
+            <div class="qc-top-row">
+              <span class="qc-label">HOLGURA CADENA</span>
+              <button type="button" class="btn-info-dot" data-info-key="chk_chain">ⓘ</button>
+            </div>
+            <strong class="qc-value">20-30 <small>mm</small></strong>
+            <span class="qc-sub">Lubricar cada 500 km</span>
+          </div>
         </div>
       </div>
 
-      <div class="progressive-drawer-card" style="margin-top: 10px;">
-        <div class="drawer-summary-row">
-          <div class="fin-mini-pair">
-            <span>Mes: <strong id="maint-month-total" class="neon-txt">S/ 0.00</strong></span>
-            <span>Año: <strong id="maint-year-total">S/ 0.00</strong></span>
+      <div id="sub-spec-oem" class="spec-panel hidden">
+        <div class="specs-box" style="margin-bottom: 10px;">
+          <div class="oem-header-row">
+            <h3>Códigos de Repuestos Originales (OEM)</h3>
+            <small class="copy-hint">Toca un código para copiar</small>
           </div>
-          <button type="button" id="btn-toggle-maint-logs" class="btn-drawer-toggle">
-            Bitácora (<span id="maint-count-badge">0</span>) <span id="maint-saved-arrow">▾</span>
-          </button>
-        </div>
-        <div id="drawer-maint-logs" class="drawer-body hidden">
-          <input type="search" id="maint-search-input" class="log-search-input" placeholder="🔍 Buscar por repuesto, taller, fecha o monto...">
-          <div class="mod-filter-bar" id="maint-log-filters" style="margin-bottom: 8px;">
-            <button type="button" class="mod-filter-pill active" data-maintfilter="all">Todos</button>
-            <button type="button" class="mod-filter-pill" data-maintfilter="oil_change">Aceite</button>
-            <button type="button" class="mod-filter-pill" data-maintfilter="chain_lube">Cadena</button>
-            <button type="button" class="mod-filter-pill" data-maintfilter="air_spark">Filtro/Bujías</button>
-            <button type="button" class="mod-filter-pill" data-maintfilter="brakes_abs">Frenos</button>
-            <button type="button" class="mod-filter-pill" data-maintfilter="valve_calib">Válvulas</button>
-            <button type="button" class="mod-filter-pill" data-maintfilter="fi_injector">Inyector FI</button>
+          <div class="oem-list">
+            <div class="oem-item" data-copy-code="JG571014">
+              <div>
+                <strong>Filtro de Aceite Original Bajaj</strong>
+                <small>Elemento filtrante de papel (Cambiar en cada servicio)</small>
+              </div>
+              <span class="oem-code-pill">JG571014</span>
+            </div>
+            <div class="oem-item" data-copy-code="JF581009">
+              <div>
+                <strong>Elemento Filtro de Aire N160</strong>
+                <small>Filtro viscoso original para caja de admisión FI</small>
+              </div>
+              <span class="oem-code-pill">JF581009</span>
+            </div>
+            <div class="oem-item" data-copy-code="CHAMPION RG6HCC">
+              <div>
+                <strong>Bujías DTS-i (x2 unidades)</strong>
+                <small>Calibración de electrodo: 0.7 a 0.8 mm</small>
+              </div>
+              <span class="oem-code-pill">RG6HCC</span>
+            </div>
+            <div class="oem-item" data-copy-code="JR131831">
+              <div>
+                <strong>Pastillas de Freno Delantero (Disco 300mm ABS)</strong>
+                <small>Compuesto original para cáliper delantero</small>
+              </div>
+              <span class="oem-code-pill">JR131831</span>
+            </div>
+            <div class="oem-item" data-copy-code="428HO-132L">
+              <div>
+                <strong>Kit de Arrastre / Cadena O-Ring</strong>
+                <small>Piñón 14T • Catalina 45T • Cadena 428 con O-Ring</small>
+              </div>
+              <span class="oem-code-pill">14T / 45T</span>
+            </div>
           </div>
-          <div id="logs-container" class="compact-scroll-list"></div>
         </div>
+
+        <div class="specs-box">
+          <div class="title-with-info" style="margin-bottom: 6px;">
+            <h3 style="margin:0; border:none; padding:0;">Torques de Apriete y Holgura de Válvulas</h3>
+            <button type="button" class="btn-info-dot" data-info-key="spec_torque">ⓘ</button>
+          </div>
+          <div class="spec-row"><span>Perno Drenaje de Aceite (Cárter)</span><strong class="neon-txt">22 - 25 Nm</strong></div>
+          <div class="spec-row"><span>Tuerca Eje Rueda Trasera</span><strong>88 - 98 Nm</strong></div>
+          <div class="spec-row"><span>Tuerca Eje Rueda Delantera</span><strong>65 - 75 Nm</strong></div>
+          <div class="spec-row"><span>Bujías de Encendido DTS-i</span><strong>13 - 15 Nm</strong></div>
+          <div class="spec-row"><span>Holgura Válvula de Admisión (En frío)</span><strong>0.05 mm</strong></div>
+          <div class="spec-row"><span>Holgura Válvula de Escape (En frío)</span><strong>0.08 - 0.10 mm</strong></div>
+        </div>
+      </div>
+
+      <div id="sub-spec-full" class="spec-panel hidden">
+        <div class="specs-box">
+          <h3>Bajaj Pulsar N160 FI • Ficha Técnica</h3>
+          <div class="spec-row"><span>Motor</span><strong>4T, Monocilíndrico, SOHC, 2V</strong></div>
+          <div class="spec-row"><span>Cilindrada</span><strong>164.82 cc (Inyección FI)</strong></div>
+          <div class="spec-row"><span>Encendido</span><strong>Doble Bujía DTS-i</strong></div>
+          <div class="spec-row"><span>Potencia / Torque</span><strong>15.78 HP @ 8750 / 14.65 Nm @ 6750</strong></div>
+          <div class="spec-row"><span>Refrigeración</span><strong>Aire + Radiador de Aceite</strong></div>
+          <div class="spec-row"><span>Frenos</span><strong>Del. 300mm ABS / Tras. 230mm</strong></div>
+          <div class="spec-row"><span>Llantas Tubeless</span><strong>Del. 100/80-17 • Tras. 130/70-17</strong></div>
+          <div class="spec-row"><span>Peso / Faro</span><strong>154 kg / Proyector Bi-LED DRL</strong></div>
+        </div>
+      </div>
+      </div>
+
+      <!-- SUBPESTAÑA 1C: BITÁCORA Y RANKING DE TALLERES -->
+      <div id="sub-maint-logs" class="maint-panel hidden">
+        <div class="finance-strip">
+          <div class="fin-box">
+            <span class="fin-label">GASTO MES</span>
+            <strong class="fin-val carib-txt" id="maint-month-total">S/ 0.00</strong>
+          </div>
+          <div class="fin-box">
+            <span class="fin-label">GASTO AÑO</span>
+            <strong class="fin-val" id="maint-year-total">S/ 0.00</strong>
+          </div>
+          <button type="button" id="btn-open-log-modal-hist" class="btn-action-sleek">+ Servicio</button>
+        </div>
+
+        <div class="progressive-drawer-card" style="margin-bottom: 10px;">
+          <div class="drawer-summary-row">
+            <div>
+              <span class="section-title-sleek">RANKING DE TALLERES & MECÁNICA</span>
+              <div class="maint-sub" id="workshop-diy-summary">Historial por taller y servicios hechos por ti</div>
+            </div>
+            <button type="button" id="btn-toggle-workshop-rank" class="btn-drawer-toggle">
+              Talleres (<span id="workshop-count-badge">0</span>) <span id="workshop-saved-arrow">▾</span>
+            </button>
+          </div>
+          <div id="drawer-workshop-rank" class="drawer-body hidden">
+            <div id="workshop-rank-container" class="compact-scroll-list" style="max-height: 180px;"></div>
+          </div>
+        </div>
+
+        <input type="search" id="maint-search-input" class="log-search-input" placeholder="Buscar por repuesto, taller, fecha o monto...">
+        <div class="mod-filter-bar" id="maint-log-filters" style="margin-bottom: 8px;">
+          <button type="button" class="mod-filter-pill active" data-maintfilter="all">Todos</button>
+          <button type="button" class="mod-filter-pill" data-maintfilter="oil_change">Aceite</button>
+          <button type="button" class="mod-filter-pill" data-maintfilter="chain_lube">Cadena</button>
+          <button type="button" class="mod-filter-pill" data-maintfilter="air_spark">Filtro/Bujías</button>
+          <button type="button" class="mod-filter-pill" data-maintfilter="brakes_abs">Frenos</button>
+          <button type="button" class="mod-filter-pill" data-maintfilter="valve_calib">Válvulas</button>
+          <button type="button" class="mod-filter-pill" data-maintfilter="fi_injector">Inyector FI</button>
+        </div>
+        <div id="logs-container" class="compact-scroll-list" style="max-height: 360px;"></div>
       </div>
     </div>
 
@@ -257,17 +429,6 @@
         <button class="period-btn" data-period="week">Semana</button>
         <button class="period-btn active" data-period="month">Mes</button>
         <button class="period-btn" data-period="year">Año</button>
-      </div>
-
-      <div class="loan-mode-strip" id="loan-mode-banner">
-        <div class="loan-left">
-          <span>🤝</span>
-          <div>
-            <strong id="loan-mode-title">Modo Préstamo: Desactivado</strong>
-            <small id="loan-mode-desc">Actívalo si prestas la moto para no alterar tu promedio km/gal</small>
-          </div>
-        </div>
-        <button type="button" id="btn-toggle-loan-mode" class="btn-loan-toggle">Activar</button>
       </div>
 
       <div class="fuel-stats-grid">
@@ -342,6 +503,53 @@
         Registra tu primera carga hoy con tu kilometraje actual para activar la telemetría.
       </div>
 
+      <!-- Calculadora de Viaje Offline (Directo junto a tu rendimiento km/gal) -->
+              <div class="progressive-drawer-card" style="margin-top: 10px;">
+                <div class="drawer-summary-row">
+                  <div>
+                    <span class="section-title-sleek">CALCULADORA RÁPIDA DE VIAJE (OFFLINE)</span>
+                    <div class="maint-sub">Estima galones y presupuesto sin señal usando tu consumo real</div>
+                  </div>
+                  <button type="button" id="btn-toggle-manual-route" class="btn-drawer-toggle">
+                    Abrir <span id="manual-route-arrow">▾</span>
+                  </button>
+                </div>
+                <div id="drawer-manual-route" class="drawer-body hidden">
+                  <div class="form-row-2">
+                    <div>
+                      <label class="modal-label">Distancia (Km):</label>
+                      <input type="number" id="route-km-input" placeholder="Ej: 120" value="100">
+                    </div>
+                    <div>
+                      <label class="modal-label">Trayecto:</label>
+                      <div class="fuel-type-pills" id="route-trip-picker">
+                        <button type="button" class="route-pill selected" data-mult="1">Solo Ida</button>
+                        <button type="button" class="route-pill" data-mult="2">Ida y Vuelta</button>
+                      </div>
+                    </div>
+                  </div>
+                  <label class="modal-label" style="margin-top: 8px;">TOPOGRAFÍA:</label>
+                  <div class="fuel-type-pills" id="route-terrain-picker">
+                    <button type="button" class="terrain-pill selected" data-factor="1">Costa / Plano</button>
+                    <button type="button" class="terrain-pill" data-factor="1.14">Sierra (+14%)</button>
+                  </div>
+                  <div class="route-results-grid">
+                    <div class="route-res-box">
+                      <span>RECORRIDO</span>
+                      <strong id="route-total-km">100 km</strong>
+                    </div>
+                    <div class="route-res-box">
+                      <span>PREMIUM</span>
+                      <strong id="route-needed-gal">0.71 gal</strong>
+                    </div>
+                    <div class="route-res-box highlight">
+                      <span>PRESUPUESTO</span>
+                      <strong id="route-est-cost">S/ 12.00</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
       <div class="progressive-drawer-card" style="margin-top: 10px;">
         <div class="drawer-summary-row">
           <div>
@@ -365,7 +573,7 @@
           </button>
         </div>
         <div id="drawer-fuel-logs" class="drawer-body hidden">
-          <input type="search" id="fuel-search-input" class="log-search-input" placeholder="🔍 Buscar por grifo, fecha, km o monto...">
+          <input type="search" id="fuel-search-input" class="log-search-input" placeholder="Buscar por grifo, fecha, km o monto...">
           <div id="fuel-logs-container" class="compact-scroll-list"></div>
         </div>
       </div>
@@ -373,17 +581,17 @@
 
     <!-- ================= PESTAÑA 3: GARAJE ================= -->
     <div id="tab-garage" class="tab-content hidden">
-      
+
       <div class="maint-card docs-garage-card" id="docs-garage-widget">
         <div class="maint-top">
           <div>
             <span class="section-title-sleek">GUANTERA DIGITAL (SOAT & BREVETE)</span>
             <div class="maint-sub" id="garage-docs-summary" style="margin-top: 4px;">
-              🪪 Registra tu Placa, SOAT y Brevete para activar las alertas automáticas.
+              Registra tu Placa, SOAT y Brevete para activar las alertas automáticas.
             </div>
           </div>
           <div class="maint-top-right">
-            <button type="button" id="btn-open-docs-modal" class="btn-action-sleek">🪪 Ver / Editar</button>
+            <button type="button" id="btn-open-docs-modal" class="btn-action-sleek">Ver / Editar</button>
           </div>
         </div>
       </div>
@@ -418,12 +626,15 @@
         </div>
       </div>
 
-      <div class="subtabs-bar">
+      <div class="subtabs-bar-3">
         <button class="subtab-garage-btn active" data-garagesub="sub-garage-tires">
-          🛞 Llantas (Cocada & DOT)
+          Llantas
         </button>
         <button class="subtab-garage-btn" data-garagesub="sub-garage-mods">
-          🛡️ Accesorios y Mods (<span id="mods-count-badge">0</span>)
+          Accesorios (<span id="mods-count-badge">0</span>)
+        </button>
+        <button class="subtab-garage-btn" data-garagesub="sub-garage-check">
+          Checklist
         </button>
       </div>
 
@@ -432,12 +643,11 @@
           <div class="title-with-info">
             <span class="section-title-sleek">TELEMETRÍA DE NEUMÁTICOS</span>
             <button type="button" class="btn-info-dot" data-info-key="tire_dot_guide">ⓘ</button>
-            <button type="button" class="btn-info-dot" data-info-key="load_psi_guide" title="Guía de Carga y Monoshock">⚖️</button>
+            <button type="button" class="btn-info-dot" data-info-key="load_psi_guide" title="Guía de Carga y Monoshock">⚙</button>
           </div>
           <button type="button" id="btn-toggle-load-mode" class="psi-load-switch-btn" title="Toca para alternar entre Piloto Solo y Con Copiloto/Carga">
-            👤 Solo: 25 / 28 PSI • Monoshock Pos 2
+            Solo: 25 / 28 PSI • Monoshock Pos 2
           </button>
-          <span id="garage-psi-dynamic" class="hidden">Frío: 25 / 28 PSI</span>
         </div>
 
         <div id="tires-status-grid" class="tires-grid"></div>
@@ -481,178 +691,8 @@
 
         <div id="mods-list-container" class="compact-scroll-list"></div>
       </div>
-    </div>
 
-    <!-- ================= PESTAÑA 4: FINANZAS (CAPEX vs OPEX), RUTA Y CHECKLIST ================= -->
-    <div id="tab-route" class="tab-content hidden">
-      <div class="subtabs-bar-3">
-        <button class="subtab-route-btn active" data-routesub="sub-route-fin">
-          CAPEX / OPEX
-        </button>
-        <button class="subtab-route-btn" data-routesub="sub-route-calc">
-          Simulador Ruta
-        </button>
-        <button class="subtab-route-btn" data-routesub="sub-route-check">
-          Checklist
-        </button>
-      </div>
-
-      <div id="sub-route-fin" class="route-panel">
-        <div class="section-header-row" style="margin-bottom: 8px; gap: 6px;">
-          <div class="period-selector" id="fin-period-picker" style="margin-bottom: 0; flex: 1;">
-            <button type="button" class="period-btn active" data-finperiod="all">Histórico</button>
-            <button type="button" class="period-btn" data-finperiod="month">Este Mes</button>
-            <button type="button" class="period-btn" data-finperiod="year">Este Año</button>
-          </div>
-          <button type="button" id="btn-export-fin-csv" class="btn-action-sleek" title="Descargar reporte en Excel (.csv)">
-            📊 Excel CSV
-          </button>
-        </div>
-        <div class="capex-opex-grid">
-          <div class="co-card capex">
-            <span class="co-tag">🏛️ PATRIMONIO CHASIS (CAPEX)</span>
-            <strong class="co-val" id="capex-total-display">S/ 0.00</strong>
-            <div class="co-sub">
-              <span id="capex-bike-sub">Reventa: S/ 0</span>
-              <button type="button" id="btn-edit-bike-price" class="btn-link-mini">✏️ Valor Moto</button>
-            </div>
-          </div>
-          <div class="co-card opex">
-            <span class="co-tag">🔥 OPERATIVO (OPEX)</span>
-            <strong class="co-val neon-txt" id="opex-total-display">S/ 0.00</strong>
-            <div class="co-sub">
-              <span>Grifo + Taller + Uso</span>
-              <strong id="opex-per-km-mini">S/ 0.00/km</strong>
-            </div>
-          </div>
-        </div>
-
-        <div class="tco-card">
-          <div class="section-header-row" style="margin-bottom: 6px;">
-            <span class="section-title-sleek">DESGLOSE TOTAL ACUMULADO (CAPEX + OPEX)</span>
-            <strong class="fin-val" id="master-grand-total">S/ 0.00</strong>
-          </div>
-
-          <div class="expense-split-bar" id="expense-split-bar">
-            <div class="split-seg seg-fuel" id="seg-fuel" style="width: 0%; opacity: 0;"></div>
-            <div class="split-seg seg-maint" id="seg-maint" style="width: 0%; opacity: 0;"></div>
-            <div class="split-seg seg-garage" id="seg-garage" style="width: 0%; opacity: 0;"></div>
-            <div class="split-seg seg-admin" id="seg-admin" style="width: 0%; opacity: 0;"></div>
-          </div>
-
-          <div class="tco-grid">
-            <div class="tco-item">
-              <span>🏍️ Inversión en Moto + Mods Chasis (CAPEX)</span>
-              <strong id="tco-capex-row">S/ 0.00</strong>
-            </div>
-            <div class="tco-item sub-breakdown">
-              <span>↳ 💎 Valor de Reventa Estimado Hoy (<small id="tco-retention-pct">--%</small>)</span>
-              <strong class="carib-txt" id="tco-resale-est">S/ 0.00</strong>
-            </div>
-            <div class="tco-item sub-breakdown">
-              <span>↳ 🪖 Equipamiento de Piloto (Casco / Guantes)</span>
-              <small id="tco-pilot-gear">S/ 0.00</small>
-            </div>
-            <div class="tco-item">
-              <span>⛽ Combustible Premium (<small id="pct-fuel">0%</small>)</span>
-              <strong id="tco-fuel-all">S/ 0.00</strong>
-            </div>
-            <div class="tco-item">
-              <span>🔧 Taller: Repuestos + Mano de Obra (<small id="pct-maint">0%</small>)</span>
-              <strong id="tco-maint-all">S/ 0.00</strong>
-            </div>
-            <div class="tco-item sub-breakdown">
-              <span>↳ Desglose Taller: Insumos vs. Mano de Obra</span>
-              <small id="tco-parts-vs-labor">Rep: S/ 0.00 • M.O: S/ 0.00</small>
-            </div>
-            <div class="tco-item">
-              <span>🚿 Lavado y Cuidado (<small id="pct-spa">0%</small>)</span>
-              <strong id="tco-spa-all">S/ 0.00</strong>
-            </div>
-            <div class="tco-item">
-              <span>🛞 Neumáticos (Desgaste Operativo) (<small id="pct-garage">0%</small>)</span>
-              <strong class="carib-txt" id="tco-garage-all">S/ 0.00</strong>
-            </div>
-            <div class="tco-item">
-              <span>🪪 Documentos (SOAT), Peajes y Otros (<small id="pct-admin">0%</small>)</span>
-              <strong id="tco-admin-all">S/ 0.00</strong>
-            </div>
-            <div class="tco-item">
-              <span>⚡ Costo Operativo Real OPEX por Km (<small id="tracked-km-label">0 km</small>)</span>
-              <strong class="neon-txt" id="tco-real-km">S/ 0.00 / km</strong>
-            </div>
-            <div class="tco-item">
-              <span>📅 Costo Operativo OPEX por Día de Uso</span>
-              <strong class="carib-txt" id="tco-daily-cost">S/ 0.00 / día</strong>
-            </div>
-          </div>
-        </div>
-
-        <div class="progressive-drawer-card">
-          <div class="drawer-summary-row">
-            <div>
-              <span class="section-title-sleek">OTROS GASTOS / IMPREVISTOS</span>
-              <div class="maint-sub">SOAT, cochera, parches, trámites o peajes</div>
-            </div>
-            <div class="maint-top-right">
-              <button type="button" id="btn-open-expense-modal" class="btn-action-sleek">+ Gasto</button>
-              <button type="button" id="btn-toggle-expense-logs" class="btn-drawer-toggle">
-                (<span id="expense-count-badge">0</span>) <span id="expense-saved-arrow">▾</span>
-              </button>
-            </div>
-          </div>
-          <div id="drawer-expense-logs" class="drawer-body hidden">
-            <div id="expense-logs-container" class="compact-scroll-list" style="max-height: 180px;"></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="sub-route-calc" class="route-panel hidden">
-        <div class="route-calc-card">
-          <div class="route-header">
-            <span class="section-title-sleek">SIMULADOR DE VIAJE / RUTA</span>
-            <span class="route-badge">FI • 14L</span>
-          </div>
-          <p class="route-desc">Proyección según tu consumo real de Gasolina Premium y la topografía:</p>
-
-          <div class="form-row-2">
-            <div>
-              <label class="modal-label">Distancia (Km):</label>
-              <input type="number" id="route-km-input" placeholder="Ej: 120" value="100">
-            </div>
-            <div>
-              <label class="modal-label">Trayecto:</label>
-              <div class="fuel-type-pills" id="route-trip-picker">
-                <button type="button" class="route-pill selected" data-mult="1">Solo Ida</button>
-                <button type="button" class="route-pill" data-mult="2">Ida y Vuelta</button>
-              </div>
-            </div>
-          </div>
-
-          <label class="modal-label" style="margin-top: 8px;">TOPOGRAFÍA DE LA RUTA:</label>
-          <div class="fuel-type-pills" id="route-terrain-picker">
-            <button type="button" class="terrain-pill selected" data-factor="1">🛣️ Costa / Plano</button>
-            <button type="button" class="terrain-pill" data-factor="1.14">⛰️ Sierra / Ascenso (+14%)</button>
-          </div>
-
-          <div class="route-results-grid">
-            <div class="route-res-box">
-              <span>RECORRIDO</span>
-              <strong id="route-total-km">100 km</strong>
-            </div>
-            <div class="route-res-box">
-              <span>PREMIUM</span>
-              <strong id="route-needed-gal">0.71 gal</strong>
-            </div>
-            <div class="route-res-box highlight">
-              <span>PRESUPUESTO</span>
-              <strong id="route-est-cost">S/ 12.00</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="sub-route-check" class="route-panel hidden">
+      <div id="sub-garage-check" class="garage-panel hidden">
         <div class="route-calc-card">
           <div class="route-header">
             <span class="section-title-sleek">INSPECCIÓN PRE-VIAJE (PASO A PASO)</span>
@@ -725,199 +765,205 @@
       </div>
     </div>
 
-    <!-- ================= PESTAÑA 5: FICHA TÉCNICA + OEM + TORQUES ================= -->
-    <div id="tab-specs" class="tab-content hidden">
-      <div class="section-header-row" style="margin-bottom:8px;">
-        <span class="section-title-sleek">MANUAL TÉCNICO, OEM & TORQUES N160 FI</span>
-        <button type="button" id="btn-back-to-maint" class="btn-quick-done">← Volver a Taller</button>
-      </div>
-
-      <div class="subtabs-bar-3">
-        <button class="subtab-spec-btn active" data-specsub="sub-spec-quick">Grifo / Taller</button>
-        <button class="subtab-spec-btn" data-specsub="sub-spec-oem">Repuestos y Torques</button>
-        <button class="subtab-spec-btn" data-specsub="sub-spec-full">Ficha Motor</button>
-      </div>
-
-      <div id="sub-spec-quick" class="spec-panel">
-        <div class="quick-cards-grid">
-          <div class="quick-card">
-            <div class="qc-top-row">
-              <span class="qc-label">LLANTA DELANTERA</span>
-              <button type="button" class="btn-info-dot" data-info-key="chk_tires">ⓘ</button>
-            </div>
-            <strong class="qc-value">25 <small>PSI</small></strong>
-            <span class="qc-sub">Medida: 100/80-17</span>
+    <!-- ================= PESTAÑA 4: FINANZAS (100% DINERO: CAPEX / OPEX + GRÁFICO 6 MESES) ================= -->
+    <div id="tab-route" class="tab-content hidden">
+      <div id="sub-route-fin" class="route-panel">
+        <!-- Resumen Mensual de Piloto -->
+        <div id="fin-monthly-pilot-card" class="pilot-summary-card">
+          <div class="pilot-summary-head">
+            <span class="section-title-sleek">RESUMEN DE PILOTO • <strong id="pilot-sum-month" class="carib-txt">MES</strong></span>
+            <span class="pilot-sum-pill">N160 FI</span>
           </div>
-
-          <div class="quick-card">
-            <div class="qc-top-row">
-              <span class="qc-label">LLANTA TRASERA</span>
-              <button type="button" class="btn-info-dot" data-info-key="chk_tires">ⓘ</button>
+          <div class="pilot-summary-grid-3">
+            <div class="pilot-kpi-box">
+              <span>KM ESTE MES</span>
+              <strong id="pilot-sum-km">0 <small>km</small></strong>
+              <small>Recorrido medido</small>
             </div>
-            <strong class="qc-value">28 / 32 <small>PSI</small></strong>
-            <span class="qc-sub">Solo: 28 • Copiloto: 32</span>
-          </div>
-
-          <div class="quick-card">
-            <div class="qc-top-row">
-              <span class="qc-label">ACEITE MOTOR</span>
-              <button type="button" class="btn-info-dot" data-info-key="spec_oil">ⓘ</button>
+            <div class="pilot-kpi-box">
+              <span>MEJOR TANQUEADA</span>
+              <strong id="pilot-sum-best" class="neon-txt">-- <small>km/gal</small></strong>
+              <small id="pilot-sum-best-sub">Sin tramos aún</small>
             </div>
-            <strong class="qc-value">20W-50</strong>
-            <span class="qc-sub">API SL / JASO MA2</span>
-          </div>
-
-          <div class="quick-card">
-            <div class="qc-top-row">
-              <span class="qc-label">CANTIDAD ACEITE</span>
-              <button type="button" class="btn-info-dot" data-info-key="spec_oil">ⓘ</button>
-            </div>
-            <strong class="qc-value">1.0 <small>Litro</small></strong>
-            <span class="qc-sub">Desarme total: 1.2 L</span>
-          </div>
-
-          <div class="quick-card">
-            <div class="qc-top-row">
-              <span class="qc-label">TANQUE GASOLINA</span>
-              <button type="button" class="btn-info-dot" data-info-key="spec_fuel">ⓘ</button>
-            </div>
-            <strong class="qc-value">14 <small>Litros</small></strong>
-            <span class="qc-sub">3.70 Galones (Solo Premium)</span>
-          </div>
-
-          <div class="quick-card">
-            <div class="qc-top-row">
-              <span class="qc-label">HOLGURA CADENA</span>
-              <button type="button" class="btn-info-dot" data-info-key="chk_chain">ⓘ</button>
-            </div>
-            <strong class="qc-value">20-30 <small>mm</small></strong>
-            <span class="qc-sub">Lubricar cada 500 km</span>
-          </div>
-        </div>
-      </div>
-
-      <div id="sub-spec-oem" class="spec-panel hidden">
-        <div class="specs-box" style="margin-bottom: 10px;">
-          <div class="oem-header-row">
-            <h3>🧩 Códigos de Repuestos Originales (OEM)</h3>
-            <small class="copy-hint">Toca un código para copiar</small>
-          </div>
-          <div class="oem-list">
-            <div class="oem-item" data-copy-code="JG571014">
-              <div>
-                <strong>Filtro de Aceite Original Bajaj</strong>
-                <small>Elemento filtrante de papel (Cambiar en cada servicio)</small>
-              </div>
-              <span class="oem-code-pill">JG571014 📋</span>
-            </div>
-            <div class="oem-item" data-copy-code="JF581009">
-              <div>
-                <strong>Elemento Filtro de Aire N160</strong>
-                <small>Filtro viscoso original para caja de admisión FI</small>
-              </div>
-              <span class="oem-code-pill">JF581009 📋</span>
-            </div>
-            <div class="oem-item" data-copy-code="CHAMPION RG6HCC">
-              <div>
-                <strong>Bujías DTS-i (x2 unidades)</strong>
-                <small>Calibración de electrodo: 0.7 a 0.8 mm</small>
-              </div>
-              <span class="oem-code-pill">RG6HCC 📋</span>
-            </div>
-            <div class="oem-item" data-copy-code="JR131831">
-              <div>
-                <strong>Pastillas de Freno Delantero (Disco 300mm ABS)</strong>
-                <small>Compuesto original para cáliper delantero</small>
-              </div>
-              <span class="oem-code-pill">JR131831 📋</span>
-            </div>
-            <div class="oem-item" data-copy-code="428HO-132L">
-              <div>
-                <strong>Kit de Arrastre / Cadena O-Ring</strong>
-                <small>Piñón 14T • Catalina 45T • Cadena 428 con O-Ring</small>
-              </div>
-              <span class="oem-code-pill">14T / 45T 📋</span>
+            <div class="pilot-kpi-box">
+              <span>AHORRO EN CASA</span>
+              <strong id="pilot-sum-diy" class="carib-txt">S/ 0</strong>
+              <small id="pilot-sum-diy-sub">0 serv. DIY</small>
             </div>
           </div>
         </div>
 
-        <div class="specs-box">
-          <div class="title-with-info" style="margin-bottom: 6px;">
-            <h3 style="margin:0; border:none; padding:0;">🔧 Torques de Apriete y Holgura de Válvulas</h3>
-            <button type="button" class="btn-info-dot" data-info-key="spec_torque">ⓘ</button>
+        <div class="section-header-row" style="margin-bottom: 10px; gap: 6px;">
+          <div class="period-selector" id="fin-period-picker" style="margin-bottom: 0; flex: 1;">
+            <button type="button" class="period-btn active" data-finperiod="all">Histórico</button>
+            <button type="button" class="period-btn" data-finperiod="month">Este Mes</button>
+            <button type="button" class="period-btn" data-finperiod="year">Este Año</button>
           </div>
-          <div class="spec-row"><span>Perno Drenaje de Aceite (Cárter)</span><strong class="neon-txt">22 - 25 Nm</strong></div>
-          <div class="spec-row"><span>Tuerca Eje Rueda Trasera</span><strong>88 - 98 Nm</strong></div>
-          <div class="spec-row"><span>Tuerca Eje Rueda Delantera</span><strong>65 - 75 Nm</strong></div>
-          <div class="spec-row"><span>Bujías de Encendido DTS-i</span><strong>13 - 15 Nm</strong></div>
-          <div class="spec-row"><span>Holgura Válvula de Admisión (En frío)</span><strong>0.05 mm</strong></div>
-          <div class="spec-row"><span>Holgura Válvula de Escape (En frío)</span><strong>0.08 - 0.10 mm</strong></div>
+          <button type="button" id="btn-export-fin-csv" class="btn-action-sleek" title="Descargar reporte en Excel (.csv)">
+            Excel CSV
+          </button>
         </div>
-      </div>
 
-      <div id="sub-spec-full" class="spec-panel hidden">
-        <div class="specs-box">
-          <h3>Bajaj Pulsar N160 FI • Ficha Técnica</h3>
-          <div class="spec-row"><span>Motor</span><strong>4T, Monocilíndrico, SOHC, 2V</strong></div>
-          <div class="spec-row"><span>Cilindrada</span><strong>164.82 cc (Inyección FI)</strong></div>
-          <div class="spec-row"><span>Encendido</span><strong>Doble Bujía DTS-i</strong></div>
-          <div class="spec-row"><span>Potencia / Torque</span><strong>15.78 HP @ 8750 / 14.65 Nm @ 6750</strong></div>
-          <div class="spec-row"><span>Refrigeración</span><strong>Aire + Radiador de Aceite</strong></div>
-          <div class="spec-row"><span>Frenos</span><strong>Del. 300mm ABS / Tras. 230mm</strong></div>
-          <div class="spec-row"><span>Llantas Tubeless</span><strong>Del. 100/80-17 • Tras. 130/70-17</strong></div>
-          <div class="spec-row"><span>Peso / Faro</span><strong>154 kg / Proyector Bi-LED DRL</strong></div>
+        <div class="capex-opex-grid">
+          <div class="co-card capex">
+            <span class="co-tag">PATRIMONIO CHASIS (CAPEX)</span>
+            <strong class="co-val" id="capex-total-display">S/ 0.00</strong>
+            <div class="co-sub">
+              <span id="capex-bike-sub">Reventa: S/ 0</span>
+              <button type="button" id="btn-edit-bike-price" class="btn-link-mini">Valor Moto</button>
+            </div>
+          </div>
+          <div class="co-card opex">
+            <span class="co-tag">OPERATIVO (OPEX)</span>
+            <strong class="co-val neon-txt" id="opex-total-display">S/ 0.00</strong>
+            <div class="co-sub">
+              <span>Grifo + Taller + Uso</span>
+              <strong id="opex-per-km-mini">S/ 0.00/km</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gráfico de Barras de Evolución Mensual (Últimos 6 Meses) -->
+        <div id="fin-monthly-chart-card" class="monthly-chart-card">
+          <div class="monthly-chart-head">
+            <div>
+              <span class="section-title-sleek">EVOLUCIÓN DE GASTO (ÚLTIMOS 6 MESES)</span>
+              <div class="monthly-legend-row">
+                <span class="legend-item"><i class="leg-dot fuel"></i>Grifo</span>
+                <span class="legend-item"><i class="leg-dot maint"></i>Taller</span>
+                <span class="legend-item"><i class="leg-dot other"></i>Otros</span>
+              </div>
+            </div>
+            <strong class="monthly-total-badge" id="fin-monthly-total-6m">S/ 0</strong>
+          </div>
+          <div id="fin-monthly-svg-wrap" class="monthly-svg-wrap"></div>
+        </div>
+
+        <div class="tco-card">
+          <div class="section-header-row" style="margin-bottom: 6px;">
+            <span class="section-title-sleek">DESGLOSE TOTAL ACUMULADO</span>
+            <strong class="fin-val" id="master-grand-total">S/ 0.00</strong>
+          </div>
+
+          <div class="expense-split-bar" id="expense-split-bar">
+            <div class="split-seg seg-fuel" id="seg-fuel" style="width: 0%; opacity: 0;"></div>
+            <div class="split-seg seg-maint" id="seg-maint" style="width: 0%; opacity: 0;"></div>
+            <div class="split-seg seg-garage" id="seg-garage" style="width: 0%; opacity: 0;"></div>
+            <div class="split-seg seg-admin" id="seg-admin" style="width: 0%; opacity: 0;"></div>
+          </div>
+
+          <div class="tco-grid">
+            <div class="tco-item">
+              <span>Inversión Moto + Mods Chasis (CAPEX)</span>
+              <strong id="tco-capex-row">S/ 0.00</strong>
+            </div>
+            <div class="tco-item sub-breakdown">
+              <span>↳ Valor de Reventa Estimado (<small id="tco-retention-pct">--%</small>)</span>
+              <strong class="carib-txt" id="tco-resale-est">S/ 0.00</strong>
+            </div>
+            <div class="tco-item sub-breakdown">
+              <span>↳ Equipamiento de Piloto (Casco / Guantes)</span>
+              <small id="tco-pilot-gear">S/ 0.00</small>
+            </div>
+            <div class="tco-item">
+              <span>Combustible Premium (<small id="pct-fuel">0%</small>)</span>
+              <strong id="tco-fuel-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item">
+              <span>Taller: Repuestos + Mano de Obra (<small id="pct-maint">0%</small>)</span>
+              <strong id="tco-maint-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item sub-breakdown">
+              <span>↳ Desglose Taller</span>
+              <small id="tco-parts-vs-labor">Rep: S/ 0.00 • M.O: S/ 0.00</small>
+            </div>
+            <div class="tco-item">
+              <span>Lavado y Cuidado (<small id="pct-spa">0%</small>)</span>
+              <strong id="tco-spa-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item">
+              <span>Neumáticos (<small id="pct-garage">0%</small>)</span>
+              <strong class="carib-txt" id="tco-garage-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item">
+              <span>SOAT, Peajes y Otros (<small id="pct-admin">0%</small>)</span>
+              <strong id="tco-admin-all">S/ 0.00</strong>
+            </div>
+            <div class="tco-item">
+              <span>Costo Operativo OPEX por Km (<small id="tracked-km-label">0 km</small>)</span>
+              <strong class="neon-txt" id="tco-real-km">S/ 0.00 / km</strong>
+            </div>
+            <div class="tco-item">
+              <span>Costo Operativo OPEX por Día</span>
+              <strong class="carib-txt" id="tco-daily-cost">S/ 0.00 / día</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="progressive-drawer-card">
+          <div class="drawer-summary-row">
+            <div>
+              <span class="section-title-sleek">OTROS GASTOS / IMPREVISTOS</span>
+              <div class="maint-sub">SOAT, cochera, parches, trámites o peajes</div>
+            </div>
+            <div class="maint-top-right">
+              <button type="button" id="btn-open-expense-modal" class="btn-action-sleek">+ Gasto</button>
+              <button type="button" id="btn-toggle-expense-logs" class="btn-drawer-toggle">
+                (<span id="expense-count-badge">0</span>) <span id="expense-saved-arrow">▾</span>
+              </button>
+            </div>
+          </div>
+          <div id="drawer-expense-logs" class="drawer-body hidden">
+            <div id="expense-logs-container" class="compact-scroll-list" style="max-height: 180px;"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ================= PESTAÑA 6: MACHINE OUTDOORS OS (EDICIÓN TFT PREMIUM MOTO) ================= -->
+    <!-- ================= PESTAÑA 5: COCKPIT MACHINE OUTDOORS OS (TFT v5.1) ================= -->
     <div id="tab-ecu" class="tab-content hidden">
       <div id="obd-cockpit-card" class="machine-os-shell obd-live-card">
         
-        <!-- CABECERA TFT DE ALTA PRECISIÓN -->
+        <!-- CABECERA TFT DESCONGESTIONADA (SIN SCROLL HORIZONTAL, 1 TOQUE PARA GIRO Y SOS) -->
         <header class="mo-unified-topbar">
           <div class="mo-top-brand">
-            <button type="button" class="mo-home-back-btn" id="btn-mo-exit-home" title="Salir al Taller">←</button>
+            <button type="button" class="mo-home-back-btn" id="btn-mo-exit-home" title="Salir al Taller" aria-label="Volver">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
             <div class="mo-brand-txt-wrap">
               <div style="display:flex;align-items:center;gap:5px;">
-                <strong class="mo-brand-title">MACHINE</strong>
-                <span id="obd-live-status" class="status-pill status-ok">OFFLINE</span>
+                <span id="obd-live-status" class="status-pill status-idle">OFFLINE</span>
               </div>
               <span class="mo-brand-sub"><strong id="mo-live-clock">08:00</strong> • <strong id="mo-top-temp-txt">24°C</strong></span>
             </div>
-            <div class="hidden">
-              <span id="mo-active-view-title">MAPA</span>
-              <span id="mo-top-gps-ico">🛰️</span>
-              <div id="mo-conn-bar-fill"></div>
-            </div>
           </div>
 
-          <!-- Selector de Módulos (Botones Grandes para Guantes) -->
+          <!-- Selector de Módulos (Iconos SVG Lineales) -->
           <nav class="mo-mode-switcher" aria-label="Vistas Machine Outdoors">
             <button type="button" class="mo-mode-tab active" data-ecuview="map">
-              <span>🗺️</span> <span>Mapa</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+              <span>Mapa</span>
             </button>
             <button type="button" class="mo-mode-tab" data-ecuview="dials">
-              <span>🎛️</span> <span>Relojes</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+              <span>Relojes</span>
             </button>
             <button type="button" class="mo-mode-tab" data-ecuview="diag">
-              <span>🔧</span> <span>Diag</span>
-            </button>
-            <button type="button" class="mo-mode-tab sos" id="btn-mo-open-sos" title="Emergencia SOS">
-              <span>🆘</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              <span>Diag</span>
             </button>
           </nav>
 
-          <!-- Acciones ECU y Pantalla Directas en Cabecera (1 Toque) -->
+          <!-- Acciones Esenciales en Marcha: Giro Horizontal 1-Toque, SOS y Panel Táctico -->
           <div class="mo-quick-actions">
-            <button type="button" id="btn-obd-connect" class="mo-top-pill connect" title="Conectar Escáner OBD2">⚡ ECU</button>
-            <button type="button" id="btn-obd-sim" class="mo-top-pill" title="Simulador en Ruta">Demo</button>
-            <button type="button" id="btn-obd-rec-toggle" class="mo-top-pill rec" title="Grabar Caja Negra">🔴 REC</button>
-            <button type="button" id="btn-mo-open-replay-top" class="mo-top-pill" title="Reproducir Ruta Grabada">▶️</button>
-            <button type="button" id="btn-obd-rotate" class="mo-top-pill icon-only" title="Activar Modo Horizontal">🔄</button>
-            <button type="button" id="btn-obd-ride-mode" class="mo-top-pill icon-only" title="Pantalla Completa Timón">⛶</button>
-            <button type="button" id="btn-obd-sunlight" class="mo-top-pill icon-only" title="Modo Sol Alto Contraste">☀️</button>
-            <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_ecu_guide" title="Guía del Cockpit">ⓘ</button>
+            <button type="button" id="btn-obd-rotate" class="mo-top-pill icon-only" title="Activar Modo Horizontal" aria-label="Modo Horizontal">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="12" height="18" x="6" y="3" rx="2" transform="rotate(90 12 12)"/><path d="m17 2 3 3-3 3"/></svg>
+            </button>
+            <button type="button" id="btn-mo-open-sos" class="mo-top-pill sos-btn" title="Emergencia SOS">SOS</button>
+            <button type="button" id="btn-mo-sheet-toggle" class="mo-top-pill icon-only sheet-trigger" title="Controles ECU, REC, Demo y Pantalla" aria-label="Menú Cockpit">
+              <span id="mo-sheet-live-dot" class="mo-sheet-dot hidden"></span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/><circle cx="9" cy="6" r="2" fill="currentColor"/><circle cx="15" cy="12" r="2" fill="currentColor"/><circle cx="10" cy="18" r="2" fill="currentColor"/></svg>
+            </button>
           </div>
         </header>
 
@@ -926,25 +972,25 @@
 
           <!-- Alerta Inteligente de Recalibración Barométrica MAP -->
           <div id="mo-map-altitude-alert" class="mo-altitude-alert-strip hidden">
-            <span>⛰️ <strong>Ascenso +1,200m detectado:</strong> En tu próxima parada apaga la llave 5 seg para recalibrar el sensor MAP FI.</span>
-            <button type="button" id="btn-ack-map-reset" class="btn-quick-done">✓ Hecho</button>
+            <span><strong>Ascenso +1,200m detectado:</strong> En tu próxima parada apaga la llave 5 seg para recalibrar el sensor MAP FI.</span>
+            <button type="button" id="btn-ack-map-reset" class="btn-quick-done">Hecho</button>
           </div>
 
           <!-- ================= VISTA 1: NAVEGADOR TÁCTICO CON LUPA AUTO-CONTRÁCTIL ================= -->
           <div id="obd-map-panel" class="mo-stage-panel">
             <div class="mo-nav-workspace">
               
-              <!-- LIENZO SATELITAL 90% DESPEJADO -->
+              <!-- LIENZO SATELITAL DESPEJADO -->
               <div class="machine-map-canvas-box">
                 <div id="leaflet-sat-map" class="leaflet-sat-container"></div>
 
-                <!-- 1. HUD INTELIGENTE SUPERIOR: SE CONTRAE EN UNA CÁPSULA CON LUPA AL ELEGIR DESTINO -->
+                <!-- 1. HUD INTELIGENTE SUPERIOR -->
                 <div id="mo-smart-search-hud" class="mo-map-top-search-hud">
                   
-                  <!-- MODO CONTRAÍDO (Se muestra automáticamente cuando ya hay ruta activa) -->
+                  <!-- MODO CONTRAÍDO -->
                   <div id="mo-collapsed-route-pill" class="mo-collapsed-lupa-pill hidden">
-                    <button type="button" id="btn-expand-search-lupa" class="mo-lupa-circle-btn" title="Buscar otro lugar">
-                      🔍
+                    <button type="button" id="btn-expand-search-lupa" class="mo-lupa-circle-btn" title="Buscar otro lugar" aria-label="Buscar">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                     </button>
                     <div class="mo-active-dest-info" id="btn-expand-search-text" title="Toca para cambiar destino">
                       <span class="mo-live-route-dot active"></span>
@@ -953,14 +999,15 @@
                         <small id="map-dest-region">Valle Moche • 1,450 msnm</small>
                       </div>
                     </div>
+                    <button type="button" id="btn-pill-save-fav" class="mo-pill-fav-btn" title="Guardar destino en Mis Rutas Favoritas">★</button>
                     <button type="button" id="btn-pill-clear-route" class="mo-pill-clear-x" title="Cancelar ruta activa">✕</button>
                   </div>
 
-                  <!-- MODO EXPANDIDO (Buscador + Chips Rápidos) -->
+                  <!-- MODO EXPANDIDO -->
                   <div id="mo-expanded-search-box" class="mo-expanded-search-wrap">
                     <div class="mo-pro-search-bar">
-                      <span class="mo-search-icon">🔍</span>
-                      <input type="search" id="map-place-search-input" class="mo-pro-search-inp" placeholder="¿A dónde rodamos hoy? (Ej: Samne, Otuzco, Grifo...)" autocomplete="off">
+                      <svg class="mo-search-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                      <input type="search" id="map-place-search-input" class="mo-pro-search-inp" placeholder="¿A dónde rodamos hoy? (Ej: Samne, Otuzco...)" autocomplete="off">
                       <button type="button" id="btn-map-search-clear" class="mo-search-clear-btn hidden" title="Limpiar">✕</button>
                       <button type="button" id="btn-map-search-go" class="mo-pro-search-btn">Ir</button>
                     </div>
@@ -968,19 +1015,16 @@
                     <div id="map-search-results" class="map-search-dropdown hidden"></div>
 
                     <div class="mo-quick-presets-strip" id="map-quick-presets">
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-7.9865" data-preset-lon="-78.6852" data-preset-name="Samne" data-preset-region="Valle Moche • 1,450 msnm">⛰️ Samne</button>
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-8.0782" data-preset-lon="-79.1205" data-preset-name="Huanchaco" data-preset-region="Costa • Nivel del Mar">🌊 Huanchaco</button>
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-7.9719" data-preset-lon="-78.8142" data-preset-name="Simbal" data-preset-region="Valle Moche • 576 msnm">☀️ Simbal</button>
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-7.9038" data-preset-lon="-78.5636" data-preset-name="Otuzco" data-preset-region="Sierra • 2,641 msnm">🏔️ Otuzco</button>
-                      <button type="button" class="mo-preset-chip" data-preset-lat="-8.0950" data-preset-lon="-78.1585" data-preset-name="Cachicadán" data-preset-region="Alta Montaña • 2,880 msnm">♨️ Cachicadán</button>
-                      <button type="button" class="mo-preset-chip poi" data-poi-query="Grifo Primax Repsol">⛽ Grifos</button>
-                      <button type="button" class="mo-preset-chip poi" data-poi-query="Mirador Turístico">📸 Miradores</button>
+                      <button type="button" id="btn-open-fav-modal" class="mo-preset-chip fav-add">★ + Favorito</button>
+                      <div id="map-fav-chips-wrap" class="mo-fav-chips-inline"></div>
+                      <button type="button" class="mo-preset-chip poi" data-poi-query="Grifo Primax Repsol">Grifos</button>
+                      <button type="button" class="mo-preset-chip poi" data-poi-query="Mirador Turístico">Miradores</button>
                     </div>
                   </div>
 
                 </div>
 
-                <!-- 2. DOCK COMPACTO DERECHO (SOLO 4 CONTROLES TÁCTILES QUE NO TAPAN EL MAPA) -->
+                <!-- 2. DOCK COMPACTO DERECHO -->
                 <div class="mo-map-right-controls">
                   <button type="button" id="btn-map-heading-mode" class="mo-compass-circle" title="Centrar vista de ruta">
                     <span id="map-compass-needle" class="mo-compass-arrow">▲</span>
@@ -991,19 +1035,19 @@
                     <div class="mo-zoom-divider"></div>
                     <button type="button" id="btn-map-zoom-out" title="Alejar">−</button>
                   </div>
-                  <button type="button" id="btn-map-follow-lock" class="mo-compass-circle active" title="Auto-seguir moto en ruta">🔒</button>
-                  <button type="button" id="btn-map-my-loc" class="mo-compass-circle" title="Ir a mi ubicación GPS">📍</button>
-                  <div class="hidden">
-                    <button type="button" id="btn-map-recenter"></button>
-                    <button type="button" id="btn-map-quick-sos"></button>
-                  </div>
+                  <button type="button" id="btn-map-follow-lock" class="mo-compass-circle active" title="Auto-seguir moto en ruta" aria-label="Seguir moto">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </button>
+                  <button type="button" id="btn-map-my-loc" class="mo-compass-circle" title="Ir a mi ubicación GPS" aria-label="Mi ubicación">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/></svg>
+                  </button>
                 </div>
 
                 <!-- 3. REPRODUCTOR INTERACTIVO DE CAJA NEGRA (RACE REPLAY HUD) -->
                 <div id="mo-race-replay-hud" class="mo-race-replay-hud hidden">
                   <div class="mo-replay-top-row">
                     <div class="mo-replay-title-wrap">
-                      <span class="mo-replay-badge">▶️ RACE REPLAY</span>
+                      <span class="mo-replay-badge">RACE REPLAY</span>
                       <strong id="replay-time-lbl">00:00 / 00:00</strong>
                       <small id="replay-point-counter">(0/0)</small>
                     </div>
@@ -1013,25 +1057,18 @@
                     <button type="button" id="btn-replay-close" class="mo-pill-clear-x" title="Salir del Reproductor">✕</button>
                   </div>
                   <div class="mo-replay-controls-row">
-                    <button type="button" id="btn-replay-play" class="mo-replay-play-btn" title="Reproducir / Pausar">▶️</button>
+                    <button type="button" id="btn-replay-play" class="mo-replay-play-btn" title="Reproducir / Pausar">▶</button>
                     <input type="range" id="replay-scrubber" class="mo-replay-slider" min="0" max="100" value="0" step="1">
                     <button type="button" id="btn-replay-speed" class="mo-replay-spd-btn" title="Velocidad de reproducción">1x</button>
                   </div>
                 </div>
 
-                <!-- 4. MICRO-DOCK FLOTANTE INFERIOR IZQUIERDO (CERO DATOS REPETIDOS) -->
+                <!-- 4. MICRO-DOCK FLOTANTE INFERIOR IZQUIERDO -->
                 <div id="mo-floating-dest-card" class="mo-map-bottom-toolbar">
-                  <button type="button" id="btn-toggle-gps" class="mo-mini-action gps">🛰️ GPS Vivo</button>
-                  <button type="button" id="btn-map-layer-toggle" class="mo-mini-action">🌍 Satélite</button>
-                  <button type="button" id="btn-map-open-gmaps" class="mo-mini-action" title="Abrir voz en Google Maps">🧭 G-Maps</button>
-                  <button type="button" id="btn-open-route-cfg" class="mo-mini-action" title="Ajustar ruta manual">⚙️</button>
-                  <!-- Espejos invisibles para compatibilidad total -->
-                  <div class="hidden" id="mo-dest-card-body">
-                    <span id="map-route-status-tag"></span>
-                    <span id="map-dest-dist"></span>
-                    <span id="map-dest-time"></span>
-                    <button type="button" id="btn-toggle-dest-card"></button>
-                  </div>
+                  <button type="button" id="btn-toggle-gps" class="mo-mini-action gps">GPS Vivo</button>
+                  <button type="button" id="btn-map-layer-toggle" class="mo-mini-action">Satélite</button>
+                  <button type="button" id="btn-map-open-gmaps" class="mo-mini-action" title="Abrir voz en Google Maps">G-Maps</button>
+                  <button type="button" id="btn-open-route-cfg" class="mo-mini-action" title="Ajustar ruta manual">Ruta</button>
                 </div>
 
               </div>
@@ -1042,9 +1079,8 @@
                 <!-- TARJETA 1: VELOCÍMETRO + MARCHA + SIGNOS VITALES ECU -->
                 <div class="mo-hud-card speed-hud">
                   <div class="obd-box-head">
-                    <span class="micro-lbl">VELOCÍMETRO & MOTOR</span>
+                    <span class="micro-lbl">VELOCIDAD</span>
                     <span id="map-bearing-deg-txt" class="mo-hud-tag">0° N</span>
-                    <span id="map-orientation-badge" class="hidden"></span>
                   </div>
                   <div class="mo-tft-speed-cluster">
                     <div class="mo-hud-speed-row">
@@ -1052,23 +1088,19 @@
                       <small>km/h</small>
                     </div>
                     <div class="mo-tft-gear-badge" title="Marcha engranada">
-                      <span>MARCHA</span>
+                      <span>MAR</span>
                       <strong id="map-hud-gear">N</strong>
                     </div>
                   </div>
-                  <div class="mo-tft- inline-vitals">
-                    <span id="map-hud-vitals">🌡️ --°C • 🔋 --V • 0 RPM</span>
-                  </div>
-                  <div class="hidden">
-                    <svg viewBox="0 0 120 18"><path id="map-live-speed-arc" d="M 8 5 Q 60 18 112 5"/></svg>
-                    <div id="map-live-speed-bar"></div>
+                  <div class="mo-tft-inline-vitals">
+                    <span id="map-hud-vitals">--°C • --V • 0 RPM</span>
                   </div>
                 </div>
 
                 <!-- TARJETA 2: META, ETA & PRESUPUESTO EXACTO DE RUTA -->
                 <div class="mo-hud-card route-hud">
                   <div class="obd-box-head">
-                    <span class="micro-lbl">META, ETA & COMBUSTIBLE</span>
+                    <span class="micro-lbl">META & ETA</span>
                     <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_bot_eta_info">ⓘ</button>
                   </div>
                   <div class="mo-hud-dual-val">
@@ -1076,47 +1108,37 @@
                     <span id="map-bot-eta" class="mo-hud-pill-stat">ETA --:--</span>
                   </div>
                   <div class="mo-hud-foot-stack">
-                    <small id="map-bot-needgal" style="color:var(--neon-lime);font-weight:700;">Toca 🔍 para elegir destino</small>
-                    <small id="map-bot-terrain">Modo Libre • <span id="map-bot-gps-status">GPS Listo</span></small>
-                  </div>
-                  <div class="hidden">
-                    <span id="map-bot-routename"></span>
-                    <span id="map-bot-diff"></span>
-                    <span id="map-bot-coords"></span>
+                    <small id="map-bot-needgal" style="color:var(--neon-lime);font-weight:700;">Elige destino en mapa</small>
+                    <small id="map-bot-terrain">Modo Libre • GPS Listo</small>
                   </div>
                 </div>
 
                 <!-- TARJETA 3: AUTONOMÍA DE TANQUE (14 L) & CONSUMO PROMEDIO -->
                 <div class="mo-hud-card fuel-hud">
                   <div class="obd-box-head">
-                    <span class="micro-lbl">TANQUE (14L) & CONSUMO</span>
+                    <span class="micro-lbl">TANQUE 14L</span>
                     <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_safe_range_info">ⓘ</button>
                   </div>
                   <div class="mo-hud-dual-val">
-                    <strong id="map-safe-range" class="mo-card-primary-val">⛽ 0 <small>km</small></strong>
+                    <strong id="map-safe-range" class="mo-card-primary-val">0 <small>km</small></strong>
                     <span id="map-avg-kml" class="mo-hud-pill-stat">37.0 km/L</span>
                   </div>
                   <div class="machine-bar-track" style="margin:4px 0;">
                     <div id="map-safe-bar" class="machine-bar-fill" style="width:0%;"></div>
                   </div>
                   <div class="mo-hud-foot-pair">
-                    <small id="map-safe-pct">0% • Sin carga en Grifo</small>
+                    <small id="map-safe-pct">0% • Sin carga</small>
                     <small id="map-avg-kmgal">140 km/gal</small>
-                  </div>
-                  <div class="hidden">
-                    <span id="map-bot-range"></span>
-                    <div id="map-bot-fuel-bar"></div>
-                    <span id="map-bot-fuel-txt"></span>
                   </div>
                 </div>
 
                 <!-- TARJETA 4: ALTÍMETRO DEM & PERFIL TOPOGRÁFICO INTERACTIVO -->
                 <div class="mo-hud-card elev-card" title="Toca la curva para inspeccionar la altitud de la ruta">
                   <div class="obd-box-head">
-                    <span class="micro-lbl">ALTITUD & TOPOGRAFÍA</span>
+                    <span class="micro-lbl">ALTITUD DEM</span>
                     <div style="display:flex;align-items:center;gap:4px;">
                       <strong id="map-current-elev" style="font-family:var(--font-speed);font-size:12px;color:var(--neon-lime);">34 m</strong>
-                      <small id="map-bot-peak-alt" style="font-size:8px;color:var(--alloy-muted);">• Cima --</small>
+                      <small id="map-bot-peak-alt" style="font-size:10px;color:var(--alloy-muted);">Cima --</small>
                     </div>
                   </div>
                   <div id="map-elevation-svg-wrap" class="mo-elev-chart-container"></div>
@@ -1133,7 +1155,7 @@
               <!-- Reloj Izquierdo: TACÓMETRO RPM -->
               <div class="obd-dial-card">
                 <div class="obd-box-head">
-                  <span class="obd-hero-tag">TACÓMETRO ECU</span>
+                  <span class="obd-hero-tag">TACÓMETRO</span>
                   <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_rpm_info">ⓘ</button>
                 </div>
                 <div class="obd-svg-dial-wrap">
@@ -1149,7 +1171,7 @@
                 </div>
                 <div class="obd-dial-foot">
                   <span>Pico: <strong id="obd-peak-rpm">0</strong></span>
-                  <span class="rpm-scale-danger">Redline 8.5k</span>
+                  <span class="rpm-scale-danger">8.5k</span>
                 </div>
               </div>
 
@@ -1183,8 +1205,8 @@
                   </div>
                 </div>
                 <div class="obd-dial-foot">
-                  <span>Máx: <strong id="obd-peak-speed">0</strong> km/h</span>
-                  <span>ABS 010D</span>
+                  <span>Máx: <strong id="obd-peak-speed">0</strong></span>
+                  <span>ABS</span>
                 </div>
               </div>
             </div>
@@ -1193,7 +1215,7 @@
             <div class="obd-vitals-grid-4">
               <div class="obd-vital-card">
                 <div class="obd-box-head">
-                  <span class="tele-label">🌡️ TEMP. MOTOR</span>
+                  <span class="tele-label">TEMP. MOTOR</span>
                   <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_temp_info">ⓘ</button>
                 </div>
                 <strong class="obd-vital-val carib" id="obd-temp-val">-- <small>°C</small></strong>
@@ -1207,7 +1229,7 @@
 
               <div class="obd-vital-card">
                 <div class="obd-box-head">
-                  <span class="tele-label">🔋 VOLTAJE 4Ah</span>
+                  <span class="tele-label">VOLTAJE 4Ah</span>
                   <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_volt_info">ⓘ</button>
                 </div>
                 <strong class="obd-vital-val neon" id="obd-volt-val">-- <small>V</small></strong>
@@ -1221,7 +1243,7 @@
 
               <div class="obd-vital-card">
                 <div class="obd-box-head">
-                  <span class="tele-label">🚀 ACELERADOR</span>
+                  <span class="tele-label">ACELERADOR</span>
                   <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_tps_info">ⓘ</button>
                 </div>
                 <strong class="obd-vital-val" id="obd-tps-val">0 <small>%</small></strong>
@@ -1235,7 +1257,7 @@
 
               <div class="obd-vital-card">
                 <div class="obd-box-head">
-                  <span class="tele-label">⛽ ECON. INSTANT.</span>
+                  <span class="tele-label">ECON. INSTANT.</span>
                   <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_econ_info">ⓘ</button>
                 </div>
                 <strong class="obd-vital-val neon" id="obd-inst-econ">-- <small>km/L</small></strong>
@@ -1248,42 +1270,72 @@
               </div>
             </div>
 
-            <!-- Micro-Grilla de 6 Sensores Secundarios (Toca cualquier celda para ver guía técnica) -->
+            <!-- Cronómetro de Aceleración Sprint (0-60 / 0-80 km/h + Récord Personal) -->
+            <div id="obd-sprint-card" class="obd-sprint-card">
+              <div class="obd-sprint-left">
+                <div class="obd-sprint-head">
+                  <span class="micro-lbl">SPRINT 0-60 / 0-80</span>
+                  <span id="sprint-status-pill" class="status-pill status-idle">LISTO</span>
+                </div>
+                <div class="obd-sprint-live-row">
+                  <strong id="sprint-live-timer">0.00</strong>
+                  <small>seg</small>
+                </div>
+              </div>
+              <div class="obd-sprint-metrics">
+                <div class="sprint-split-box">
+                  <span>0–60 km/h</span>
+                  <strong id="sprint-val-060">--</strong>
+                  <small id="sprint-best-060">Mejor: --</small>
+                </div>
+                <div class="sprint-split-box">
+                  <span>0–80 km/h</span>
+                  <strong id="sprint-val-080">--</strong>
+                  <small id="sprint-best-080">Mejor: --</small>
+                </div>
+              </div>
+              <div class="obd-sprint-actions">
+                <button type="button" id="btn-sprint-toggle" class="btn-action-sleek">Armar</button>
+                <button type="button" id="btn-sprint-reset" class="btn-link-mini" title="Reiniciar récords Sprint">Reset</button>
+              </div>
+            </div>
+
+            <!-- Micro-Grilla de 6 Sensores Secundarios -->
             <div class="obd-micro-grid-6">
               <div class="obd-micro-cell interactive-cell" data-info-key="obd_load_info" title="Toca para ver explicación técnica">
-                <span class="micro-lbl">CARGA MOTOR</span>
+                <span class="micro-lbl">CARGA</span>
                 <strong id="obd-micro-load">0%</strong>
-                <small>Esfuerzo (0104)</small>
+                <small>Esfuerzo</small>
               </div>
 
               <div class="obd-micro-cell interactive-cell" data-info-key="obd_map_info" title="Toca para ver explicación técnica">
-                <span class="micro-lbl">PRESIÓN MAP</span>
+                <span class="micro-lbl">MAP</span>
                 <strong id="obd-micro-map">-- kPa</strong>
-                <small id="obd-micro-alt">Alt: ~0 msnm</small>
+                <small id="obd-micro-alt">Alt: ~0 m</small>
               </div>
 
               <div class="obd-micro-cell interactive-cell" data-info-key="obd_iat_info" title="Toca para ver explicación técnica">
-                <span class="micro-lbl">TEMP. ADM (IAT)</span>
+                <span class="micro-lbl">ADM (IAT)</span>
                 <strong id="obd-micro-iat">-- °C</strong>
-                <small>Aire Caja Filtro</small>
+                <small>Aire Filtro</small>
               </div>
 
               <div class="obd-micro-cell interactive-cell" data-info-key="obd_timing_info" title="Toca para ver explicación técnica">
-                <span class="micro-lbl">AVANCE CHISPA</span>
+                <span class="micro-lbl">CHISPA</span>
                 <strong id="obd-micro-timing">0.0°</strong>
-                <small>Doble Bujía DTS-i</small>
+                <small>DTS-i</small>
               </div>
 
               <div class="obd-micro-cell interactive-cell" data-info-key="obd_o2_info" title="Toca para ver explicación técnica">
-                <span class="micro-lbl">MEZCLA / O2</span>
+                <span class="micro-lbl">MEZCLA O2</span>
                 <strong id="obd-micro-o2">0.45 V</strong>
-                <small id="obd-micro-stft">STFT: 0.0%</small>
+                <small id="obd-micro-stft">STFT: 0%</small>
               </div>
 
               <div class="obd-micro-cell interactive-cell" data-info-key="obd_runtime_info" title="Toca para ver explicación técnica">
-                <span class="micro-lbl">HORA MOTOR</span>
+                <span class="micro-lbl">TIEMPO</span>
                 <strong id="obd-micro-runtime">00:00</strong>
-                <small id="obd-micro-dist">Ruta: +0.00 km</small>
+                <small id="obd-micro-dist">+0.00 km</small>
               </div>
             </div>
 
@@ -1291,7 +1343,7 @@
             <div class="obd-machine-footer-strip">
               <div class="obd-footer-stat">
                 <div class="obd-box-head">
-                  <span class="micro-lbl">⛽ TANQUE (14L)</span>
+                  <span class="micro-lbl">TANQUE (14L)</span>
                   <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_tank_footer_info">ⓘ</button>
                 </div>
                 <strong id="obd-footer-fuel-pct">0%</strong>
@@ -1299,22 +1351,22 @@
               </div>
               <div class="obd-footer-stat">
                 <div class="obd-box-head">
-                  <span class="micro-lbl">🛣️ RANGO EST.</span>
+                  <span class="micro-lbl">RANGO EST.</span>
                   <button type="button" class="btn-info-dot obd-micro-info" data-info-key="nav_safe_range_info">ⓘ</button>
                 </div>
                 <strong id="obd-footer-range">0 km</strong>
-                <small>Autonomía rest.</small>
+                <small>Autonomía</small>
               </div>
               <div class="obd-footer-stat">
                 <div class="obd-box-head">
-                  <span class="micro-lbl">⚙️ ODÓMETRO</span>
+                  <span class="micro-lbl">ODÓMETRO</span>
                   <button type="button" class="btn-info-dot obd-micro-info" data-info-key="obd_runtime_info">ⓘ</button>
                 </div>
                 <strong id="obd-footer-odo">0 km</strong>
                 <small id="obd-session-km-txt">+0.00 km hoy</small>
               </div>
               <div class="obd-footer-action">
-                <button type="button" id="btn-obd-sync-km" class="btn-quick-done">🏁 +Km</button>
+                <button type="button" id="btn-obd-sync-km" class="btn-quick-done">+Km</button>
               </div>
             </div>
           </div>
@@ -1327,36 +1379,36 @@
                 <div class="obd-dtc-top">
                   <div>
                     <div class="title-with-info">
-                      <span class="section-title-sleek">⚡ TEST DE SALUD ELÉCTRICA (15 SEGUNDOS)</span>
+                      <span class="section-title-sleek">TEST DE SALUD ELÉCTRICA (15 SEGUNDOS)</span>
                       <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_elec_test_info">ⓘ</button>
                     </div>
                     <div id="elec-test-title" class="obd-dtc-status-txt" style="font-size:11.5px;margin-top:3px;">
                       Audita Batería 12V 4Ah (Reposo), Caída en Arranque (CCA) y Estator Trifásico
                     </div>
                   </div>
-                  <button type="button" id="btn-start-elec-test" class="btn-action-sleek">⚡ Test 15s</button>
+                  <button type="button" id="btn-start-elec-test" class="btn-action-sleek">Test 15s</button>
                 </div>
 
                 <div class="elec-test-metrics-3">
                   <div class="et-metric-box">
-                    <span>1. REPOSO (KOEO)</span>
+                    <span>1. REPOSO</span>
                     <strong id="et-val-rest">-- V</strong>
                     <small>Meta: >12.4V</small>
                   </div>
                   <div class="et-metric-box">
-                    <span>2. ARRANQUE (CCA)</span>
+                    <span>2. ARRANQUE</span>
                     <strong id="et-val-crank">-- V</strong>
-                    <small>Mínimo: >9.6V</small>
+                    <small>Mín: >9.6V</small>
                   </div>
                   <div class="et-metric-box">
-                    <span>3. ESTATOR (4k RPM)</span>
+                    <span>3. ESTATOR</span>
                     <strong id="et-val-charge">-- V</strong>
-                    <small>Óptimo: 13.6-14.5V</small>
+                    <small>13.6-14.5V</small>
                   </div>
                 </div>
 
-                <div id="elec-test-detail" class="tele-tip-banner" style="margin-top:6px;padding:6px 9px;font-size:10px;">
-                  Abre contacto (o activa Demo) y presiona <strong>"⚡ Test 15s"</strong> para iniciar el diagnóstico guiado.
+                <div id="elec-test-detail" class="tele-tip-banner" style="margin-top:6px;padding:7px 10px;font-size:10.5px;">
+                  Abre contacto (o activa Demo) y presiona <strong>"Test 15s"</strong> para iniciar el diagnóstico guiado.
                 </div>
               </div>
 
@@ -1364,7 +1416,7 @@
                 <div class="obd-dtc-top">
                   <div>
                     <div class="title-with-info">
-                      <span class="section-title-sleek">🔴 CAJA NEGRA DE TELEMETRÍA (GPS + 14 SENSORES ECU)</span>
+                      <span class="section-title-sleek">CAJA NEGRA DE TELEMETRÍA (GPS + ECU)</span>
                       <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_blackbox_info">ⓘ</button>
                     </div>
                     <div id="bb-status-summary" class="obd-dtc-status-txt" style="font-size:11px;margin-top:3px;color:var(--alloy-silver);">
@@ -1372,20 +1424,20 @@
                     </div>
                   </div>
                   <div class="obd-btn-group" style="flex-wrap:wrap;justify-content:flex-end;">
-                    <button type="button" id="btn-bb-toggle-diag" class="btn-action-sleek">🔴 Grabar Ruta</button>
-                    <button type="button" id="btn-bb-open-replay" class="btn-quick-done">▶️ Replay</button>
-                    <button type="button" id="btn-bb-export-gpx" class="btn-quick-done">🗺️ .GPX</button>
-                    <button type="button" id="btn-bb-export-csv" class="btn-quick-done">📊 .CSV</button>
+                    <button type="button" id="btn-bb-toggle-diag" class="btn-action-sleek">Grabar Ruta</button>
+                    <button type="button" id="btn-bb-open-replay" class="btn-quick-done">Replay</button>
+                    <button type="button" id="btn-bb-export-gpx" class="btn-quick-done">.GPX</button>
+                    <button type="button" id="btn-bb-export-csv" class="btn-quick-done">.CSV</button>
                   </div>
                 </div>
 
                 <div class="elec-test-metrics-3" style="margin-top:6px;">
                   <div class="et-metric-box">
-                    <span>MUESTRAS GRABADAS</span>
+                    <span>MUESTRAS</span>
                     <strong id="bb-val-points">0 pts</strong>
                   </div>
                   <div class="et-metric-box">
-                    <span>TEMP. PICO RUTA</span>
+                    <span>TEMP. PICO</span>
                     <strong id="bb-val-maxtemp">-- °C</strong>
                   </div>
                   <div class="et-metric-box">
@@ -1399,14 +1451,14 @@
                 <div class="obd-dtc-top">
                   <div>
                     <div class="title-with-info">
-                      <span class="section-title-sleek">🔍 ESCÁNER DE FALLAS CHECK ENGINE (MODOS 03 Y 04)</span>
+                      <span class="section-title-sleek">ESCÁNER CHECK ENGINE (MODOS 03 Y 04)</span>
                       <button type="button" class="btn-info-dot obd-mini-info" data-info-key="obd_dtc_info">ⓘ</button>
                     </div>
-                    <div id="obd-dtc-summary" class="obd-dtc-status-txt" style="font-size:11.5px;margin-top:4px;">✅ 0 Códigos de falla detectados en la ECU Bosch/Bajaj</div>
+                    <div id="obd-dtc-summary" class="obd-dtc-status-txt" style="font-size:11.5px;margin-top:4px;">0 Códigos de falla detectados en la ECU Bosch/Bajaj</div>
                   </div>
                   <div class="obd-btn-group">
-                    <button type="button" id="btn-obd-scan-dtc" class="btn-action-sleek">🔍 Escanear ECU</button>
-                    <button type="button" id="btn-obd-clear-dtc" class="btn-del-log hidden">🧹 Borrar Check Engine</button>
+                    <button type="button" id="btn-obd-scan-dtc" class="btn-action-sleek">Escanear ECU</button>
+                    <button type="button" id="btn-obd-clear-dtc" class="btn-del-log hidden">Borrar Fallas</button>
                   </div>
                 </div>
                 <div id="obd-dtc-list" class="obd-dtc-list hidden" style="margin-top:8px;"></div>
@@ -1416,26 +1468,26 @@
                 <div class="obd-dtc-top">
                   <div>
                     <div class="title-with-info">
-                      <span class="section-title-sleek">🌙 AUDITORÍA DE DRENAJE PARÁSITO NOCTURNO (REPOSO 4Ah)</span>
+                      <span class="section-title-sleek">AUDITORÍA DE DRENAJE NOCTURNO (4Ah)</span>
                       <button type="button" class="btn-info-dot obd-mini-info" data-info-key="night_drain_guide">ⓘ</button>
                     </div>
                     <div id="night-drain-summary" class="obd-dtc-status-txt" style="font-size:11px;margin-top:3px;color:var(--alloy-silver);">
-                      Mide cuánto voltaje pierde tu batería de noche por alarma o GPS (vía OBD2 o multímetro)
+                      Mide cuánto voltaje pierde tu batería de noche por alarma o GPS
                     </div>
                   </div>
                   <div class="obd-btn-group">
-                    <button type="button" id="btn-night-save-base" class="btn-quick-done">🌙 Base Noche</button>
-                    <button type="button" id="btn-night-compare-morning" class="btn-action-sleek">☀️ Evaluar Mañana</button>
+                    <button type="button" id="btn-night-save-base" class="btn-quick-done">Base Noche</button>
+                    <button type="button" id="btn-night-compare-morning" class="btn-action-sleek">Evaluar Mañana</button>
                   </div>
                 </div>
                 <div class="elec-test-metrics-3" style="margin-top:6px;">
                   <div class="et-metric-box">
-                    <span>VOLTAJE NOCHE</span>
+                    <span>NOCHE</span>
                     <strong id="nd-val-base">-- V</strong>
                     <small id="nd-time-base">Sin muestra</small>
                   </div>
                   <div class="et-metric-box">
-                    <span>VOLTAJE MAÑANA</span>
+                    <span>MAÑANA</span>
                     <strong id="nd-val-morning">-- V</strong>
                     <small id="nd-hours-elapsed">Reposo 8-12h</small>
                   </div>
@@ -1446,6 +1498,7 @@
                   </div>
                 </div>
               </div>
+
 
             </div>
           </div>
@@ -1517,9 +1570,9 @@
 
       <label class="modal-label">MODALIDAD DE LAVADO:</label>
       <div class="fuel-type-pills-3" id="spa-type-picker">
-        <button type="button" class="compound-pill selected" data-spatype="Carwash Básico" data-defaultcost="12">🚿 Carwash</button>
-        <button type="button" class="compound-pill" data-spatype="Detailing + Cera" data-defaultcost="25">✨ Detailing</button>
-        <button type="button" class="compound-pill" data-spatype="Lavado en Casa" data-defaultcost="0">🧽 En Casa</button>
+        <button type="button" class="compound-pill selected" data-spatype="Carwash Básico" data-defaultcost="12">Carwash</button>
+        <button type="button" class="compound-pill" data-spatype="Detailing + Cera" data-defaultcost="25">Detailing</button>
+        <button type="button" class="compound-pill" data-spatype="Lavado en Casa" data-defaultcost="0">En Casa</button>
       </div>
 
       <div class="form-row-3">
@@ -1596,9 +1649,9 @@
       <div id="chain-action-picker-wrap" class="hidden" style="margin-bottom: 6px;">
         <label class="modal-label">ACCIÓN EN CADENA 428 O-RING (AUDITORÍA DE ESTIRAMIENTO):</label>
         <div class="fuel-type-pills-3" id="chain-action-picker">
-          <button type="button" class="compound-pill selected" data-chainact="lube_only">🧴 Solo Limpieza/Lub</button>
-          <button type="button" class="compound-pill" data-chainact="lube_and_tension">🔧 Lub + Tensar Eje</button>
-          <button type="button" class="compound-pill" data-chainact="kit_replace">⚙️ Kit Nuevo 14T/45T</button>
+          <button type="button" class="compound-pill selected" data-chainact="lube_only">Solo Limpieza/Lub</button>
+          <button type="button" class="compound-pill" data-chainact="lube_and_tension">Lub + Tensar Eje</button>
+          <button type="button" class="compound-pill" data-chainact="kit_replace">Kit Nuevo 14T/45T</button>
         </div>
       </div>
 
@@ -1617,7 +1670,7 @@
       <div id="workshop-quick-picks" class="quick-picks-row"></div>
 
       <div id="maint-memory-banner" class="memory-pill-bar">
-        <span>💡 Sin registro previo de este servicio en tu historial.</span>
+        <span>Sin registro previo de este servicio en tu historial.</span>
       </div>
 
       <label class="modal-label">Insumos / Notas adicionales (Opcional):</label>
@@ -1641,10 +1694,19 @@
       </div>
 
       <label class="modal-label">MODO DE CARGA EN EL GRIFO:</label>
-      <div class="fuel-type-pills" id="fuel-mode-picker" style="margin-bottom: 6px;">
-        <button type="button" class="mode-pill selected" data-full="true">⛽ Tanque Lleno (1er Corte)</button>
-        <button type="button" class="mode-pill" data-full="false">⚡ Carga Parcial</button>
+      <div class="fuel-type-pills" id="fuel-mode-picker" style="margin-bottom: 8px;">
+        <button type="button" class="mode-pill selected" data-full="true">Tanque Lleno (1er Corte)</button>
+        <button type="button" class="mode-pill" data-full="false">Carga Parcial</button>
       </div>
+
+      <label class="fuel-loan-check-row" for="fuel-is-loan-chk">
+        <input type="checkbox" id="fuel-is-loan-chk">
+        <span class="chk-box"></span>
+        <div>
+          <strong>Carga en Modo Préstamo</strong>
+          <small>Aísla esta tanqueada para no alterar tu rendimiento personal (km/gal)</small>
+        </div>
+      </label>
 
       <div class="form-row-3">
         <div><label class="modal-label">Odómetro (Km):</label><input type="number" id="fuel-km" placeholder="350"></div>
@@ -1653,7 +1715,7 @@
       </div>
 
       <div id="fuel-memory-banner" class="memory-pill-bar">
-        <span>⛽ Ingresa el precio por galón Premium para compararlo con tu última tanqueada.</span>
+        <span>Ingresa el precio por galón Premium para compararlo con tu última tanqueada.</span>
       </div>
 
       <div class="form-row-3">
@@ -1687,9 +1749,9 @@
 
       <label class="modal-label">CATEGORÍA DEL GASTO:</label>
       <div class="fuel-type-pills-3" id="expense-cat-picker">
-        <button type="button" class="compound-pill selected" data-expcat="Cochera / Peaje">🅿️ Cochera/Peaje</button>
-        <button type="button" class="compound-pill" data-expcat="Parche / Auxilio">🛞 Parche/Ruta</button>
-        <button type="button" class="compound-pill" data-expcat="Trámite / Legal">🪪 Trámite/Legal</button>
+        <button type="button" class="compound-pill selected" data-expcat="Cochera / Peaje">Cochera / Peaje</button>
+        <button type="button" class="compound-pill" data-expcat="Parche / Auxilio">Parche / Auxilio</button>
+        <button type="button" class="compound-pill" data-expcat="Trámite / Legal">Trámite / Legal</button>
       </div>
 
       <div class="form-row-2">
@@ -1719,7 +1781,7 @@
         <button id="btn-close-backup-x" class="btn-close-x">✕</button>
       </div>
 
-      <label class="modal-label">🎨 COLOR DE TU MOTO (TEMA DE LA APP):</label>
+      <label class="modal-label">COLOR DE TU MOTO (TEMA DE LA APP):</label>
       <div class="color-theme-grid" id="settings-theme-picker">
         <button type="button" class="theme-pill selected" data-theme="blue" data-edition="CARIBBEAN BLUE EDITION">
           <span class="swatch-circle" style="background: #1E88A8;"></span>
@@ -1739,9 +1801,9 @@
         </button>
       </div>
 
-      <label class="modal-label">🔐 CUENTA PRIVADA EN LA NUBE (CLUB MOTERO):</label>
+      <label class="modal-label">CUENTA PRIVADA EN LA NUBE:</label>
       <div id="cloud-status-banner" class="memory-pill-bar" style="margin-bottom: 8px;">
-        <span>🔒 Inicia sesión o crea tu cuenta para respaldar tu moto en tu bóveda privada.</span>
+        <span>Inicia sesión o crea tu cuenta para respaldar tu moto en tu bóveda privada.</span>
       </div>
 
       <div id="auth-logged-out-box">
@@ -1755,29 +1817,32 @@
             <input type="password" id="auth-pass-input" placeholder="••••••">
           </div>
         </div>
-        <div class="backup-actions" style="margin-bottom: 12px;">
-          <button type="button" id="btn-auth-login" class="btn-neon">🔑 Iniciar Sesión</button>
-          <button type="button" id="btn-auth-register" class="btn-secondary">✨ Crear Cuenta</button>
+        <div class="backup-actions" style="margin-bottom: 8px;">
+          <button type="button" id="btn-auth-login" class="btn-neon">Iniciar Sesión</button>
+          <button type="button" id="btn-auth-register" class="btn-secondary">Crear Cuenta</button>
         </div>
+        <button type="button" id="btn-auth-reset" class="btn-link-mini auth-reset-link">
+          ¿Olvidaste tu contraseña? Enviar correo de recuperación
+        </button>
       </div>
 
       <div id="auth-logged-in-box" class="hidden">
         <div class="backup-actions" style="margin-bottom: 8px;">
-          <button type="button" id="btn-cloud-push" class="btn-neon">☁️ Subir Mi Moto</button>
-          <button type="button" id="btn-cloud-pull" class="btn-secondary">🔄 Bajar de Mi Nube</button>
+          <button type="button" id="btn-cloud-push" class="btn-neon">Subir a Nube</button>
+          <button type="button" id="btn-cloud-pull" class="btn-secondary">Bajar de Nube</button>
         </div>
         <button type="button" id="btn-auth-logout" class="btn-secondary" style="width: 100%; margin-bottom: 12px; color: var(--red-danger);">
-          🚪 Cerrar Sesión de Nube
+          Cerrar Sesión
         </button>
       </div>
 
-      <label class="modal-label">📁 ARCHIVO LOCAL (OFFLINE JSON):</label>
+      <label class="modal-label">RESPALDO LOCAL (JSON):</label>
       <div class="backup-actions" style="margin-bottom: 8px;">
-        <button id="btn-export" class="btn-secondary">⬇️ Exportar JSON</button>
-        <button id="btn-import-trigger" class="btn-secondary">⬆️ Importar JSON</button>
+        <button id="btn-export" class="btn-secondary">Exportar JSON</button>
+        <button id="btn-import-trigger" class="btn-secondary">Importar JSON</button>
         <input type="file" id="import-input" accept=".json" class="hidden">
       </div>
-      <button id="btn-reset-onboarding" class="btn-secondary" style="width: 100%;">📷 Cambiar Foto de Portada / Km Inicial</button>
+      <button id="btn-reset-onboarding" class="btn-secondary" style="width: 100%;">Cambiar Foto de Portada / Km Inicial</button>
     </div>
   </div>
 
@@ -1844,8 +1909,8 @@
         </div>
       </div>
       <div class="backup-actions" style="margin-top: 8px;">
-        <button type="button" id="btn-cal-soat" class="btn-cal-ics">📅 Agendar SOAT en Google Calendar</button>
-        <button type="button" id="btn-cal-license" class="btn-cal-ics">📅 Agendar Brevete en Google Calendar</button>
+        <button type="button" id="btn-cal-soat" class="btn-cal-ics">Agendar SOAT en Calendar</button>
+        <button type="button" id="btn-cal-license" class="btn-cal-ics">Agendar Brevete en Calendar</button>
       </div>
       <div class="form-row-2" style="margin-top: 6px;">
         <div>
@@ -1857,17 +1922,17 @@
           <input type="tel" id="doc-sos-phone" placeholder="Ej: 999888777">
         </div>
       </div>
-      <label class="modal-label" style="margin-top: 10px;">🛡️ BÓVEDA OFFLINE SIN SEÑAL (INDEXED-DB ALTA CAPACIDAD):</label>
+      <label class="modal-label" style="margin-top: 10px;">BÓVEDA OFFLINE SIN SEÑAL (INDEXED-DB):</label>
       <div class="vault-media-grid">
         <div class="vault-doc-slot">
           <div class="vault-slot-top">
-            <strong>📄 Certificado SOAT</strong>
+            <strong>Certificado SOAT</strong>
             <span id="vault-soat-badge" class="status-pill status-warn">Vacío</span>
           </div>
           <small>Captura o foto para operativos sin señal</small>
           <div class="vault-slot-actions">
-            <button type="button" id="btn-vault-upload-soat" class="btn-quick-done">📷 Subir</button>
-            <button type="button" id="btn-vault-view-soat" class="btn-edit-log hidden">👁️ Ver</button>
+            <button type="button" id="btn-vault-upload-soat" class="btn-quick-done">Subir</button>
+            <button type="button" id="btn-vault-view-soat" class="btn-edit-log hidden">Ver</button>
             <button type="button" id="btn-vault-del-soat" class="btn-del-log hidden">✕</button>
           </div>
           <input type="file" id="vault-soat-input" accept="image/*" class="hidden">
@@ -1875,13 +1940,13 @@
 
         <div class="vault-doc-slot">
           <div class="vault-slot-top">
-            <strong>🪪 Tarjeta Propiedad</strong>
+            <strong>Tarjeta Propiedad</strong>
             <span id="vault-card-badge" class="status-pill status-warn">Vacío</span>
           </div>
           <small>T. Propiedad / Brevete digitalizado</small>
           <div class="vault-slot-actions">
-            <button type="button" id="btn-vault-upload-card" class="btn-quick-done">📷 Subir</button>
-            <button type="button" id="btn-vault-view-card" class="btn-edit-log hidden">👁️ Ver</button>
+            <button type="button" id="btn-vault-upload-card" class="btn-quick-done">Subir</button>
+            <button type="button" id="btn-vault-view-card" class="btn-edit-log hidden">Ver</button>
             <button type="button" id="btn-vault-del-card" class="btn-del-log hidden">✕</button>
           </div>
           <input type="file" id="vault-card-input" accept="image/*" class="hidden">
@@ -1897,7 +1962,7 @@
       </div>
 
       <div id="docs-status-summary" class="memory-pill-bar" style="margin-top: 10px;">
-        <span>🪪 Tus documentos y capturas quedan encriptados localmente en IndexedDB para mostrarlos sin internet.</span>
+        <span>Tus documentos y capturas quedan almacenados localmente en IndexedDB para mostrarlos sin señal.</span>
       </div>
       <div class="modal-actions">
         <button id="btn-cancel-docs" class="btn-secondary">Cerrar</button>
@@ -1918,8 +1983,8 @@
 
       <label class="modal-label">ACCIÓN A REALIZAR:</label>
       <div class="fuel-type-pills" id="tire-action-picker" style="margin-bottom: 6px;">
-        <button type="button" class="mode-pill selected" data-tireaction="edit">✏️ Editar Llanta Actual</button>
-        <button type="button" class="mode-pill" data-tireaction="replace">🔄 Montar Llanta Nueva</button>
+        <button type="button" class="mode-pill selected" data-tireaction="edit">Editar Llanta Actual</button>
+        <button type="button" class="mode-pill" data-tireaction="replace">Montar Llanta Nueva</button>
       </div>
 
       <div class="form-row-2">
@@ -1928,9 +1993,9 @@
       </div>
       <label class="modal-label">COMPUESTO / USO (DEFINE LA VIDA ÚTIL SUGERIDA):</label>
       <div class="fuel-type-pills-3" id="tire-compound-picker">
-        <button type="button" class="compound-pill selected" data-compound="Touring / Calle" data-life="18000">🛣️ Calle (18k)</button>
-        <button type="button" class="compound-pill" data-compound="Sport / Blando" data-life="13000">⚡ Sport (13k)</button>
-        <button type="button" class="compound-pill" data-compound="Mixta / Dual" data-life="16000">⛰️ Mixta (16k)</button>
+        <button type="button" class="compound-pill selected" data-compound="Touring / Calle" data-life="18000">Calle (18k)</button>
+        <button type="button" class="compound-pill" data-compound="Sport / Blando" data-life="13000">Sport (13k)</button>
+        <button type="button" class="compound-pill" data-compound="Mixta / Dual" data-life="16000">Mixta (16k)</button>
       </div>
       <div class="form-row-3">
         <div><label class="modal-label">Km Instalación:</label><input type="number" id="tire-install-km" placeholder="0"></div>
@@ -1952,7 +2017,7 @@
         <div><label class="modal-label">Fecha Montaje:</label><input type="date" id="tire-date"></div>
       </div>
       <div id="tire-memory-banner" class="memory-pill-bar">
-        <span>🛞 Si ingresas la <strong>Cocada Actual (mm)</strong>, la app calculará el desgaste real en km/mm hasta el tope TWI (1.6 mm).</span>
+        <span>Si ingresas la <strong>Cocada Actual (mm)</strong>, la app calculará el desgaste real en km/mm hasta el tope TWI (1.6 mm).</span>
       </div>
       <div class="modal-actions">
         <button id="btn-cancel-tire" class="btn-secondary">Cancelar</button>
@@ -1987,9 +2052,9 @@
       </div>
       <label class="modal-label">CONEXIÓN ELÉCTRICA (AUDITORÍA BATERÍA 12V 4Ah):</label>
       <div class="fuel-type-pills-3" id="mod-elec-picker" style="margin-bottom: 6px;">
-        <button type="button" class="compound-pill selected" data-modelec="none">🔩 Sin Consumo 12V</button>
-        <button type="button" class="compound-pill" data-modelec="switched_acc">🔑 Bajo Llave (ACC)</button>
-        <button type="button" class="compound-pill" data-modelec="direct_24_7">🔋 Directo 24/7 (Parásito)</button>
+        <button type="button" class="compound-pill selected" data-modelec="none">Sin Consumo 12V</button>
+        <button type="button" class="compound-pill" data-modelec="switched_acc">Bajo Llave (ACC)</button>
+        <button type="button" class="compound-pill" data-modelec="direct_24_7">Directo 24/7</button>
       </div>
       <div class="form-row-2">
         <div><label class="modal-label">Nombre del Accesorio:</label><input type="text" id="mod-name" placeholder="Ej: Sliders de motor con tope"></div>
@@ -2003,7 +2068,7 @@
       <label class="modal-label">Notas / Garantía / Taller donde se instaló:</label>
       <input type="text" id="mod-notes" placeholder="Ej: Conectado con relé independiente sin cortar ramal original">
       <div id="mod-smart-tip" class="memory-pill-bar">
-        <span>🛡️ Tip: En sliders de motor para la N160 verifica que usen pernos grado 8.8 o 10.9.</span>
+        <span>Tip: En sliders de motor para la N160 verifica que usen pernos grado 8.8 o 10.9.</span>
       </div>
       <div class="modal-actions">
         <button id="btn-cancel-mod" class="btn-secondary">Cancelar</button>
@@ -2050,9 +2115,9 @@
 
       <label class="modal-label">EXIGENCIA TOPOGRÁFICA (FACTOR INYECCIÓN FI):</label>
       <div class="fuel-type-pills-3" id="cfg-route-terrain-picker">
-        <button type="button" class="compound-pill" data-rterr="1.0" data-rdiff="Baja • Plano">🛣️ Plano (1.0x)</button>
-        <button type="button" class="compound-pill selected" data-rterr="1.10" data-rdiff="Media • Ascenso">⛰️ Subida (+10%)</button>
-        <button type="button" class="compound-pill" data-rterr="1.18" data-rdiff="Alta • Sierra (>2,500m)">🏔️ Sierra (+18%)</button>
+        <button type="button" class="compound-pill" data-rterr="1.0" data-rdiff="Baja • Plano">Plano (1.0x)</button>
+        <button type="button" class="compound-pill selected" data-rterr="1.10" data-rdiff="Media • Ascenso">Subida (+10%)</button>
+        <button type="button" class="compound-pill" data-rterr="1.18" data-rdiff="Alta • Sierra (>2,500m)">Sierra (+18%)</button>
       </div>
 
       <div class="modal-actions">
@@ -2067,7 +2132,7 @@
       <div class="modal-header">
         <div>
           <span class="info-modal-tag" style="color:var(--red-danger);">ASISTENCIA TÁCTICA & RESCATE VIAL</span>
-          <h3 class="modal-pulsar-title">🆘 Ficha SOS en Ruta</h3>
+          <h3 class="modal-pulsar-title">Ficha SOS en Ruta</h3>
         </div>
         <button id="btn-close-sos-x" class="btn-close-x">✕</button>
       </div>
@@ -2096,13 +2161,122 @@
       </div>
 
       <div class="backup-actions" style="margin-bottom:8px;">
-        <button type="button" id="btn-sos-whatsapp" class="btn-neon">📲 Enviar SOS por WhatsApp</button>
-        <button type="button" id="btn-sos-copy" class="btn-secondary">📋 Copiar Coordenadas</button>
+        <button type="button" id="btn-sos-whatsapp" class="btn-neon">Enviar SOS por WhatsApp</button>
+        <button type="button" id="btn-sos-copy" class="btn-secondary">Copiar Coordenadas</button>
       </div>
 
       <div class="modal-actions">
         <button type="button" id="btn-close-sos-ok" class="btn-secondary" style="width:100%;">Cerrar Ficha SOS</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: MIS RUTAS FAVORITAS ================= -->
+  <div id="modal-fav-routes" class="modal-backdrop hidden" style="z-index: 1130;">
+    <div class="modal-card modal-wide">
+      <div class="modal-header">
+        <div>
+          <span class="info-modal-tag">DESTINOS PERSONALES EN 1 TOQUE</span>
+          <h3 class="modal-pulsar-title">Mis Rutas Favoritas</h3>
+        </div>
+        <button type="button" id="btn-close-fav-x" class="btn-close-x">✕</button>
+      </div>
+
+      <p>Guarda tu ruta trazada actual o tu posición GPS de hoy para abrirla en un toque desde el Mapa:</p>
+
+      <div class="form-row-2">
+        <div>
+          <label class="modal-label">Nombre del Favorito:</label>
+          <input type="text" id="fav-route-name" placeholder="Ej: Casa / Taller / Ruta Sierra">
+        </div>
+        <div>
+          <label class="modal-label">Zona / Nota (Opcional):</label>
+          <input type="text" id="fav-route-region" placeholder="Ej: Trujillo / Mi ruta">
+        </div>
+      </div>
+
+      <div id="fav-source-hint" class="memory-pill-bar" style="margin-top: 8px;">
+        <span>Se guardarán las coordenadas de tu destino activo o ubicación GPS actual.</span>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 8px; margin-bottom: 12px;">
+        <button type="button" id="btn-save-fav-route" class="btn-neon" style="width: 100%;">★ Guardar Favorito</button>
+      </div>
+
+      <label class="modal-label">TUS DESTINOS GUARDADOS (<span id="fav-routes-count">0</span>):</label>
+      <div id="fav-routes-modal-list" class="compact-scroll-list" style="max-height: 190px; margin-top: 6px;"></div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-cancel-fav" class="btn-secondary" style="width: 100%;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PANEL DESLIZABLE TÁCTICO DEL COCKPIT (BOTTOM SHEET) ================= -->
+  <div id="mo-cockpit-sheet" class="modal-backdrop sheet-backdrop hidden" style="z-index: 1120;">
+    <div class="modal-card mo-sheet-card">
+      <div class="mo-sheet-handle"></div>
+      <div class="modal-header" style="margin-bottom: 10px;">
+        <div>
+          <span class="info-modal-tag">CONTROLES DE RUTA Y TELEMETRÍA</span>
+          <h3 class="modal-pulsar-title">Panel del Cockpit</h3>
+        </div>
+        <button type="button" id="btn-close-sheet-x" class="btn-close-x">✕</button>
+      </div>
+
+      <div class="mo-sheet-grid">
+        <button type="button" id="btn-obd-connect" class="mo-sheet-tile connect">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <div>
+            <strong id="sheet-ecu-label">Conectar ECU</strong>
+            <small>Escáner OBD2 BLE</small>
+          </div>
+        </button>
+
+        <button type="button" id="btn-obd-rec-toggle" class="mo-sheet-tile rec">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+          <div>
+            <strong id="sheet-rec-label">Grabar REC</strong>
+            <small>Caja Negra GPS+ECU</small>
+          </div>
+        </button>
+
+        <button type="button" id="btn-obd-sim" class="mo-sheet-tile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <div>
+            <strong id="sheet-demo-label">Modo Demo</strong>
+            <small>Simulador en ruta</small>
+          </div>
+        </button>
+
+        <button type="button" id="btn-mo-open-replay-top" class="mo-sheet-tile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><polygon points="10 9 15 12 10 15 10 9" fill="currentColor"/></svg>
+          <div>
+            <strong>Race Replay</strong>
+            <small>Reproducir trazado</small>
+          </div>
+        </button>
+
+        <button type="button" id="btn-obd-ride-mode" class="mo-sheet-tile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          <div>
+            <strong id="sheet-ride-label">Modo Timón</strong>
+            <small>Pantalla completa</small>
+          </div>
+        </button>
+
+        <button type="button" id="btn-obd-sunlight" class="mo-sheet-tile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <div>
+            <strong id="sheet-sun-label">Modo Sol</strong>
+            <small>Alto contraste ruta</small>
+          </div>
+        </button>
+      </div>
+
+      <button type="button" class="btn-secondary mo-sheet-guide-btn" data-info-key="obd_ecu_guide">
+        ⓘ Ver Guía del Cockpit y Sensores OBD2
+      </button>
     </div>
   </div>
 

@@ -1,3 +1,4 @@
+import { MAINT_RULES } from './constants.js';
 import { appState, escapeHTML } from './state.js';
 
 export function isWithinPeriod(dateStr, period) {
@@ -604,7 +605,7 @@ export function computeMasterFinancials(period = 'all') {
   const allAdmin = soatCost + extraDocsAndOther;
 
   const opCostTotal = allFuel + allMaint + allSpa + allAdmin + allTires;
-  const grandTotalInvested = opCostTotal + capexTotal;
+  const grandTotalInvested = opCostTotal + capexTotal + pilotGearCost;
 
   let trackedKm = Math.max(0, Number(appState.currentKm) - (Number(appState.initialKm) || 0));
   if (period !== 'all') {
@@ -705,7 +706,8 @@ export function openGoogleCalendarEvent({ title, description, dateStr }) {
   if (!targetDate) {
     const d = new Date();
     d.setDate(d.getDate() + 7);
-    targetDate = d.toISOString().slice(0, 10);
+    const offsetMs = d.getTimezoneOffset() * 60000;
+    targetDate = new Date(d.getTime() - offsetMs).toISOString().slice(0, 10);
   }
 
   const [y, m, day] = targetDate.split('-').map(Number);
@@ -838,4 +840,238 @@ export function exportFinancialsToCSV(period = 'all') {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+export function computeMonthlySpendSeries(monthsCount = 6) {
+  const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const now = new Date();
+  const buckets = [];
+  const bucketMap = {};
+
+  for (let i = monthsCount - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const item = {
+      key,
+      label: monthNames[d.getMonth()],
+      fuel: 0,
+      maint: 0,
+      other: 0,
+      total: 0
+    };
+    buckets.push(item);
+    bucketMap[key] = item;
+  }
+
+  const getYmKey = (dateStr) => (typeof dateStr === 'string' && dateStr.length >= 7 ? dateStr.slice(0, 7) : '');
+
+  (appState.fuelLogs || []).forEach((f) => {
+    const b = bucketMap[getYmKey(f.date)];
+    if (b) b.fuel += Number(f.cost) || 0;
+  });
+
+  (appState.logs || []).forEach((l) => {
+    const b = bucketMap[getYmKey(l.date)];
+    if (b) b.maint += Number(l.cost) || 0;
+  });
+
+  (appState.washLogs || []).forEach((w) => {
+    const b = bucketMap[getYmKey(w.date)];
+    if (b) b.other += Number(w.cost) || 0;
+  });
+
+  (appState.otherExpenses || []).forEach((e) => {
+    const b = bucketMap[getYmKey(e.date)];
+    if (b) b.other += Number(e.cost) || 0;
+  });
+
+  ['front', 'rear'].forEach((pos) => {
+    const t = appState.tires?.[pos];
+    if (t && Number(t.cost) > 0) {
+      const b = bucketMap[getYmKey(t.date)];
+      if (b) b.other += Number(t.cost) || 0;
+    }
+  });
+
+  if (Number(appState.docs?.soatCost) > 0 && appState.docs?.soatExp) {
+    const expStr = String(appState.docs.soatExp);
+    if (expStr.length >= 7) {
+      const expY = parseInt(expStr.slice(0, 4), 10);
+      const expM = expStr.slice(5, 7);
+      const payKey = `${expY - 1}-${expM}`;
+      const b = bucketMap[payKey] || bucketMap[getYmKey(expStr)];
+      if (b) b.other += Number(appState.docs.soatCost) || 0;
+    }
+  }
+
+  let maxTotal = 0;
+  let total6m = 0;
+  buckets.forEach((b) => {
+    b.total = b.fuel + b.maint + b.other;
+    if (b.total > maxTotal) maxTotal = b.total;
+    total6m += b.total;
+  });
+
+  return { months: buckets, maxTotal, total6m };
+}
+
+export function computePriorityAlert() {
+  const candidates = [];
+
+  // 1. Revisar SOAT y Brevete (prioridad crítica si vencido o <= 15 días)
+  const docs = appState.docs || {};
+  const today = new Date();
+  const zeroToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  if (docs.soatExp) {
+    const [y, m, d] = docs.soatExp.split('-').map(Number);
+    const diffDays = Math.ceil((new Date(y, m - 1, d) - zeroToday) / 86400000);
+    if (diffDays < 0) {
+      candidates.push({
+        id: `soat_exp_${docs.soatExp}`,
+        score: 1000 + Math.abs(diffDays),
+        severity: 'danger',
+        title: `SOAT vencido hace ${Math.abs(diffDays)} día(s)`,
+        detail: 'Actualiza tu póliza en la Guantera Digital para circular en regla.',
+        actionType: 'docs',
+        actionTarget: 'docs',
+        ctaLabel: 'Ver Guantera'
+      });
+    } else if (diffDays <= 15) {
+      candidates.push({
+        id: `soat_soon_${docs.soatExp}`,
+        score: 600 + (15 - diffDays),
+        severity: 'warn',
+        title: `Tu SOAT vence en ${diffDays} día(s)`,
+        detail: `Fecha límite: ${docs.soatExp}. Renueva a tiempo y actualiza tu póliza.`,
+        actionType: 'docs',
+        actionTarget: 'docs',
+        ctaLabel: 'Ver Guantera'
+      });
+    }
+  }
+
+  if (docs.licenseExp) {
+    const [y, m, d] = docs.licenseExp.split('-').map(Number);
+    const diffDays = Math.ceil((new Date(y, m - 1, d) - zeroToday) / 86400000);
+    if (diffDays < 0) {
+      candidates.push({
+        id: `lic_exp_${docs.licenseExp}`,
+        score: 950 + Math.abs(diffDays),
+        severity: 'danger',
+        title: `Brevete B-IIc vencido hace ${Math.abs(diffDays)} día(s)`,
+        detail: 'Revalida tu licencia y actualiza la vigencia en tu Guantera.',
+        actionType: 'docs',
+        actionTarget: 'docs',
+        ctaLabel: 'Ver Guantera'
+      });
+    } else if (diffDays <= 15) {
+      candidates.push({
+        id: `lic_soon_${docs.licenseExp}`,
+        score: 520 + (15 - diffDays),
+        severity: 'warn',
+        title: `Tu Brevete vence en ${diffDays} día(s)`,
+        detail: `Fecha límite: ${docs.licenseExp}.`,
+        actionType: 'docs',
+        actionTarget: 'docs',
+        ctaLabel: 'Ver Guantera'
+      });
+    }
+  }
+
+  // 2. Revisar Mantenimientos vencidos o a menos de 150 km
+  MAINT_RULES.forEach((rule) => {
+    if (rule.onlyFirstTime && appState.lastServiceKm.breakin_500 !== null) return;
+    const baseKm = appState.lastServiceKm[rule.id] ?? (appState.initialKm || 0);
+    const nextTargetKm = baseKm + rule.intervalKm;
+    const kmLeft = nextTargetKm - appState.currentKm;
+
+    const lastDateStr = appState.lastServiceDate?.[rule.id] || '';
+    let daysLeft = null;
+    if (rule.intervalMonths && lastDateStr) {
+      const totalAllowedDays = Math.round(rule.intervalMonths * 30.44);
+      daysLeft = totalAllowedDays - getDaysElapsed(lastDateStr);
+    }
+
+    if (kmLeft <= 0 || (daysLeft !== null && daysLeft <= 0)) {
+      const reason =
+        kmLeft <= 0
+          ? `Pasado por ${Math.abs(kmLeft).toLocaleString('es-PE')} km (Meta: ${nextTargetKm.toLocaleString('es-PE')} km)`
+          : `Vencido por tiempo hace ${Math.abs(daysLeft)} día(s)`;
+      candidates.push({
+        id: `maint_over_${rule.id}_${baseKm}`,
+        score: 850 + Math.abs(Math.min(0, kmLeft)),
+        severity: 'danger',
+        title: `${rule.title} vencido`,
+        detail: reason,
+        actionType: 'maint',
+        actionTarget: rule.id,
+        ctaLabel: 'Registrar'
+      });
+    } else if (kmLeft < 150) {
+      candidates.push({
+        id: `maint_soon_${rule.id}_${baseKm}`,
+        score: 500 + (150 - kmLeft),
+        severity: 'warn',
+        title: `${rule.title} en ${kmLeft.toLocaleString('es-PE')} km`,
+        detail: `Próximo servicio a los ${nextTargetKm.toLocaleString('es-PE')} km.`,
+        actionType: 'maint',
+        actionTarget: rule.id,
+        ctaLabel: 'Registrar'
+      });
+    }
+  });
+
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates[0];
+}
+
+export function computeMonthlyPilotSummary() {
+  const monthNamesFull = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  const now = new Date();
+  const monthName = monthNamesFull[now.getMonth()];
+
+  const finMonth = computeMasterFinancials('month');
+  const monthKm = finMonth.trackedKm || 0;
+
+  const tele = computeFuelTelemetry();
+  let bestMonthKmg = 0;
+  let bestAllKmg = 0;
+
+  (appState.fuelLogs || []).forEach((f) => {
+    const info = tele.enrichedMap[f.id];
+    if (info && info.kmPerGal > 0) {
+      if (info.kmPerGal > bestAllKmg) bestAllKmg = info.kmPerGal;
+      if (isWithinPeriod(f.date, 'month') && info.kmPerGal > bestMonthKmg) {
+        bestMonthKmg = info.kmPerGal;
+      }
+    }
+  });
+
+  const allLogs = appState.logs || [];
+  const paidLaborLogs = allLogs.filter((l) => Number(l.laborCost) > 0);
+  const avgWorkshopLabor =
+    paidLaborLogs.length > 0
+      ? paidLaborLogs.reduce((s, l) => s + Number(l.laborCost), 0) / paidLaborLogs.length
+      : 30;
+
+  const diyMonthLogs = allLogs.filter((l) => isWithinPeriod(l.date, 'month') && (Number(l.laborCost) || 0) === 0);
+  const diyAllLogs = allLogs.filter((l) => (Number(l.laborCost) || 0) === 0);
+  const diyCount = diyMonthLogs.length > 0 ? diyMonthLogs.length : diyAllLogs.length;
+  const diyIsMonthly = diyMonthLogs.length > 0;
+  const diyEstSaved = Math.round(diyCount * avgWorkshopLabor);
+
+  return {
+    monthName,
+    monthKm,
+    bestKmPerGal: bestMonthKmg > 0 ? bestMonthKmg : bestAllKmg,
+    bestIsMonthly: bestMonthKmg > 0,
+    diyCount,
+    diyIsMonthly,
+    diyEstSaved
+  };
 }

@@ -84,6 +84,13 @@ export const liveEcuData = {
   instKmPerL: 0.0,     // Economía instantánea estimada (km/L)
   dtcCodes: [],        // 03: Lista de códigos de falla activos
   lastDtcScan: '',
+  sprint: {
+    status: 'idle', // 'idle' | 'waiting_stop' | 'armed' | 'running' | 'done'
+    startTimeMs: 0,
+    elapsedSec: 0,
+    time060: null,
+    time080: null
+  },
   elecTest: {
     active: false,
     phase: 'idle',
@@ -125,8 +132,143 @@ let blackboxTimer = null;
 let getGpsCallback = null;
 let hasTriggeredMapHaptic = false;
 
+let sprintRecordCallback = null;
+let sprintTickCallback = null;
+let sprintTickTimer = null;
+
+function stopSprintTicker() {
+  if (sprintTickTimer) {
+    clearInterval(sprintTickTimer);
+    sprintTickTimer = null;
+  }
+}
+
+function startSprintTicker() {
+  stopSprintTicker();
+  sprintTickTimer = setInterval(() => {
+    const sp = liveEcuData.sprint;
+    if (!sp || sp.status !== 'running') {
+      stopSprintTicker();
+      return;
+    }
+    const elapsed = Math.max(0, (performance.now() - sp.startTimeMs) / 1000);
+    sp.elapsedSec = Number(elapsed.toFixed(2));
+    if (elapsed > 28) {
+      sp.status = sp.time060 !== null ? 'done' : 'armed';
+      if (sp.status === 'armed') sp.elapsedSec = 0;
+      stopSprintTicker();
+    }
+    if (typeof sprintTickCallback === 'function') {
+      sprintTickCallback(liveEcuData);
+    }
+  }, 60);
+}
+
 export function registerGpsProviderForBlackbox(fn) {
   getGpsCallback = fn;
+}
+
+export function registerSprintRecordCallback(fn) {
+  sprintRecordCallback = fn;
+}
+
+export function registerSprintTickCallback(fn) {
+  sprintTickCallback = fn;
+}
+
+export function armSprintTimer(onUpdateCallback, onStatusCallback) {
+  stopSprintTicker();
+  const gpsSpd = typeof getGpsCallback === 'function' ? Number(getGpsCallback()?.speedKmh) || 0 : 0;
+  const currSpd = liveEcuData.connected ? (Number(liveEcuData.speedKmh) || 0) : gpsSpd;
+
+  liveEcuData.sprint = {
+    status: currSpd <= 2 ? 'armed' : 'waiting_stop',
+    startTimeMs: 0,
+    elapsedSec: 0,
+    time060: null,
+    time080: null
+  };
+  triggerHaptic(18);
+  if (onStatusCallback) {
+    onStatusCallback(
+      currSpd <= 2
+        ? 'Sprint ARMADO: acelera desde 0 km/h para iniciar'
+        : 'Sprint listo: detente por completo (0 km/h) para armar'
+    );
+  }
+  if (onUpdateCallback) onUpdateCallback(liveEcuData);
+}
+
+export function cancelSprintTimer(onUpdateCallback) {
+  stopSprintTicker();
+  liveEcuData.sprint = {
+    status: 'idle',
+    startTimeMs: 0,
+    elapsedSec: 0,
+    time060: null,
+    time080: null
+  };
+  if (onUpdateCallback) onUpdateCallback(liveEcuData);
+}
+
+export function feedSprintSpeedSample(speedKmh) {
+  const sp = liveEcuData.sprint;
+  if (!sp || sp.status === 'idle' || sp.status === 'done') return;
+
+  const spd = Math.max(0, Number(speedKmh) || 0);
+  const now = performance.now();
+
+  if (sp.status === 'waiting_stop') {
+    if (spd <= 2) {
+      sp.status = 'armed';
+      sp.elapsedSec = 0;
+      triggerHaptic(20);
+    }
+    return;
+  }
+
+  if (sp.status === 'armed') {
+    if (spd >= 4) {
+      sp.status = 'running';
+      sp.startTimeMs = now;
+      sp.elapsedSec = 0;
+      sp.time060 = null;
+      sp.time080 = null;
+      startSprintTicker();
+      triggerHaptic(15);
+    }
+    return;
+  }
+
+  if (sp.status === 'running') {
+    const elapsed = Math.max(0, (now - sp.startTimeMs) / 1000);
+    sp.elapsedSec = Number(elapsed.toFixed(2));
+
+    if (sp.time060 === null && spd >= 60) {
+      sp.time060 = Number(elapsed.toFixed(2));
+      triggerHaptic(25);
+      if (typeof sprintRecordCallback === 'function') {
+        sprintRecordCallback({ target: 60, timeSec: sp.time060 });
+      }
+    }
+
+    if (sp.time080 === null && spd >= 80) {
+      sp.time080 = Number(elapsed.toFixed(2));
+      sp.status = 'done';
+      stopSprintTicker();
+      triggerHaptic(35);
+      if (typeof sprintRecordCallback === 'function') {
+        sprintRecordCallback({ target: 80, timeSec: sp.time080 });
+      }
+      return;
+    }
+
+    if (elapsed > 28 || (elapsed > 3 && spd <= 2)) {
+      sp.status = sp.time060 !== null ? 'done' : 'armed';
+      if (sp.status === 'armed') sp.elapsedSec = 0;
+      stopSprintTicker();
+    }
+  }
 }
 
 export function feedGpsDistanceSample(lat, lon, accuracy = 20, speedMps = null) {
@@ -137,6 +279,7 @@ export function feedGpsDistanceSample(lat, lon, accuracy = 20, speedMps = null) 
     if (gpsKmh > liveEcuData.peakSpeed) {
       liveEcuData.peakSpeed = gpsKmh;
     }
+    feedSprintSpeedSample(gpsKmh);
   }
 
   if (typeof lat !== 'number' || typeof lon !== 'number' || isNaN(lat) || isNaN(lon)) return 0;
@@ -171,6 +314,10 @@ export function feedGpsDistanceSample(lat, lon, accuracy = 20, speedMps = null) 
         }
       }
     }
+  }
+
+  if ((typeof speedMps !== 'number' || isNaN(speedMps) || speedMps < 0) && !liveEcuData.connected) {
+    feedSprintSpeedSample(calculatedKmh);
   }
 
   lastGpsLat = lat;
@@ -344,6 +491,7 @@ function parseObdResponse(cmd, rawHex) {
       emaSpeed = A <= 1 ? 0 : Math.round(applyEmaSmoothing(A, emaSpeed, EMA_ALPHA_FAST));
       liveEcuData.speedKmh = emaSpeed;
       integrateSessionDistance(A);
+      feedSprintSpeedSample(A);
       if (A > liveEcuData.peakSpeed) liveEcuData.peakSpeed = A;
       liveEcuData.gear = calculateEstimatedGear(liveEcuData.rpm, liveEcuData.speedKmh);
       updateInstantFuelEconomy();
@@ -1011,6 +1159,7 @@ export async function startSimulatorMode(onUpdateCallback, onStatusCallback) {
 
     liveEcuData.speedKmh = emaSpeed;
     integrateSessionDistance(emaSpeed);
+    feedSprintSpeedSample(emaSpeed);
     if (rawSpdVal > liveEcuData.peakSpeed) liveEcuData.peakSpeed = rawSpdVal;
 
     liveEcuData.gear = calculateEstimatedGear(emaRpm, emaSpeed);
@@ -1064,6 +1213,11 @@ export function stopEcuTelemetry(onUpdateCallback) {
     isDtcBusy = false;
     liveEcuData.connected = false;
     liveEcuData.mode = 'offline';
+    stopSprintTicker();
+    if (liveEcuData.sprint && liveEcuData.sprint.status !== 'done') {
+      liveEcuData.sprint.status = 'idle';
+      liveEcuData.sprint.elapsedSec = 0;
+    }
     isSimulating = false;
     emaRpm = 0;
     emaSpeed = 0;

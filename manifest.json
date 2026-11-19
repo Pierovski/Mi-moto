@@ -28,21 +28,48 @@
       "short_name": "Grifo",
       "description": "Nuevo abastecimiento de Gasolina Premium",
       "url": "./index.html?action=fuel",
-      "icons": [{ "src": "icono.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icono.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Registrar Servicio",
       "short_name": "Taller",
       "description": "Registrar mantenimiento en bitácora",
       "url": "./index.html?action=maint",
-      "icons": [{ "src": "icono.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icono.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Registrar Lavado",
       "short_name": "Lavado",
       "description": "Registrar lavado y cuidado de unidad",
       "url": "./index.html?action=spa",
-      "icons": [{ "src": "icono.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icono.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Abrir Cockpit / Mapa",
+      "short_name": "Cockpit",
+      "description": "Ir directo al Mapa Satelital y Telemetría OBD2",
+      "url": "./index.html?action=cockpit",
+      "icons": [
+        {
+          "src": "icono.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
