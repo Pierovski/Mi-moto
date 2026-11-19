@@ -153,45 +153,85 @@ let selectedTireCompound = 'Touring / Calle';
 let hasLoadedInitialRoadRoute = false;
 let ecuClockInterval = null;
 
-function applyBikeTheme(themeName = 'blue') {
-  const normalized = themeName === 'grey' ? 'white' : themeName;
-  appState.colorTheme = normalized;
-  document.body.setAttribute('data-theme', normalized);
-  const editionMap = {
-    blue: 'CARIBBEAN BLUE EDITION',
-    red: 'RACING RED EDITION',
-    black: 'BROOKLYN BLACK EDITION',
-    white: 'PEARL METALLIC WHITE EDITION'
-  };
-  const badge = document.getElementById('onboarding-edition-badge');
-  if (badge) badge.textContent = editionMap[normalized] || editionMap.blue;
+let heroCoverExpanded = true;
+let activeMainTabId = 'tab-maint';
 
-  document.querySelectorAll('.theme-pill').forEach((btn) => {
-    btn.classList.toggle('selected', btn.getAttribute('data-theme') === normalized);
+function applySurfaceMode(mode = 'day') {
+  const valid = (mode === 'night' || mode === 'dark') ? 'night' : 'day';
+  appState.colorTheme = 'blue';
+  appState.surfaceMode = valid;
+  appState.sunlightMode = false;
+
+  document.body.setAttribute('data-theme', 'blue');
+  document.body.setAttribute('data-surface', valid);
+  document.body.removeAttribute('data-sunlight');
+
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', valid === 'night' ? '#070B10' : '#E2F0F6');
+  }
+
+  document.querySelectorAll('.surface-pill').forEach((btn) => {
+    btn.classList.toggle('selected', btn.getAttribute('data-surface') === valid);
   });
+
+  const sunSvg = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>';
+  const moonSvg = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>';
+
+  const surfaceBtn = document.getElementById('btn-toggle-surface');
+  const surfaceSvg = document.getElementById('surface-toggle-svg');
+  if (surfaceBtn) {
+    surfaceBtn.title = valid === 'day' ? 'Cambiar a Modo Noche' : 'Cambiar a Modo Día';
+    surfaceBtn.classList.toggle('surface-dark-active', valid === 'night');
+  }
+  if (surfaceSvg) {
+    surfaceSvg.innerHTML = valid === 'day' ? moonSvg : sunSvg;
+  }
+
+  const obdBtn = document.getElementById('btn-obd-sunlight');
+  const sheetSunLbl = document.getElementById('sheet-sun-label');
+  const sheetSunSub = document.getElementById('sheet-sun-sub');
+  const sheetSvg = document.getElementById('sheet-surface-svg');
+  if (obdBtn) obdBtn.classList.toggle('active-tile', valid === 'day');
+  if (sheetSunLbl) sheetSunLbl.textContent = valid === 'day' ? 'Modo Noche' : 'Modo Día';
+  if (sheetSunSub) sheetSunSub.textContent = valid === 'day' ? 'Cambiar a oscuro N160' : 'Cambiar a celeste plateado';
+  if (sheetSvg) sheetSvg.innerHTML = valid === 'day' ? moonSvg : sunSvg;
 
   if (appState.onboarded) {
     renderFuelSection();
     renderRouteAndTCO();
     if (document.body.classList.contains('ecu-tab-active')) {
+      renderObdLiveUI(liveEcuData, false);
       renderTacticalMapUI(liveEcuData, false);
     }
   }
 }
 
-function applySunlightMode(enabled) {
-  appState.sunlightMode = Boolean(enabled);
-  document.body.setAttribute('data-sunlight', appState.sunlightMode ? 'true' : 'false');
-  const topBtn = document.getElementById('btn-toggle-sunlight');
-  const obdBtn = document.getElementById('btn-obd-sunlight');
-  const sheetSunLbl = document.getElementById('sheet-sun-label');
-  if (topBtn) topBtn.classList.toggle('sun-active', appState.sunlightMode);
-  if (obdBtn) obdBtn.classList.toggle('active-tile', appState.sunlightMode);
-  if (sheetSunLbl) sheetSunLbl.textContent = appState.sunlightMode ? 'Modo Oscuro' : 'Modo Sol';
+function syncHeroCoverState(tabId = activeMainTabId, explicitExpanded = null) {
+  if (tabId) activeMainTabId = tabId;
+  const shell = document.getElementById('hero-cockpit-shell');
+  const btn = document.getElementById('btn-hero-toggle');
+  const lbl = document.getElementById('hero-toggle-label');
+  if (!shell) return;
+
+  const hasPhoto = Boolean(appState.bikePhotoBase64);
+  if (btn) btn.classList.toggle('hidden', !hasPhoto);
+
+  if (!hasPhoto) {
+    shell.classList.remove('hero-collapsed');
+    heroCoverExpanded = false;
+    return;
+  }
+
+  heroCoverExpanded = explicitExpanded !== null ? Boolean(explicitExpanded) : activeMainTabId === 'tab-maint';
+  shell.classList.toggle('hero-collapsed', !heroCoverExpanded);
+  if (lbl) {
+    lbl.textContent = heroCoverExpanded ? '⌃ Ocultar portada' : '⌄ Jala o toca para ver portada';
+  }
 }
 
 function updateHeaderCloudIndicator(status = 'idle') {
-  const pill = document.getElementById('cloud-live-indicator');
+  const pill = document.getElementById('btn-open-backup-modal') || document.getElementById('cloud-live-indicator');
   const text = document.getElementById('cloud-live-text');
   if (!pill || !text) return;
 
@@ -333,6 +373,7 @@ function switchMainTab(tabId) {
     }, 80);
   } else {
     exitEcuLandscapeIfNeeded();
+    syncHeroCoverState(tabId);
   }
 }
 
@@ -352,6 +393,7 @@ function showMainScreen() {
   document.getElementById('onboarding-screen').classList.add('hidden');
   document.getElementById('main-screen').classList.remove('hidden');
   renderAllMain(true);
+  syncHeroCoverState(activeMainTabId);
 }
 
 // ================= MODALES DE TALLER (CON AUDITORÍA DE CADENA O-RING) =================
@@ -406,7 +448,7 @@ function updateMaintMemoryBanner() {
     if (Math.abs(diff) < 0.05) {
       banner.innerHTML = `<span>🧠 <strong>Memoria (${prevKm} km):</strong> Pagaste <strong>S/ ${prevCost.toFixed(2)}</strong> • Hoy te cuesta igual.</span>`;
     } else if (diff < 0) {
-      banner.innerHTML = `<span>🧠 <strong>Memoria (${prevKm} km):</strong> Antes S/ ${prevCost.toFixed(2)} • <strong style="color:var(--neon-lime)">▼ Ahorras S/ ${Math.abs(diff).toFixed(2)} hoy</strong>.</span>`;
+      banner.innerHTML = `<span>🧠 <strong>Memoria (${prevKm} km):</strong> Antes S/ ${prevCost.toFixed(2)} • <strong style="color:var(--status-ok)">▼ Ahorras S/ ${Math.abs(diff).toFixed(2)} hoy</strong>.</span>`;
     } else {
       banner.innerHTML = `<span>🧠 <strong>Memoria (${prevKm} km):</strong> Antes S/ ${prevCost.toFixed(2)} • <strong style="color:var(--amber-warn)">▲ S/ ${diff.toFixed(2)} más caro hoy</strong>.</span>`;
     }
@@ -475,7 +517,7 @@ function updateFuelPreview(sourceId = null) {
       if (Math.abs(diffP) < 0.01) {
         fuelMemBanner.innerHTML = `<span>🧠 <strong>Memoria de galón:</strong> S/ ${price.toFixed(2)} • Mismo precio que tu última carga.</span>`;
       } else if (diffP < 0) {
-        fuelMemBanner.innerHTML = `<span>🧠 <strong>Memoria de galón:</strong> Antes S/ ${prevP.toFixed(2)} • <strong style="color:var(--neon-lime)">▼ Bajó S/ ${Math.abs(diffP).toFixed(2)} por galón</strong>.</span>`;
+        fuelMemBanner.innerHTML = `<span>🧠 <strong>Memoria de galón:</strong> Antes S/ ${prevP.toFixed(2)} • <strong style="color:var(--status-ok)">▼ Bajó S/ ${Math.abs(diffP).toFixed(2)} por galón</strong>.</span>`;
       } else {
         fuelMemBanner.innerHTML = `<span>🧠 <strong>Memoria de galón:</strong> Antes S/ ${prevP.toFixed(2)} • <strong style="color:var(--amber-warn)">▲ Subió S/ ${diffP.toFixed(2)} por galón</strong>.</span>`;
       }
@@ -515,7 +557,7 @@ function updateFuelPreview(sourceId = null) {
   if (!isNaN(delta) && delta > 0 && totalGal > 0 && totalCost > 0) {
     const eff = delta / totalGal;
     const cKm = totalCost / delta;
-    livePreview.innerHTML = `Tramo Real: <strong>+${delta} km</strong> • Rendimiento: <strong style="color:var(--neon-lime)">${eff.toFixed(1)} km/gal</strong> • Costo: <strong>S/ ${cKm.toFixed(2)}/km</strong>`;
+    livePreview.innerHTML = `Tramo Real: <strong>+${delta} km</strong> • Rendimiento: <strong style="color:var(--status-ok)">${eff.toFixed(1)} km/gal</strong> • Costo: <strong>S/ ${cKm.toFixed(2)}/km</strong>`;
   } else {
     livePreview.innerHTML = `Último tanque lleno: <strong>${baseline.lastFullKm} km</strong>. Ingresa el kilometraje actual y el monto pagado.`;
   }
@@ -721,6 +763,7 @@ async function syncVaultDocsUI() {
 function setupEventListeners() {
   window.addEventListener('popstate', () => {
     handlePopstateModalBack([
+      'modal-vault-fullscreen',
       'modal-confirm',
       'modal-sos',
       'mo-cockpit-sheet',
@@ -754,10 +797,61 @@ function setupEventListeners() {
     updateHeaderCloudIndicator(ev.detail);
   });
 
-  const cloudHeaderPill = document.getElementById('cloud-live-indicator');
-  if (cloudHeaderPill) {
-    cloudHeaderPill.addEventListener('click', () => openModalById('modal-backup'));
-  }
+  // Conmutador único Día / Noche (Cabecera y Cockpit)
+  const toggleDayNightHandler = () => {
+    const nextMode = appState.surfaceMode === 'night' ? 'day' : 'night';
+    applySurfaceMode(nextMode);
+    saveState();
+    closeModalById('mo-cockpit-sheet', true);
+    triggerHaptic(12);
+    showToast(nextMode === 'day' ? '☀️ Modo Día N160 activado' : '🌙 Modo Noche N160 activado');
+  };
+
+  document.getElementById('btn-toggle-surface')?.addEventListener('click', toggleDayNightHandler);
+
+  // Selector Día / Noche (Onboarding y Ajustes)
+  document.querySelectorAll('.surface-pill').forEach((pill) => {
+    pill.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const chosen = pill.getAttribute('data-surface') === 'night' ? 'night' : 'day';
+      applySurfaceMode(chosen);
+      saveState();
+      triggerHaptic(10);
+      showToast(chosen === 'day' ? '☀️ Modo Día N160 activado' : '🌙 Modo Noche N160 activado');
+    });
+  });
+
+  // Portada desplegable: toque en tirador o gesto de jalar hacia abajo / arriba sobre el Odómetro
+  const heroShellEl = document.getElementById('hero-cockpit-shell');
+  let heroTouchStartY = 0;
+  let heroTouchStartX = 0;
+
+  document.getElementById('btn-hero-toggle')?.addEventListener('click', () => {
+    syncHeroCoverState(activeMainTabId, !heroCoverExpanded);
+    triggerHaptic(10);
+  });
+
+  heroShellEl?.addEventListener('touchstart', (ev) => {
+    if (!appState.bikePhotoBase64 || !ev.touches?.length) return;
+    heroTouchStartY = ev.touches[0].clientY;
+    heroTouchStartX = ev.touches[0].clientX;
+  }, { passive: true });
+
+  heroShellEl?.addEventListener('touchend', (ev) => {
+    if (!appState.bikePhotoBase64 || !ev.changedTouches?.length) return;
+    const dy = ev.changedTouches[0].clientY - heroTouchStartY;
+    const dx = ev.changedTouches[0].clientX - heroTouchStartX;
+    if (Math.abs(dy) > 32 && Math.abs(dy) > Math.abs(dx)) {
+      if (dy > 0 && !heroCoverExpanded) {
+        syncHeroCoverState(activeMainTabId, true);
+        triggerHaptic(12);
+      } else if (dy < 0 && heroCoverExpanded) {
+        syncHeroCoverState(activeMainTabId, false);
+        triggerHaptic(10);
+      }
+    }
+  }, { passive: true });
 
   // Acceso directo desde la Placa en cabecera hacia la Guantera Digital
   document.getElementById('header-plate-badge')?.addEventListener('click', () => {
@@ -875,16 +969,8 @@ function setupEventListeners() {
     showToast(drop > 0.25 ? `⚠️ Fuga detectada (-${drop.toFixed(2)}V)` : `✅ Reposo evaluado (Δ ${drop.toFixed(2)}V)`);
   });
 
-  // Modo Alto Contraste Solar (Ruta a Mediodía)
-  const toggleSunlightHandler = () => {
-    applySunlightMode(!appState.sunlightMode);
-    saveState();
-    closeModalById('mo-cockpit-sheet', true);
-    triggerHaptic(12);
-    showToast(appState.sunlightMode ? 'Modo Sol (Alto Contraste) Activado' : 'Modo Oscuro Apex Restaurado');
-  };
-  document.getElementById('btn-toggle-sunlight')?.addEventListener('click', toggleSunlightHandler);
-  document.getElementById('btn-obd-sunlight')?.addEventListener('click', toggleSunlightHandler);
+  // Botón Modo Día / Modo Noche dentro del Panel del Cockpit
+  document.getElementById('btn-obd-sunlight')?.addEventListener('click', toggleDayNightHandler);
 
   // Confirmación de reinicio barométrico del sensor MAP en Sierra
   document.getElementById('btn-ack-map-reset')?.addEventListener('click', () => {
@@ -2097,6 +2183,7 @@ function setupEventListeners() {
       appState.bikePhotoBase64 = base64;
       saveState();
       renderImages();
+      syncHeroCoverState(activeMainTabId, true);
       showToast('Foto de tu N160 guardada');
     });
   });
@@ -2715,11 +2802,10 @@ function setupEventListeners() {
     if (sosInp) sosInp.value = d.sosPhone || '';
     checkDocsStatusUI();
     syncVaultDocsUI();
-    document.getElementById('vault-preview-box')?.classList.add('hidden');
     openModalById('modal-docs');
   });
 
-  // Eventos de Bóveda Offline IndexedDB (Certificado SOAT y Tarjeta de Propiedad)
+  // Eventos de Bóveda Offline IndexedDB (Certificado SOAT y Tarjeta de Propiedad en Pantalla Completa)
   const soatVaultInput = document.getElementById('vault-soat-input');
   const cardVaultInput = document.getElementById('vault-card-input');
 
@@ -2729,58 +2815,96 @@ function setupEventListeners() {
   soatVaultInput?.addEventListener('change', (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    compressImage(file, 1280, async (base64) => {
+    compressImage(file, 1600, async (base64) => {
       await saveVaultDocMedia('soat_cert', base64);
       await syncVaultDocsUI();
       triggerHaptic(15);
-      showToast('📄 Certificado SOAT guardado offline');
-    });
+      showToast('📄 Certificado SOAT guardado offline en HD');
+    }, 0.88);
     e.target.value = '';
   });
 
   cardVaultInput?.addEventListener('change', (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    compressImage(file, 1280, async (base64) => {
+    compressImage(file, 1600, async (base64) => {
       await saveVaultDocMedia('prop_card', base64);
       await syncVaultDocsUI();
       triggerHaptic(15);
-      showToast('🪪 Tarjeta de Propiedad guardada offline');
-    });
+      showToast('🪪 Tarjeta de Propiedad guardada offline en HD');
+    }, 0.88);
     e.target.value = '';
   });
+
+  let vaultFsRotation = 0;
+  let vaultFsZoomed = false;
+
+  function applyVaultFsTransform() {
+    const img = document.getElementById('vault-fs-img');
+    const stage = document.getElementById('vault-fs-stage');
+    const zoomBtn = document.getElementById('btn-vault-fs-zoom');
+    if (!img || !stage) return;
+    const isRotatedSide = vaultFsRotation % 180 !== 0;
+    stage.classList.toggle('zoomed', vaultFsZoomed);
+    img.classList.toggle('rotated-side', isRotatedSide);
+    const scale = vaultFsZoomed ? 2.0 : 1;
+    img.style.transform = `rotate(${vaultFsRotation}deg) scale(${scale})`;
+    if (zoomBtn) zoomBtn.textContent = vaultFsZoomed ? '1x' : 'Zoom';
+  }
 
   const showVaultPreview = async (docKey, title) => {
     const data = await getVaultDocMedia(docKey);
     if (!data) return;
-    const box = document.getElementById('vault-preview-box');
-    const img = document.getElementById('vault-preview-img');
-    const ttl = document.getElementById('vault-preview-title');
-    if (box && img && ttl) {
+    const img = document.getElementById('vault-fs-img');
+    const ttl = document.getElementById('vault-fs-title');
+    const topbar = document.getElementById('vault-fs-topbar');
+    if (img && ttl) {
+      vaultFsRotation = 0;
+      vaultFsZoomed = false;
       ttl.textContent = title;
       img.src = data;
-      box.classList.remove('hidden');
-      triggerHaptic(10);
+      topbar?.classList.remove('fs-hidden');
+      applyVaultFsTransform();
+      openModalById('modal-vault-fullscreen');
+      triggerHaptic(12);
     }
   };
 
-  document.getElementById('btn-vault-view-soat')?.addEventListener('click', () => showVaultPreview('soat_cert', '📄 Certificado SOAT (Offline)'));
-  document.getElementById('btn-vault-view-card')?.addEventListener('click', () => showVaultPreview('prop_card', '🪪 Tarjeta de Propiedad (Offline)'));
-  document.getElementById('btn-close-vault-preview')?.addEventListener('click', () => {
-    document.getElementById('vault-preview-box')?.classList.add('hidden');
+  document.getElementById('btn-vault-view-soat')?.addEventListener('click', () => showVaultPreview('soat_cert', 'Certificado SOAT (Offline)'));
+  document.getElementById('btn-vault-view-card')?.addEventListener('click', () => showVaultPreview('prop_card', 'Tarjeta de Propiedad (Offline)'));
+
+  document.getElementById('btn-vault-fs-close')?.addEventListener('click', () => {
+    closeModalById('modal-vault-fullscreen');
+    triggerHaptic(8);
+  });
+
+  document.getElementById('btn-vault-fs-rotate')?.addEventListener('click', () => {
+    vaultFsRotation = (vaultFsRotation + 90) % 360;
+    applyVaultFsTransform();
+    triggerHaptic(10);
+  });
+
+  document.getElementById('btn-vault-fs-zoom')?.addEventListener('click', () => {
+    vaultFsZoomed = !vaultFsZoomed;
+    applyVaultFsTransform();
+    triggerHaptic(10);
+  });
+
+  document.getElementById('vault-fs-stage')?.addEventListener('click', () => {
+    document.getElementById('vault-fs-topbar')?.classList.toggle('fs-hidden');
   });
 
   document.getElementById('btn-vault-del-soat')?.addEventListener('click', async () => {
     await deleteVaultDocMedia('soat_cert');
     await syncVaultDocsUI();
-    document.getElementById('vault-preview-box')?.classList.add('hidden');
+    closeModalById('modal-vault-fullscreen');
     showToast('Documento SOAT eliminado de la bóveda');
   });
 
   document.getElementById('btn-vault-del-card')?.addEventListener('click', async () => {
     await deleteVaultDocMedia('prop_card');
     await syncVaultDocsUI();
-    document.getElementById('vault-preview-box')?.classList.add('hidden');
+    closeModalById('modal-vault-fullscreen');
     showToast('Tarjeta eliminada de la bóveda');
   });
 
@@ -2832,17 +2956,7 @@ function setupEventListeners() {
     showToast('Guantera Digital actualizada');
   });
 
-  // Selector de Color de la Moto
-  document.querySelectorAll('.theme-pill').forEach((pill) => {
-    pill.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const chosen = pill.getAttribute('data-theme') || 'blue';
-      applyBikeTheme(chosen);
-      saveState();
-      showToast(`🎨 Tema aplicado`);
-    });
-  });
+
 
   // Eventos de Autenticación Multiusuario y Nube Firebase
   const cloudBanner = document.getElementById('cloud-status-banner');
@@ -2988,8 +3102,7 @@ function setupEventListeners() {
         reuseHistoryState: true,
         onConfirm: () => {
           replaceFullState(cloudData, false);
-          applyBikeTheme(appState.colorTheme || 'blue');
-          applySunlightMode(appState.sunlightMode);
+          applySurfaceMode(appState.surfaceMode || 'day');
           renderAllMain();
           showToast('Datos restaurados de tu cuenta');
         }
@@ -3036,8 +3149,7 @@ function setupEventListeners() {
           return;
         }
         replaceFullState(imported, true);
-        applyBikeTheme(appState.colorTheme || 'blue');
-        applySunlightMode(appState.sunlightMode);
+        applySurfaceMode(appState.surfaceMode || 'day');
         renderAllMain();
         closeBackup();
         showToast('Copia de seguridad restaurada');
@@ -3078,8 +3190,7 @@ function handleAppShortcutActions() {
 
 function initApp() {
   loadState();
-  applyBikeTheme(appState.colorTheme || 'blue');
-  applySunlightMode(appState.sunlightMode);
+  applySurfaceMode(appState.surfaceMode || 'day');
   if (appState.onboarded) {
     showMainScreen();
   } else {

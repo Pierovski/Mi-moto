@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#060A0F">
+  <meta name="theme-color" content="#E2F0F6">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
@@ -37,7 +37,7 @@
       </div>
 
       <div class="brand-emblem-wrap">
-        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA V5.2.2 APEX</span>
+        <span class="mi-moto-tag">MI MOTO • TELEMETRÍA V5.4 APEX</span>
         <h1 class="pulsar-script-logo">pulsar</h1>
         <span class="n160-fi-sub">N160 FI • DUAL CHANNEL ABS</span>
       </div>
@@ -55,22 +55,20 @@
             <div class="check-circle">✓</div>
           </div>
 
-          <div class="color-theme-grid" id="onboarding-theme-picker" style="position: relative; z-index: 10;">
-            <button type="button" class="theme-pill selected" data-theme="blue" data-edition="CARIBBEAN BLUE EDITION">
-              <span class="swatch-circle" style="background: #1E88A8;"></span>
-              <span>Azul</span>
+          <div class="day-night-picker" id="onboarding-surface-picker" style="position: relative; z-index: 10;">
+            <button type="button" class="surface-mode-btn surface-pill selected" data-surface="day">
+              <span class="swatch-duo day"></span>
+              <div>
+                <strong>Modo Día</strong>
+                <small>Celeste plateado • Blanco</small>
+              </div>
             </button>
-            <button type="button" class="theme-pill" data-theme="red" data-edition="RACING RED EDITION">
-              <span class="swatch-circle" style="background: #C81E2B;"></span>
-              <span>Roja</span>
-            </button>
-            <button type="button" class="theme-pill" data-theme="black" data-edition="BROOKLYN BLACK EDITION">
-              <span class="swatch-circle" style="background: #222934;"></span>
-              <span>Negra</span>
-            </button>
-            <button type="button" class="theme-pill" data-theme="white" data-edition="PEARL METALLIC WHITE EDITION">
-              <span class="swatch-circle" style="background: #F8FAFC; border: 1px solid #94A3B8;"></span>
-              <span>Blanca</span>
+            <button type="button" class="surface-mode-btn surface-pill" data-surface="night">
+              <span class="swatch-duo night"></span>
+              <div>
+                <strong>Modo Noche</strong>
+                <small>Negro carbón • Verde neón</small>
+              </div>
             </button>
           </div>
 
@@ -104,7 +102,7 @@
   <!-- ================= PANTALLA 2: PANEL PRINCIPAL ================= -->
   <section id="main-screen" class="screen hidden">
     
-    <!-- Cabecera Minimalista TFT (Iconos SVG Lineales) -->
+    <!-- Cabecera Minimalista Unificada (Sin redundancia Nube/Ajustes + Alerta SOAT en Placa) -->
     <header class="app-header">
       <div class="header-left">
         <div class="mini-logo-wrap" id="header-logo-btn" title="Cambiar icono">
@@ -114,22 +112,22 @@
         <div class="brand-titles">
           <div class="brand-row">
             <span class="pulsar-script-header">pulsar</span>
-            <span id="header-plate-badge" class="plate-mini-pill" title="Toca para ver Guantera Digital">N160 FI</span>
+            <span id="header-plate-badge" class="plate-mini-pill" title="Toca para ver Guantera Digital">
+              <span id="docs-alert-dot" class="notif-dot hidden"></span>
+              <span id="header-plate-text">N160 FI</span>
+            </span>
           </div>
           <span class="health-indicator" id="bike-health-badge">● Sistema 100% Óptimo</span>
         </div>
       </div>
       <div class="header-actions">
-        <button type="button" id="btn-toggle-sunlight" class="btn-icon-sleek" title="Modo Alto Contraste Solar (Ruta)" aria-label="Modo Sol">
-          <svg class="ui-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <button type="button" id="btn-toggle-surface" class="btn-icon-sleek" title="Alternar Modo Día / Modo Noche" aria-label="Modo Día / Noche">
+          <svg id="surface-toggle-svg" class="ui-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
         </button>
-        <button type="button" id="cloud-live-indicator" class="cloud-live-pill" title="Cuenta y sincronización en la nube">
+        <button type="button" id="btn-open-backup-modal" class="cloud-settings-pill" title="Ajustes, Fondo, Tema y Cuenta en la Nube" aria-label="Ajustes y Nube">
           <span class="cloud-live-dot" id="cloud-live-dot"></span>
           <span id="cloud-live-text">Local</span>
-        </button>
-        <button id="btn-open-backup-modal" class="btn-icon-sleek" title="Ajustes, Tema, Cuenta y Respaldo" aria-label="Ajustes">
-          <span id="docs-alert-dot" class="notif-dot hidden"></span>
-          <svg class="ui-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <svg class="ui-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
     </header>
@@ -171,6 +169,11 @@
           + Km
         </button>
       </div>
+
+      <button type="button" id="btn-hero-toggle" class="hero-pull-handle hidden" title="Jala hacia abajo o toca para desplegar/ocultar portada" aria-label="Mostrar u ocultar portada">
+        <span class="hero-grab-bar"></span>
+        <span id="hero-toggle-label">⌃ Ocultar portada</span>
+      </button>
     </div>
 
     <!-- Banner de Alerta Proactiva (Solo aparece si falta <150 km para servicio o <=15d SOAT/Brevete) -->
@@ -1108,7 +1111,7 @@
                     <span id="map-bot-eta" class="mo-hud-pill-stat">ETA --:--</span>
                   </div>
                   <div class="mo-hud-foot-stack">
-                    <small id="map-bot-needgal" style="color:var(--neon-lime);font-weight:700;">Elige destino en mapa</small>
+                    <small id="map-bot-needgal" style="color:var(--status-ok);font-weight:700;">Elige destino en mapa</small>
                     <small id="map-bot-terrain">Modo Libre • GPS Listo</small>
                   </div>
                 </div>
@@ -1137,7 +1140,7 @@
                   <div class="obd-box-head">
                     <span class="micro-lbl">ALTITUD DEM</span>
                     <div style="display:flex;align-items:center;gap:4px;">
-                      <strong id="map-current-elev" style="font-family:var(--font-speed);font-size:12px;color:var(--neon-lime);">34 m</strong>
+                      <strong id="map-current-elev" style="font-family:var(--font-speed);font-size:12px;color:var(--status-ok);">34 m</strong>
                       <small id="map-bot-peak-alt" style="font-size:10px;color:var(--alloy-muted);">Cima --</small>
                     </div>
                   </div>
@@ -1160,7 +1163,7 @@
                 </div>
                 <div class="obd-svg-dial-wrap">
                   <svg viewBox="0 0 120 100" class="obd-dial-svg">
-                    <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="#142234" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--dial-track)" stroke-width="8" stroke-linecap="round"/>
                     <path id="obd-rpm-redzone-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="rgba(255, 69, 58, 0.28)" stroke-width="8" stroke-linecap="butt" pathLength="100" stroke-dasharray="50 100" stroke-dashoffset="-50"/>
                     <path id="obd-rpm-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--neon-lime)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
                   </svg>
@@ -1196,7 +1199,7 @@
                 </div>
                 <div class="obd-svg-dial-wrap">
                   <svg viewBox="0 0 120 100" class="obd-dial-svg">
-                    <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="#142234" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--dial-track)" stroke-width="8" stroke-linecap="round"/>
                     <path id="obd-speed-arc" d="M 21 82 A 45 45 0 1 1 99 82" fill="none" stroke="var(--caribbean-bright)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
                   </svg>
                   <div class="obd-dial-center-txt">
@@ -1781,23 +1784,21 @@
         <button id="btn-close-backup-x" class="btn-close-x">✕</button>
       </div>
 
-      <label class="modal-label">COLOR DE TU MOTO (TEMA DE LA APP):</label>
-      <div class="color-theme-grid" id="settings-theme-picker">
-        <button type="button" class="theme-pill selected" data-theme="blue" data-edition="CARIBBEAN BLUE EDITION">
-          <span class="swatch-circle" style="background: #1E88A8;"></span>
-          <span>Azul</span>
+      <label class="modal-label">APARIENCIA PULSAR N160 FI (DÍA / NOCHE):</label>
+      <div class="day-night-picker" id="settings-surface-picker" style="margin-bottom: 12px;">
+        <button type="button" class="surface-mode-btn surface-pill selected" data-surface="day">
+          <span class="swatch-duo day"></span>
+          <div>
+            <strong>Modo Día</strong>
+            <small>Celeste plateado • Blanco • Plomo</small>
+          </div>
         </button>
-        <button type="button" class="theme-pill" data-theme="red" data-edition="RACING RED EDITION">
-          <span class="swatch-circle" style="background: #C81E2B;"></span>
-          <span>Roja</span>
-        </button>
-        <button type="button" class="theme-pill" data-theme="black" data-edition="BROOKLYN BLACK EDITION">
-          <span class="swatch-circle" style="background: #222934;"></span>
-          <span>Negra</span>
-        </button>
-        <button type="button" class="theme-pill" data-theme="white" data-edition="PEARL METALLIC WHITE EDITION">
-          <span class="swatch-circle" style="background: #F8FAFC; border: 1px solid #94A3B8;"></span>
-          <span>Blanca</span>
+        <button type="button" class="surface-mode-btn surface-pill" data-surface="night">
+          <span class="swatch-duo night"></span>
+          <div>
+            <strong>Modo Noche</strong>
+            <small>Negro • Plomo • Verde neón</small>
+          </div>
         </button>
       </div>
 
@@ -1951,14 +1952,6 @@
           </div>
           <input type="file" id="vault-card-input" accept="image/*" class="hidden">
         </div>
-      </div>
-
-      <div id="vault-preview-box" class="vault-preview-lightbox hidden">
-        <div class="vault-preview-head">
-          <strong id="vault-preview-title">Documento Offline</strong>
-          <button type="button" id="btn-close-vault-preview" class="btn-close-x">✕</button>
-        </div>
-        <img id="vault-preview-img" src="" alt="Documento guardado en bóveda">
       </div>
 
       <div id="docs-status-summary" class="memory-pill-bar" style="margin-top: 10px;">
@@ -2139,7 +2132,7 @@
 
       <div class="info-section-box" style="border-left-color:var(--red-danger);margin-bottom:8px;">
         <span class="info-sub-label" style="color:var(--red-danger);">UBICACIÓN SATELITAL ACTUAL (DMS / DECIMAL)</span>
-        <p id="sos-coords-display" style="font-family:var(--font-speed);font-size:13px;font-weight:800;color:#FFFFFF;">Calculando coordenadas...</p>
+        <p id="sos-coords-display" style="font-family:var(--font-speed);font-size:13px;font-weight:800;color:var(--text-primary);">Calculando coordenadas...</p>
       </div>
 
       <div class="elec-test-metrics-3" style="margin-bottom:10px;">
@@ -2266,10 +2259,10 @@
         </button>
 
         <button type="button" id="btn-obd-sunlight" class="mo-sheet-tile">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <svg id="sheet-surface-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
           <div>
-            <strong id="sheet-sun-label">Modo Sol</strong>
-            <small>Alto contraste ruta</small>
+            <strong id="sheet-sun-label">Modo Noche</strong>
+            <small id="sheet-sun-sub">Cambiar tema Día / Noche</small>
           </div>
         </button>
       </div>
@@ -2277,6 +2270,24 @@
       <button type="button" class="btn-secondary mo-sheet-guide-btn" data-info-key="obd_ecu_guide">
         ⓘ Ver Guía del Cockpit y Sensores OBD2
       </button>
+    </div>
+  </div>
+
+  <!-- ================= VISOR PANTALLA COMPLETA (SOAT / TARJETA PROPIEDAD) ================= -->
+  <div id="modal-vault-fullscreen" class="vault-fullscreen-overlay hidden" role="dialog" aria-modal="true" aria-label="Documento en pantalla completa">
+    <div class="vault-fs-topbar" id="vault-fs-topbar">
+      <div class="vault-fs-title-wrap">
+        <strong id="vault-fs-title">Documento Offline</strong>
+        <small id="vault-fs-sub">Toca la imagen para ocultar controles • Pellizca o usa Zoom</small>
+      </div>
+      <div class="vault-fs-actions">
+        <button type="button" id="btn-vault-fs-rotate" class="vault-fs-btn" title="Rotar 90 grados">↻ 90°</button>
+        <button type="button" id="btn-vault-fs-zoom" class="vault-fs-btn" title="Acercar / Alejar">Zoom</button>
+        <button type="button" id="btn-vault-fs-close" class="vault-fs-btn close" title="Cerrar pantalla completa">✕</button>
+      </div>
+    </div>
+    <div class="vault-fs-stage" id="vault-fs-stage">
+      <img id="vault-fs-img" src="" alt="Documento guardado en bóveda">
     </div>
   </div>
 

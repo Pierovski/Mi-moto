@@ -23,6 +23,10 @@
   --border-accent: rgba(56, 214, 255, 0.28);
   --amber-warn: #FF9F0A;
   --red-danger: #FF453A;
+  --text-primary: #FFFFFF;
+  --dial-track: #142234;
+  --chart-grid: rgba(255, 255, 255, 0.08);
+  --chart-empty: rgba(255, 255, 255, 0.12);
 
   --font-speed: 'Exo 2', sans-serif;
   --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -3500,4 +3504,997 @@ body.ecu-ride-mode #smart-priority-banner {
   .obd-sprint-metrics {
     grid-column: 1 / -1;
   }
+}
+
+/* ============================================================================
+   V5.4 APEX - SOLO MODO DÍA Y MODO NOCHE (PALETA PULSAR N160 FI)
+   Verde Neón (#58E800) • Negro Carbón (#070B10) • Plomo Plateado (#94A3B8/#CBD5E1)
+   Blanco (#FFFFFF) • Celeste Plateado (#7CD3EA / #0EA5C6 / #E2F0F6)
+   Adaptación Total: App Principal + Modales + Cockpit OBD2 + Mapa Satelital + Diag
+   ============================================================================ */
+
+/* --- Selector limpio de 2 modos (Día / Noche) --- */
+.day-night-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.surface-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 11px;
+  border: 1.5px solid var(--border-subtle);
+  background: var(--bg-inset, #070C14);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.surface-mode-btn strong {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.surface-mode-btn small {
+  display: block;
+  font-size: 9.5px;
+  color: var(--alloy-muted);
+  margin-top: 2px;
+}
+
+.surface-mode-btn.selected {
+  border-color: var(--caribbean-primary);
+  background: rgba(14, 165, 198, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(88, 232, 0, 0.35);
+}
+
+.swatch-duo {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid #94A3B8;
+}
+
+.swatch-duo.day {
+  background: linear-gradient(135deg, #FFFFFF 0%, #9FD8EC 55%, #58E800 100%);
+  border-color: #0EA5C6;
+}
+
+.swatch-duo.night {
+  background: linear-gradient(135deg, #070B10 0%, #1F2E40 58%, #58E800 100%);
+  border-color: #5AD8F5;
+}
+
+/* --- Cabecera Unificada (Nube + Ajustes en una sola píldora) --- */
+.cloud-settings-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: var(--bg-engine);
+  border: 1px solid var(--border-subtle);
+  color: var(--alloy-silver);
+  font-size: 10.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cloud-settings-pill.syncing {
+  border-color: var(--caribbean-primary);
+  color: var(--caribbean-bright);
+}
+.cloud-settings-pill.syncing .cloud-live-dot {
+  background: var(--caribbean-bright);
+  box-shadow: 0 0 8px var(--caribbean-bright);
+  animation: pulseCloud 0.8s infinite alternate;
+}
+.cloud-settings-pill.ok .cloud-live-dot {
+  background: var(--status-ok);
+  box-shadow: 0 0 6px var(--status-ok);
+}
+.cloud-settings-pill.conflict {
+  border-color: var(--amber-warn);
+  color: var(--amber-warn);
+}
+.cloud-settings-pill.conflict .cloud-live-dot {
+  background: var(--amber-warn);
+  box-shadow: 0 0 7px var(--amber-warn);
+}
+.cloud-settings-pill.error {
+  border-color: var(--red-danger);
+  color: var(--red-danger);
+}
+.cloud-settings-pill.error .cloud-live-dot {
+  background: var(--red-danger);
+}
+
+#header-plate-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#header-plate-badge .notif-dot {
+  position: static;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+}
+
+/* --- Portada Hero Solo en Inicio + Desplegable Jalando --- */
+.hero-cockpit-shell {
+  transition: min-height 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+
+.hero-cockpit-shell.has-photo.hero-collapsed {
+  min-height: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+
+.hero-cockpit-shell.has-photo.hero-collapsed .hero-photo-layer,
+.hero-cockpit-shell.has-photo.hero-collapsed .hero-top-badge-row {
+  display: none !important;
+}
+
+.hero-cockpit-shell.has-photo.hero-collapsed .cockpit-card {
+  margin: 0 !important;
+}
+
+.hero-pull-handle {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 5px 0 4px;
+  border: none;
+  background: transparent;
+  color: #CBD5E1;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+}
+
+.hero-cockpit-shell.hero-collapsed .hero-pull-handle {
+  color: var(--alloy-muted);
+  padding: 5px 0 1px;
+}
+
+.hero-grab-bar {
+  width: 36px;
+  height: 3.5px;
+  border-radius: 99px;
+  background: rgba(14, 165, 198, 0.6);
+}
+
+/* --- Visor Pantalla Completa SOAT / Tarjeta de Propiedad --- */
+.vault-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  background: #000000;
+  z-index: 2200;
+  display: flex;
+  flex-direction: column;
+  animation: tabFadeIn 0.16s ease-out;
+}
+
+.vault-fs-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 12px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.45) 75%, transparent 100%);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.vault-fs-topbar.fs-hidden {
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+.vault-fs-title-wrap { min-width: 0; }
+.vault-fs-title-wrap strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vault-fs-title-wrap small {
+  display: block;
+  font-size: 10px;
+  color: #CBD5E1;
+}
+
+.vault-fs-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.vault-fs-btn {
+  padding: 7px 11px;
+  border-radius: 9px;
+  border: 1px solid rgba(90, 216, 245, 0.45);
+  background: rgba(15, 23, 42, 0.86);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.vault-fs-btn.close {
+  background: rgba(255, 69, 58, 0.9);
+  border-color: #FF453A;
+}
+
+.vault-fs-stage {
+  flex: 1;
+  width: 100vw;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+  touch-action: manipulation;
+}
+
+.vault-fs-stage.zoomed {
+  overflow: auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 64px 20px 24px;
+}
+
+.vault-fs-stage img {
+  max-width: 100vw;
+  max-height: 100dvh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transform-origin: center center;
+  transition: transform 0.22s ease;
+  user-select: none;
+}
+
+.vault-fs-stage img.rotated-side {
+  max-width: 96dvh;
+  max-height: 96vw;
+}
+
+/* ============================================================================
+   MODO NOCHE (NEGRO CARBÓN + PLOMO PLATEADO + CELESTE PLATEADO + VERDE NEÓN + BLANCO)
+   ============================================================================ */
+body[data-surface="night"] {
+  --bg-chassis: #070B10;
+  --bg-engine: #0E1520;
+  --bg-elevated: #162130;
+  --bg-inset: #091019;
+  --text-primary: #FFFFFF;
+  --alloy-silver: #CBD5E1;
+  --alloy-muted: #8FA0B5;
+  --caribbean-deep: #0E4D61;
+  --caribbean-primary: #179EC2;
+  --caribbean-bright: #67DBF5;
+  --neon-lime: #58E800;
+  --neon-soft: rgba(88, 232, 0, 0.14);
+  --neon-border: rgba(88, 232, 0, 0.44);
+  --accent-primary: #58E800;
+  --accent-soft: rgba(103, 219, 245, 0.14);
+  --accent-border: rgba(103, 219, 245, 0.36);
+  --status-ok: #58E800;
+  --status-ok-soft: rgba(88, 232, 0, 0.14);
+  --status-ok-border: rgba(88, 232, 0, 0.36);
+  --border-subtle: rgba(203, 213, 225, 0.11);
+  --border-accent: rgba(103, 219, 245, 0.32);
+  --dial-track: #1B2838;
+  --chart-grid: rgba(203, 213, 225, 0.09);
+  --chart-empty: rgba(203, 213, 225, 0.14);
+  background-color: var(--bg-chassis);
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(103, 219, 245, 0.18) 0%, transparent 52%),
+    radial-gradient(circle at 88% 95%, rgba(88, 232, 0, 0.07) 0%, transparent 40%);
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+   MODO DÍA (CELESTE PLATEADO + BLANCO + PLOMO PLATEADO + NEGRO + VERDE NEÓN)
+   Aplica uniformemente a TODA la app e INCLUYE EL COCKPIT COMPLETO
+   ============================================================================ */
+body[data-surface="day"] {
+  --bg-chassis: #E1EFF5;
+  --bg-engine: #FFFFFF;
+  --bg-elevated: #EAF3F7;
+  --bg-inset: #EFF5F8;
+  --text-primary: #0B121B;
+  --alloy-silver: #334155;
+  --alloy-muted: #5C6F84;
+  --caribbean-deep: #0B556B;
+  --caribbean-primary: #0EA5C6;
+  --caribbean-bright: #0284C7;
+  --neon-lime: #58E800;
+  --neon-text-safe: #1F8F00;
+  --neon-soft: rgba(88, 232, 0, 0.16);
+  --neon-border: rgba(31, 143, 0, 0.42);
+  --accent-primary: #58E800;
+  --accent-soft: rgba(14, 165, 198, 0.13);
+  --accent-border: rgba(14, 165, 198, 0.38);
+  --status-ok: #1F8F00;
+  --status-ok-soft: rgba(31, 143, 0, 0.12);
+  --status-ok-border: rgba(31, 143, 0, 0.34);
+  --amber-warn: #D97706;
+  --red-danger: #DC2626;
+  --border-subtle: rgba(100, 116, 139, 0.22);
+  --border-accent: rgba(14, 165, 198, 0.42);
+  --dial-track: #CBD5E1;
+  --chart-grid: rgba(15, 23, 42, 0.09);
+  --chart-empty: rgba(15, 23, 42, 0.11);
+
+  background-color: var(--bg-chassis);
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(124, 211, 234, 0.42) 0%, transparent 52%),
+    radial-gradient(circle at 92% 96%, rgba(88, 232, 0, 0.11) 0%, transparent 40%),
+    linear-gradient(180deg, #D9ECF4 0%, #E7F2F7 55%, #EFF5F8 100%);
+  color: var(--text-primary);
+}
+
+/* --- A. Marca, Cabecera y Onboarding en Modo Día --- */
+body[data-surface="day"] .pulsar-script-logo,
+body[data-surface="day"] .pulsar-script-header {
+  background: linear-gradient(180deg, #0B121B 20%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(14, 165, 198, 0.22));
+}
+
+body[data-surface="day"] .mi-moto-tag {
+  color: var(--neon-text-safe);
+}
+
+body[data-surface="day"] .mini-logo-wrap,
+body[data-surface="day"] .btn-icon-sleek,
+body[data-surface="day"] .cloud-settings-pill {
+  background: #FFFFFF;
+  border-color: rgba(14, 165, 198, 0.32);
+  color: #0B121B;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.07);
+}
+
+body[data-surface="day"] .plate-mini-pill {
+  background: linear-gradient(180deg, #1E293B 0%, #0B121B 100%);
+  border-color: #0EA5C6;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+}
+
+/* Odómetro principal: Negro carbón deportivo + celeste plateado + verde neón */
+body[data-surface="day"] #cockpit-cluster {
+  background: linear-gradient(135deg, #0F172A 0%, #0E3147 100%);
+  border: 1px solid rgba(14, 165, 198, 0.5);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+}
+body[data-surface="day"] .hero-cockpit-shell.has-photo #cockpit-cluster {
+  background: rgba(11, 20, 32, 0.84);
+}
+body[data-surface="day"] #cockpit-cluster .cockpit-label { color: #67DBF5; }
+body[data-surface="day"] #cockpit-cluster #current-km-display { color: #FFFFFF; }
+body[data-surface="day"] #cockpit-cluster .odo-value-row small,
+body[data-surface="day"] #cockpit-cluster .trip-value-row small,
+body[data-surface="day"] #cockpit-cluster #trip-a-display { color: #CBD5E1; }
+body[data-surface="day"] #cockpit-cluster .cockpit-divider { background: rgba(255, 255, 255, 0.18); }
+body[data-surface="day"] .hero-cockpit-shell.has-photo {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+}
+
+body[data-surface="day"] .bike-select-card {
+  background: linear-gradient(145deg, #FFFFFF 0%, #E8F4F9 100%);
+  border-color: var(--caribbean-primary);
+  box-shadow: 0 8px 22px rgba(14, 165, 198, 0.14);
+}
+body[data-surface="day"] .pulsar-italic-title { color: #0B121B; }
+body[data-surface="day"] .bike-photo-box {
+  background: var(--bg-inset);
+  border-color: rgba(14, 165, 198, 0.36);
+}
+body[data-surface="day"] .initial-km-box,
+body[data-surface="day"] .logo-upload-box {
+  background: #FFFFFF;
+  border-color: rgba(14, 165, 198, 0.34);
+}
+
+/* --- B. Tarjetas, Listas, Inputs y Modales Principales en Modo Día --- */
+body[data-surface="day"] .maint-card,
+body[data-surface="day"] .stat-card,
+body[data-surface="day"] .tele-box,
+body[data-surface="day"] .tire-card,
+body[data-surface="day"] .tco-card,
+body[data-surface="day"] .specs-box,
+body[data-surface="day"] .quick-card,
+body[data-surface="day"] .progressive-drawer-card,
+body[data-surface="day"] .budget-bar-card,
+body[data-surface="day"] .finance-strip,
+body[data-surface="day"] .sparkline-box,
+body[data-surface="day"] .monthly-chart-card,
+body[data-surface="day"] .pilot-summary-card,
+body[data-surface="day"] .route-calc-card,
+body[data-surface="day"] .modal-card {
+  background: #FFFFFF;
+  border-color: rgba(14, 165, 198, 0.24);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  color: var(--text-primary);
+}
+
+body[data-surface="day"] .maint-card.maint-urgent {
+  background: linear-gradient(160deg, #FFFBF2 0%, #FFFFFF 100%);
+  border-color: rgba(217, 119, 6, 0.42);
+}
+
+body[data-surface="day"] .maint-title,
+body[data-surface="day"] .fin-val,
+body[data-surface="day"] .stat-big,
+body[data-surface="day"] .tele-val,
+body[data-surface="day"] .tire-brand-title,
+body[data-surface="day"] .log-left h4,
+body[data-surface="day"] .log-cost,
+body[data-surface="day"] .co-val,
+body[data-surface="day"] .pilot-kpi-box strong,
+body[data-surface="day"] .monthly-total-badge,
+body[data-surface="day"] .modal-pulsar-title,
+body[data-surface="day"] .chk-info strong,
+body[data-surface="day"] .oem-item strong,
+body[data-surface="day"] .tm-box strong,
+body[data-surface="day"] .qc-value,
+body[data-surface="day"] .route-res-box strong,
+body[data-surface="day"] .budget-title strong,
+body[data-surface="day"] .priority-alert-texts strong,
+body[data-surface="day"] .diag-alert-box strong,
+body[data-surface="day"] .vault-slot-top strong,
+body[data-surface="day"] .srv-text strong,
+body[data-surface="day"] .fuel-loan-check-row strong,
+body[data-surface="day"] .tco-item strong,
+body[data-surface="day"] .spec-row strong {
+  color: #0B121B;
+}
+
+body[data-surface="day"] .neon-txt,
+body[data-surface="day"] .tele-val.neon,
+body[data-surface="day"] .route-res-box.highlight strong,
+body[data-surface="day"] .qc-value small,
+body[data-surface="day"] .pilot-sum-pill,
+body[data-surface="day"] .info-modal-tag,
+body[data-surface="day"] .btn-action-sleek,
+body[data-surface="day"] .btn-cal-ics,
+body[data-surface="day"] .sparkline-trend,
+body[data-surface="day"] .info-section-box.why .info-sub-label {
+  color: var(--neon-text-safe) !important;
+}
+
+body[data-surface="day"] .log-item,
+body[data-surface="day"] .rank-item-row,
+body[data-surface="day"] .co-card,
+body[data-surface="day"] .pilot-kpi-box,
+body[data-surface="day"] .tire-metrics-strip,
+body[data-surface="day"] .check-row-card,
+body[data-surface="day"] .oem-item,
+body[data-surface="day"] .route-res-box,
+body[data-surface="day"] .empty-logs,
+body[data-surface="day"] .vault-doc-slot,
+body[data-surface="day"] .info-section-box,
+body[data-surface="day"] .service-option,
+body[data-surface="day"] .live-calc-sleek,
+body[data-surface="day"] .mode-pill,
+body[data-surface="day"] .route-pill,
+body[data-surface="day"] .terrain-pill,
+body[data-surface="day"] .compound-pill,
+body[data-surface="day"] .mod-filter-pill,
+body[data-surface="day"] .btn-close-x,
+body[data-surface="day"] .subtabs-bar,
+body[data-surface="day"] .subtabs-bar-3,
+body[data-surface="day"] .period-selector,
+body[data-surface="day"] .progress-track,
+body[data-surface="day"] .expense-split-bar,
+body[data-surface="day"] .log-search-input,
+body[data-surface="day"] input:not(.mo-pro-search-inp):not(.mo-replay-slider) {
+  background: var(--bg-inset);
+  border-color: rgba(100, 116, 139, 0.24);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .subtab-spec-btn.active,
+body[data-surface="day"] .subtab-maint-btn.active,
+body[data-surface="day"] .subtab-garage-btn.active {
+  background: #FFFFFF;
+  color: #0B121B;
+  border-color: rgba(14, 165, 198, 0.45);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+body[data-surface="day"] .mode-pill.selected,
+body[data-surface="day"] .route-pill.selected,
+body[data-surface="day"] .terrain-pill.selected,
+body[data-surface="day"] .compound-pill.selected,
+body[data-surface="day"] .mod-filter-pill.active,
+body[data-surface="day"] .service-option.selected {
+  background: rgba(14, 165, 198, 0.16);
+  border-color: var(--caribbean-primary);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .btn-secondary {
+  background: #DDE9F0;
+  border-color: rgba(100, 116, 139, 0.28);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .psi-load-switch-btn {
+  background: rgba(14, 165, 198, 0.14);
+  border-color: rgba(14, 165, 198, 0.42);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .btn-priority-close {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .tco-item,
+body[data-surface="day"] .spec-row,
+body[data-surface="day"] .drawer-body {
+  border-color: rgba(100, 116, 139, 0.16);
+}
+
+body[data-surface="day"] .hud-toast {
+  background: rgba(11, 18, 27, 0.94);
+  color: #FFFFFF;
+}
+
+/* Barra de navegación inferior en Modo Día */
+body[data-surface="day"] .tabs-nav-5 {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(14, 165, 198, 0.28);
+  box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.10);
+}
+
+body[data-surface="day"] .tab-btn {
+  color: #64748B;
+}
+
+body[data-surface="day"] .tab-btn.active {
+  background: rgba(14, 165, 198, 0.14);
+  color: #0B121B;
+  box-shadow: inset 0 2.5px 0 var(--neon-lime), inset 0 0 0 1px rgba(14, 165, 198, 0.36);
+}
+
+body[data-surface="day"] .tab-btn.active .nav-svg {
+  color: var(--caribbean-primary);
+}
+
+/* ============================================================================
+   C. ADAPTACIÓN 100% COMPLETA DEL COCKPIT (MAPA + RELOJES + DIAG + SHEET) EN MODO DÍA
+   ============================================================================ */
+body[data-surface="day"].ecu-tab-active,
+body[data-surface="day"].ecu-ride-mode {
+  background: #DCEBF2 !important;
+}
+
+body[data-surface="day"] .machine-os-shell {
+  background: linear-gradient(180deg, #D9ECF4 0%, #E7F2F7 100%) !important;
+  color: #0B121B;
+}
+
+/* 1. Barra superior del Cockpit en Modo Día */
+body[data-surface="day"] .mo-unified-topbar {
+  background: linear-gradient(180deg, #FFFFFF 0%, #EEF6FA 100%);
+  border-bottom: 1px solid rgba(14, 165, 198, 0.26);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+}
+
+body[data-surface="day"] .mo-home-back-btn {
+  background: #E8F4F9;
+  border-color: rgba(14, 165, 198, 0.42);
+  color: #0B556B;
+}
+
+body[data-surface="day"] .mo-brand-sub {
+  color: #5C6F84;
+}
+
+body[data-surface="day"] .mo-mode-switcher {
+  background: #E4EEF4;
+  border-color: rgba(100, 116, 139, 0.24);
+}
+
+body[data-surface="day"] .mo-mode-tab {
+  color: #475569;
+}
+
+body[data-surface="day"] .mo-mode-tab.active {
+  background: linear-gradient(135deg, #0EA5C6, #0B556B);
+  border-color: #0EA5C6;
+  color: #FFFFFF;
+}
+
+body[data-surface="day"] .mo-top-pill {
+  background: #FFFFFF;
+  border-color: rgba(100, 116, 139, 0.28);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .mo-top-pill.sos-btn {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.45);
+  color: #DC2626;
+}
+
+body[data-surface="day"] .mo-top-pill.sheet-trigger {
+  background: #E4F4FA;
+  border-color: rgba(14, 165, 198, 0.45);
+  color: #0B556B;
+}
+
+body[data-surface="day"] .mo-altitude-alert-strip {
+  background: #FEF3C7;
+  border-color: #D97706;
+  color: #0B121B;
+}
+
+/* 2. Mapa Satelital y Controles Flotantes sobre Mapa en Modo Día */
+body[data-surface="day"] .machine-map-canvas-box {
+  background: #D6E6EE;
+  border-color: rgba(14, 165, 198, 0.42);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+}
+
+body[data-surface="day"] .leaflet-sat-container {
+  background: #D6E6EE;
+}
+
+body[data-surface="day"] .leaflet-tile-pane {
+  filter: brightness(1.0) contrast(1.04) saturate(1.02);
+}
+
+body[data-surface="day"] .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.82) !important;
+  color: #475569 !important;
+}
+
+body[data-surface="day"] .mo-collapsed-lupa-pill,
+body[data-surface="day"] .mo-pro-search-bar,
+body[data-surface="day"] .mo-map-bottom-toolbar,
+body[data-surface="day"] .mo-race-replay-hud {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(14, 165, 198, 0.48);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.18);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .mo-active-dest-texts strong,
+body[data-surface="day"] #replay-time-lbl {
+  color: #0B121B;
+}
+
+body[data-surface="day"] .mo-pro-search-inp {
+  color: #0B121B !important;
+}
+
+body[data-surface="day"] .mo-pro-search-inp::placeholder {
+  color: #64748B;
+}
+
+body[data-surface="day"] .mo-search-clear-btn {
+  background: rgba(15, 23, 42, 0.10);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .map-search-dropdown {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: #0EA5C6;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.20);
+}
+
+body[data-surface="day"] .map-search-item {
+  color: #0B121B;
+  border-bottom-color: rgba(100, 116, 139, 0.16);
+}
+
+body[data-surface="day"] .map-search-item strong {
+  color: #0B556B;
+}
+
+body[data-surface="day"] .mo-preset-chip {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(100, 116, 139, 0.30);
+  color: #0B121B;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+body[data-surface="day"] .mo-preset-chip.fav-add {
+  background: #ECFDDF;
+  border-color: rgba(31, 143, 0, 0.45);
+  color: var(--neon-text-safe);
+}
+
+body[data-surface="day"] .mo-preset-chip.fav-chip {
+  border-color: rgba(14, 165, 198, 0.45);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .mo-preset-chip.active {
+  background: #0EA5C6;
+  border-color: #0B556B;
+  color: #FFFFFF;
+}
+
+body[data-surface="day"] .mo-preset-chip.poi {
+  border-color: rgba(14, 165, 198, 0.45);
+  color: #0284C7;
+}
+
+body[data-surface="day"] .mo-pill-fav-btn {
+  background: #EFF5F8;
+  border-color: rgba(100, 116, 139, 0.28);
+  color: #475569;
+}
+body[data-surface="day"] .mo-pill-fav-btn.saved {
+  background: #ECFDDF;
+  border-color: rgba(31, 143, 0, 0.45);
+  color: var(--neon-text-safe);
+}
+
+body[data-surface="day"] .mo-compass-circle,
+body[data-surface="day"] .mo-zoom-pill-group {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(14, 165, 198, 0.36);
+  color: #0B121B;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
+}
+
+body[data-surface="day"] .mo-compass-circle.active {
+  background: #ECFDDF;
+  border-color: var(--neon-text-safe);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .mo-zoom-pill-group button {
+  color: #0B121B;
+}
+body[data-surface="day"] .mo-zoom-divider {
+  background: rgba(100, 116, 139, 0.24);
+}
+
+body[data-surface="day"] .mo-mini-action {
+  background: #EFF5F8;
+  border-color: rgba(100, 116, 139, 0.25);
+  color: #0B121B;
+}
+body[data-surface="day"] .mo-mini-action.gps.active {
+  background: #ECFDDF;
+  border-color: rgba(31, 143, 0, 0.48);
+  color: var(--neon-text-safe);
+}
+
+body[data-surface="day"] .mo-replay-badge {
+  background: #ECFDDF;
+  border-color: rgba(31, 143, 0, 0.45);
+  color: var(--neon-text-safe);
+}
+body[data-surface="day"] .mo-replay-vitals-strip {
+  background: #EFF5F8;
+  border-color: rgba(100, 116, 139, 0.2);
+  color: #334155;
+}
+body[data-surface="day"] .mo-replay-slider {
+  background: #CBD5E1 !important;
+}
+
+/* 3. Panel de 4 Tarjetas bajo el Mapa en Modo Día */
+body[data-surface="day"] .mo-hud-card {
+  background: #FFFFFF;
+  border-color: rgba(14, 165, 198, 0.26);
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06);
+}
+
+body[data-surface="day"] .mo-hud-card.fuel-hud {
+  border-left-color: #94A3B8;
+}
+
+body[data-surface="day"] .mo-hud-speed-row strong,
+body[data-surface="day"] .mo-card-primary-val {
+  color: #0B121B;
+}
+
+body[data-surface="day"] .mo-hud-speed-row small,
+body[data-surface="day"] .mo-card-primary-val small,
+body[data-surface="day"] .mo-hud-foot-pair,
+body[data-surface="day"] .mo-hud-foot-stack {
+  color: #5C6F84;
+}
+
+body[data-surface="day"] .mo-tft-gear-badge {
+  background: #EFF7FA;
+  border-color: rgba(14, 165, 198, 0.36);
+}
+body[data-surface="day"] .mo-tft-gear-badge span {
+  color: #5C6F84;
+}
+body[data-surface="day"] .mo-tft-gear-badge strong {
+  color: #0B121B;
+}
+
+body[data-surface="day"] #map-hud-vitals {
+  color: #334155;
+  border-top-color: rgba(100, 116, 139, 0.18);
+}
+
+body[data-surface="day"] #map-bot-needgal,
+body[data-surface="day"] #map-current-elev {
+  color: var(--neon-text-safe) !important;
+}
+
+/* 4. Vista Relojes OBD2, Signos Vitales, Sprint y 6 Micro-Sensores en Modo Día */
+body[data-surface="day"] .obd-dial-card,
+body[data-surface="day"] .obd-vital-card,
+body[data-surface="day"] .obd-sprint-card,
+body[data-surface="day"] .obd-micro-cell,
+body[data-surface="day"] .obd-machine-footer-strip,
+body[data-surface="day"] .obd-dtc-strip {
+  background: #FFFFFF;
+  border-color: rgba(14, 165, 198, 0.26);
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .obd-hero-gear-box {
+  background: linear-gradient(165deg, #F3FDE8 0%, #FFFFFF 100%);
+  border-color: rgba(31, 143, 0, 0.36);
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06);
+}
+
+body[data-surface="day"] #obd-rpm-val,
+body[data-surface="day"] #obd-speed-val,
+body[data-surface="day"] .obd-vital-val,
+body[data-surface="day"] .obd-micro-cell strong,
+body[data-surface="day"] .obd-footer-stat strong,
+body[data-surface="day"] .sprint-split-box strong,
+body[data-surface="day"] .et-metric-box strong {
+  color: #0B121B;
+}
+
+body[data-surface="day"] .obd-vital-val.neon,
+body[data-surface="day"] .obd-sprint-live-row strong,
+body[data-surface="day"] .obd-guard-pill,
+body[data-surface="day"] .obd-gear-number {
+  color: var(--neon-text-safe);
+}
+
+body[data-surface="day"] .obd-dial-foot {
+  border-top-color: rgba(100, 116, 139, 0.18);
+  color: #475569;
+}
+
+body[data-surface="day"] .machine-bar-track {
+  background: #DCE6EE;
+}
+
+body[data-surface="day"] .sprint-split-box,
+body[data-surface="day"] .et-metric-box {
+  background: #EFF5F8;
+  border-color: rgba(100, 116, 139, 0.20);
+}
+
+body[data-surface="day"] .obd-dtc-item {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.32);
+}
+
+/* 5. Bottom Sheet del Cockpit (#mo-cockpit-sheet) en Modo Día */
+body[data-surface="day"] .mo-sheet-card {
+  background: #FFFFFF;
+  border-color: rgba(14, 165, 198, 0.32);
+}
+
+body[data-surface="day"] .mo-sheet-handle {
+  background: #CBD5E1;
+}
+
+body[data-surface="day"] .mo-sheet-tile {
+  background: #EFF5F8;
+  border-color: rgba(100, 116, 139, 0.22);
+  color: #0B121B;
+}
+
+body[data-surface="day"] .mo-sheet-tile strong {
+  color: #0B121B;
+}
+
+body[data-surface="day"] .mo-sheet-tile.connect svg {
+  color: var(--neon-text-safe);
+}
+
+body[data-surface="day"] .mo-sheet-tile.active-tile {
+  background: #E2F4FA;
+  border-color: #0EA5C6;
+}
+body[data-surface="day"] .mo-sheet-tile.connect.active-tile {
+  background: #ECFDDF;
+  border-color: var(--neon-text-safe);
+}
+
+/* --- Polish Modo Día: Franja de métricas de llantas, chips, tracks y backdrop --- */
+body[data-surface="day"] .tire-metrics-strip {
+  background: #EFF5F8;
+  border: 1px solid rgba(14, 165, 198, 0.24);
+  border-radius: 10px;
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+body[data-surface="day"] .tm-box {
+  background: transparent;
+  border: none;
+  padding: 0 2px;
+}
+
+body[data-surface="day"] .tire-spec-chip {
+  background: #EFF5F8;
+  border-color: rgba(100, 116, 139, 0.24);
+  color: #334155;
+}
+
+body[data-surface="day"] .tire-spec-chip.dot-ok {
+  background: rgba(14, 165, 198, 0.10);
+  border-color: rgba(14, 165, 198, 0.34);
+  color: #0284C7;
+}
+
+body[data-surface="day"] .progress-track,
+body[data-surface="day"] .expense-split-bar {
+  background: #DCE8EF;
+}
+
+body[data-surface="day"] .btn-del-log {
+  color: #DC2626;
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.28);
+}
+
+body[data-surface="day"] .obd-dtc-status-txt {
+  color: var(--neon-text-safe);
+}
+
+body[data-surface="day"] .modal-backdrop {
+  background: rgba(15, 23, 42, 0.56);
 }

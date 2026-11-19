@@ -25,11 +25,15 @@ function getThemeColors() {
   const cs = getComputedStyle(document.body);
   return {
     neon: (cs.getPropertyValue('--neon-lime') || '#58E800').trim(),
-    accent: (cs.getPropertyValue('--caribbean-bright') || '#38D6FF').trim(),
-    bright: (cs.getPropertyValue('--caribbean-bright') || '#38D6FF').trim(),
-    ok: (cs.getPropertyValue('--status-ok') || '#22C55E').trim(),
+    accent: (cs.getPropertyValue('--caribbean-primary') || '#0EA5C6').trim(),
+    bright: (cs.getPropertyValue('--caribbean-bright') || '#0284C7').trim(),
+    ok: (cs.getPropertyValue('--status-ok') || '#1F8F00').trim(),
     warn: (cs.getPropertyValue('--amber-warn') || '#FF9F0A').trim(),
-    danger: (cs.getPropertyValue('--red-danger') || '#FF453A').trim()
+    danger: (cs.getPropertyValue('--red-danger') || '#FF453A').trim(),
+    textPrimary: (cs.getPropertyValue('--text-primary') || '#FFFFFF').trim(),
+    textMuted: (cs.getPropertyValue('--alloy-muted') || '#7C8B9E').trim(),
+    gridLine: (cs.getPropertyValue('--chart-grid') || 'rgba(255,255,255,0.06)').trim(),
+    barEmpty: (cs.getPropertyValue('--chart-empty') || 'rgba(255,255,255,0.12)').trim()
   };
 }
 
@@ -440,10 +444,16 @@ export function renderImages() {
   if (heroBadgeRow) {
     heroBadgeRow.classList.toggle('hidden', !appState.bikePhotoBase64 && appState.currentKm >= 2000);
   }
+
+  const heroPullBtn = document.getElementById('btn-hero-toggle');
+  if (heroPullBtn) {
+    heroPullBtn.classList.toggle('hidden', !appState.bikePhotoBase64);
+  }
 }
 
 export function checkDocsStatusUI() {
   const plateBadge = document.getElementById('header-plate-badge');
+  const plateText = document.getElementById('header-plate-text');
   const alertDot = document.getElementById('docs-alert-dot');
   const summaryEl = document.getElementById('docs-status-summary');
   const garageDocsSummary = document.getElementById('garage-docs-summary');
@@ -452,11 +462,12 @@ export function checkDocsStatusUI() {
   const docs = appState.docs || {};
   if (plateBadge) {
     plateBadge.classList.remove('hidden');
+    const targetTextEl = plateText || plateBadge;
     if (docs.plate && docs.plate.trim() !== '') {
-      plateBadge.textContent = docs.plate.trim().toUpperCase();
+      targetTextEl.textContent = docs.plate.trim().toUpperCase();
       plateBadge.classList.add('has-plate');
     } else {
-      plateBadge.textContent = 'N160 FI';
+      targetTextEl.textContent = 'N160 FI';
       plateBadge.classList.remove('has-plate');
     }
   }
@@ -516,7 +527,7 @@ export function renderSparkline(points) {
 
   const tc = getThemeColors();
   const circlesHtml = coords
-    .map((c, i) => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${i === coords.length - 1 ? 3.5 : 2.5}" fill="${i === coords.length - 1 ? tc.neon : tc.accent}" stroke="${i === coords.length - 1 ? '#FFFFFF' : 'none'}" stroke-width="1.5" />`)
+    .map((c, i) => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="${i === coords.length - 1 ? 3.5 : 2.5}" fill="${i === coords.length - 1 ? tc.neon : tc.accent}" stroke="${i === coords.length - 1 ? tc.textPrimary : 'none'}" stroke-width="1.5" />`)
     .join('');
 
   wrap.innerHTML = `
@@ -920,7 +931,7 @@ export function renderFuelSection() {
     if (Math.abs(d) < 0.01) {
       trendSub.innerHTML = `Galón Premium estable: <strong>S/ ${currP.toFixed(2)}</strong>`;
     } else if (d < 0) {
-      trendSub.innerHTML = `<span style="color:var(--neon-lime)">▼ Galón bajó S/ ${Math.abs(d).toFixed(2)}</span> (S/ ${currP.toFixed(2)})`;
+      trendSub.innerHTML = `<span style="color:var(--status-ok)">▼ Galón bajó S/ ${Math.abs(d).toFixed(2)}</span> (S/ ${currP.toFixed(2)})`;
     } else {
       trendSub.innerHTML = `<span style="color:var(--amber-warn)">▲ Galón subió S/ ${d.toFixed(2)}</span> (S/ ${currP.toFixed(2)})`;
     }
@@ -953,7 +964,7 @@ export function renderFuelSection() {
       const top = tele.stationRanking[0];
       stSub.innerHTML =
         top.realCostPerKm > 0
-          ? `Más rentable: <strong style="color:var(--neon-lime)">${escapeHTML(top.name)}</strong> (S/ ${top.realCostPerKm.toFixed(2)}/km • ${top.realKmPerGal.toFixed(1)} km/gal)`
+          ? `Más rentable: <strong style="color:var(--status-ok)">${escapeHTML(top.name)}</strong> (S/ ${top.realCostPerKm.toFixed(2)}/km • ${top.realKmPerGal.toFixed(1)} km/gal)`
           : `Mejor precio galón: <strong style="color:var(--caribbean-bright)">${escapeHTML(top.name)}</strong> (S/ ${top.avgPrice.toFixed(2)}/gal)`;
     } else {
       stSub.textContent = 'Elige o escribe el nombre del grifo al abastecer (ej. Primax, Repsol)';
@@ -1675,10 +1686,11 @@ export function renderMonthlySpendChart() {
     return;
   }
 
+  const tc = getThemeColors();
   const gridLines = [0, 0.5, 1]
     .map((ratio) => {
       const y = (padTop + chartH * (1 - ratio)).toFixed(1);
-      return `<line x1="${padX}" y1="${y}" x2="${w - padX}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="${ratio === 0 ? 'none' : '3 3'}" stroke-width="1"/>`;
+      return `<line x1="${padX}" y1="${y}" x2="${w - padX}" y2="${y}" stroke="${tc.gridLine}" stroke-dasharray="${ratio === 0 ? 'none' : '3 3'}" stroke-width="1"/>`;
     })
     .join('');
 
@@ -1700,7 +1712,7 @@ export function renderMonthlySpendChart() {
       }
       if (maintH > 0.5) {
         currY -= maintH;
-        segs += `<rect x="${x.toFixed(1)}" y="${currY.toFixed(1)}" width="${barW.toFixed(1)}" height="${maintH.toFixed(1)}" rx="2.5" fill="var(--caribbean-bright)" />`;
+        segs += `<rect x="${x.toFixed(1)}" y="${currY.toFixed(1)}" width="${barW.toFixed(1)}" height="${maintH.toFixed(1)}" rx="2.5" fill="var(--caribbean-primary)" />`;
       }
       if (otherH > 0.5) {
         currY -= otherH;
@@ -1708,16 +1720,16 @@ export function renderMonthlySpendChart() {
       }
 
       if (m.total <= 0) {
-        segs = `<rect x="${x.toFixed(1)}" y="${(padTop + chartH - 2).toFixed(1)}" width="${barW.toFixed(1)}" height="2" rx="1" fill="rgba(255,255,255,0.12)" />`;
+        segs = `<rect x="${x.toFixed(1)}" y="${(padTop + chartH - 2).toFixed(1)}" width="${barW.toFixed(1)}" height="2" rx="1" fill="${tc.barEmpty}" />`;
       }
 
       const valLabel =
         m.total > 0
-          ? `<text x="${cx.toFixed(1)}" y="${Math.max(11, padTop + chartH - totalH - 5).toFixed(1)}" fill="#D2DAE4" font-size="9.5" font-weight="700" text-anchor="middle">${Math.round(m.total)}</text>`
+          ? `<text x="${cx.toFixed(1)}" y="${Math.max(11, padTop + chartH - totalH - 5).toFixed(1)}" fill="${tc.textPrimary}" font-size="9.5" font-weight="700" text-anchor="middle">${Math.round(m.total)}</text>`
           : '';
 
       const isLatest = idx === series.months.length - 1;
-      const monthLabel = `<text x="${cx.toFixed(1)}" y="${(h - 5).toFixed(1)}" fill="${isLatest ? '#FFFFFF' : '#7C8B9E'}" font-size="10" font-weight="${isLatest ? '800' : '600'}" text-anchor="middle">${m.label}</text>`;
+      const monthLabel = `<text x="${cx.toFixed(1)}" y="${(h - 5).toFixed(1)}" fill="${isLatest ? tc.textPrimary : tc.textMuted}" font-size="10" font-weight="${isLatest ? '800' : '600'}" text-anchor="middle">${m.label}</text>`;
 
       return `${segs}${valLabel}${monthLabel}`;
     })
@@ -1818,15 +1830,16 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0, routeAct
 
   const w = 165, h = 42, padLeft = 24, padRight = 6, padY = 5;
 
+  const tc = getThemeColors();
   if (!routeActive || !Array.isArray(elevArray) || elevArray.length < 2) {
     const baseAlt = Math.round(uiConfig.liveGpsAlt ?? 34);
     wrap.innerHTML = `
       <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">
-        <line x1="${padLeft}" y1="${padY}" x2="${w - padRight}" y2="${padY}" stroke="rgba(210,218,228,0.08)" stroke-dasharray="2 2" stroke-width="0.8"/>
-        <line x1="${padLeft}" y1="${(h / 2).toFixed(1)}" x2="${w - padRight}" y2="${(h / 2).toFixed(1)}" stroke="rgba(73,191,230,0.28)" stroke-dasharray="3 3" stroke-width="1.2"/>
-        <line x1="${padLeft}" y1="${h - padY}" x2="${w - padRight}" y2="${h - padY}" stroke="rgba(210,218,228,0.12)" stroke-width="0.8"/>
-        <text x="1" y="${(h / 2 + 2).toFixed(1)}" fill="#7C8B9E" font-size="6.8" font-weight="700">${baseAlt}m</text>
-        <text x="${((w + padLeft) / 2).toFixed(0)}" y="${(h / 2 - 4).toFixed(1)}" fill="#8E9BAE" font-size="6.8" font-weight="700" text-anchor="middle">Sin ruta trazada</text>
+        <line x1="${padLeft}" y1="${padY}" x2="${w - padRight}" y2="${padY}" stroke="${tc.gridLine}" stroke-dasharray="2 2" stroke-width="0.8"/>
+        <line x1="${padLeft}" y1="${(h / 2).toFixed(1)}" x2="${w - padRight}" y2="${(h / 2).toFixed(1)}" stroke="${tc.accent}" stroke-opacity="0.45" stroke-dasharray="3 3" stroke-width="1.2"/>
+        <line x1="${padLeft}" y1="${h - padY}" x2="${w - padRight}" y2="${h - padY}" stroke="${tc.gridLine}" stroke-width="0.8"/>
+        <text x="1" y="${(h / 2 + 2).toFixed(1)}" fill="${tc.textMuted}" font-size="6.8" font-weight="700">${baseAlt}m</text>
+        <text x="${((w + padLeft) / 2).toFixed(0)}" y="${(h / 2 - 4).toFixed(1)}" fill="${tc.textMuted}" font-size="6.8" font-weight="700" text-anchor="middle">Sin ruta trazada</text>
       </svg>
     `;
     return;
@@ -1858,26 +1871,25 @@ export function renderElevationProfileSVG(elevArray, progressRatio = 0, routeAct
   const dotY = pts[lowIdx].y + (pts[highIdx].y - pts[lowIdx].y) * frac;
   const midE = Math.round((minE + maxE) / 2);
 
-  const tc = getThemeColors();
   wrap.innerHTML = `
     <svg id="elev-interactive-svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="none">
       <defs>
         <linearGradient id="elevFillGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="${tc.neon}" stop-opacity="0.36"/>
-          <stop offset="100%" stop-color="${tc.neon}" stop-opacity="0.02"/>
+          <stop offset="100%" stop-color="${tc.neon}" stop-opacity="0.03"/>
         </linearGradient>
       </defs>
-      <line x1="${padLeft}" y1="${padY}" x2="${w - padRight}" y2="${padY}" stroke="rgba(210,218,228,0.12)" stroke-dasharray="2 2" stroke-width="0.8"/>
-      <line x1="${padLeft}" y1="${(h / 2).toFixed(1)}" x2="${w - padRight}" y2="${(h / 2).toFixed(1)}" stroke="rgba(210,218,228,0.10)" stroke-dasharray="2 2" stroke-width="0.8"/>
-      <line x1="${padLeft}" y1="${h - padY}" x2="${w - padRight}" y2="${h - padY}" stroke="rgba(210,218,228,0.12)" stroke-width="0.8"/>
-      <text x="1" y="${padY + 3}" fill="#7C8B9E" font-size="6.8" font-weight="700">${Math.round(maxE)}</text>
-      <text x="1" y="${(h / 2 + 2).toFixed(1)}" fill="#7C8B9E" font-size="6.8" font-weight="700">${midE}</text>
-      <text x="1" y="${h - 2}" fill="#7C8B9E" font-size="6.8" font-weight="700">${Math.round(minE)}</text>
+      <line x1="${padLeft}" y1="${padY}" x2="${w - padRight}" y2="${padY}" stroke="${tc.gridLine}" stroke-dasharray="2 2" stroke-width="0.8"/>
+      <line x1="${padLeft}" y1="${(h / 2).toFixed(1)}" x2="${w - padRight}" y2="${(h / 2).toFixed(1)}" stroke="${tc.gridLine}" stroke-dasharray="2 2" stroke-width="0.8"/>
+      <line x1="${padLeft}" y1="${h - padY}" x2="${w - padRight}" y2="${h - padY}" stroke="${tc.gridLine}" stroke-width="0.8"/>
+      <text x="1" y="${padY + 3}" fill="${tc.textMuted}" font-size="6.8" font-weight="700">${Math.round(maxE)}</text>
+      <text x="1" y="${(h / 2 + 2).toFixed(1)}" fill="${tc.textMuted}" font-size="6.8" font-weight="700">${midE}</text>
+      <text x="1" y="${h - 2}" fill="${tc.textMuted}" font-size="6.8" font-weight="700">${Math.round(minE)}</text>
       <polygon points="${areaStr}" fill="url(#elevFillGrad)" />
-      <polyline fill="none" stroke="${tc.neon}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polyStr}" />
-      <line x1="${dotX.toFixed(1)}" y1="${padY}" x2="${dotX.toFixed(1)}" y2="${h - padY}" stroke="rgba(255,255,255,0.28)" stroke-dasharray="1.5 1.5" stroke-width="0.8"/>
-      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4.5" fill="${tc.neon}" fill-opacity="0.32" />
-      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="2.6" fill="#FFFFFF" stroke="${tc.neon}" stroke-width="1.4" />
+      <polyline fill="none" stroke="${tc.ok}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polyStr}" />
+      <line x1="${dotX.toFixed(1)}" y1="${padY}" x2="${dotX.toFixed(1)}" y2="${h - padY}" stroke="${tc.textMuted}" stroke-opacity="0.55" stroke-dasharray="1.5 1.5" stroke-width="0.8"/>
+      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="4.5" fill="${tc.neon}" fill-opacity="0.36" />
+      <circle cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="2.6" fill="${tc.textPrimary}" stroke="${tc.neon}" stroke-width="1.4" />
     </svg>
   `;
 
@@ -2523,9 +2535,9 @@ export function renderReplayFrame(idx, panMap = false) {
   if (vitalsStrip) {
     const tempColor = pt.tempC > 110 ? 'var(--amber-warn)' : 'var(--caribbean-bright)';
     vitalsStrip.innerHTML =
-      `<strong style="color:#FFFFFF">${pt.speedKmh} km/h</strong> • ` +
+      `<strong style="color:var(--text-primary)">${pt.speedKmh} km/h</strong> • ` +
       `<span>${Number(pt.rpm).toLocaleString('es-PE')} RPM</span> • ` +
-      `<strong style="color:var(--neon-lime)">M:${escapeHTML(pt.gear || 'N')}</strong> • ` +
+      `<strong style="color:var(--status-ok)">M:${escapeHTML(pt.gear || 'N')}</strong> • ` +
       `<span>TPS ${pt.tpsPct}%</span> • ` +
       `<span style="color:${tempColor}">${pt.tempC}°C</span> • ` +
       `<span>${pt.voltage}V</span>`;
@@ -2538,7 +2550,7 @@ export function renderReplayFrame(idx, panMap = false) {
   const hudGearEl = document.getElementById('map-hud-gear');
   if (hudGearEl) {
     hudGearEl.textContent = pt.gear || 'N';
-    hudGearEl.style.color = (pt.gear || 'N') === 'N' ? 'var(--status-ok)' : '#FFFFFF';
+    hudGearEl.style.color = (pt.gear || 'N') === 'N' ? 'var(--status-ok)' : 'var(--text-primary)';
   }
 
   const hudVitalsEl = document.getElementById('map-hud-vitals');
@@ -2955,7 +2967,7 @@ export function renderObdLiveUI(data, forceMap = false) {
         : bb.points.length > 0
         ? `Sesión lista (${bb.points.length} puntos). Descarga tu ruta en .GPX o .CSV`
         : 'Listo para grabar trazado satelital y parámetros del motor cada 2.5s';
-      bbSummary.style.color = bb.recording ? 'var(--red-danger)' : 'var(--neon-lime)';
+      bbSummary.style.color = bb.recording ? 'var(--red-danger)' : 'var(--status-ok)';
     }
     if (bbPts) bbPts.textContent = `${bb.points.length} pts`;
     if (bbTemp) bbTemp.textContent = bb.maxTempC > 0 ? `${bb.maxTempC} °C` : '-- °C';
@@ -3024,9 +3036,9 @@ export function renderObdLiveUI(data, forceMap = false) {
   const gearEl = document.getElementById('obd-gear-val');
   gearEl.textContent = gear;
   // Silencio Visual TFT: Verde Neón exclusivo para Neutro (N), Blanco Puro para marchas 1-5
-  gearEl.style.color = gear === 'N' ? 'var(--status-ok)' : '#FFFFFF';
+  gearEl.style.color = gear === 'N' ? 'var(--status-ok)' : 'var(--text-primary)';
   const mapGearEl = document.getElementById('map-hud-gear');
-  if (mapGearEl) mapGearEl.style.color = gear === 'N' ? 'var(--status-ok)' : '#FFFFFF';
+  if (mapGearEl) mapGearEl.style.color = gear === 'N' ? 'var(--status-ok)' : 'var(--text-primary)';
 
   document.getElementById('obd-rpm-val').textContent = rpm.toLocaleString('es-PE');
   document.getElementById('obd-peak-rpm').textContent = peakRpm.toLocaleString('es-PE');
@@ -3075,7 +3087,7 @@ export function renderObdLiveUI(data, forceMap = false) {
     card.classList.remove('obd-shift-alert');
     guardPill.textContent = isBreakin1k ? 'CUIDANDO <5k' : (rpm >= 5500 ? 'TORQUE ÓPTIMO' : 'CRUCERO OK');
     guardPill.style.background = rpm >= 5500 ? 'var(--neon-soft)' : 'var(--accent-soft)';
-    guardPill.style.color = rpm >= 5500 ? 'var(--neon-lime)' : 'var(--caribbean-bright)';
+    guardPill.style.color = rpm >= 5500 ? 'var(--status-ok)' : 'var(--caribbean-bright)';
     if (rpmArc) rpmArc.setAttribute('stroke', rpm >= 5500 ? 'var(--neon-lime)' : 'var(--caribbean-bright)');
   }
 
@@ -3094,7 +3106,7 @@ export function renderObdLiveUI(data, forceMap = false) {
     if (barTemp) barTemp.style.backgroundColor = 'var(--caribbean-bright)';
   } else if (tempC <= 110) {
     tempSub.textContent = 'Aceite/Culata OK';
-    tempEl.style.color = '#FFFFFF';
+    tempEl.style.color = 'var(--text-primary)';
     if (barTemp) barTemp.style.backgroundColor = 'var(--caribbean-bright)';
   } else if (tempC <= 115) {
     tempSub.textContent = 'Exigencia Alta';
@@ -3126,11 +3138,11 @@ export function renderObdLiveUI(data, forceMap = false) {
     voltSub.textContent = 'Sobrecarga >14.8V';
     if (barVolt) barVolt.style.backgroundColor = 'var(--red-danger)';
   } else if (volt >= 13.5 && volt <= 14.6) {
-    voltEl.style.color = '#FFFFFF';
+    voltEl.style.color = 'var(--text-primary)';
     voltSub.textContent = 'Estator OK';
     if (barVolt) barVolt.style.backgroundColor = 'var(--status-ok)';
   } else {
-    voltEl.style.color = '#FFFFFF';
+    voltEl.style.color = 'var(--text-primary)';
     voltSub.textContent = 'Reposo 12V OK';
     if (barVolt) barVolt.style.backgroundColor = 'var(--caribbean-bright)';
   }
@@ -3197,7 +3209,7 @@ export function renderObdLiveUI(data, forceMap = false) {
     dtcListEl.innerHTML = codes
       .map((code) => {
         const desc = BAJAJ_DTC_DICTIONARY[code] || 'Código de falla registrado en módulo de inyección Bosch/Bajaj';
-        return `<div class="obd-dtc-item"><span class="obd-dtc-code">${escapeHTML(code)}</span><span style="color:#FFFFFF;flex:1;">${escapeHTML(desc)}</span></div>`;
+        return `<div class="obd-dtc-item"><span class="obd-dtc-code">${escapeHTML(code)}</span><span style="color:var(--text-primary);flex:1;">${escapeHTML(desc)}</span></div>`;
       })
       .join('');
   }
@@ -3290,7 +3302,7 @@ export function renderNightDrainUI() {
     mornEl.textContent = '-- V';
     hoursEl.textContent = 'Reposo 8-12h';
     dropEl.textContent = '-- V';
-    dropEl.style.color = '#FFFFFF';
+    dropEl.style.color = 'var(--text-primary)';
     verdictSub.textContent = 'Meta: ≤ 0.18V';
   }
 }

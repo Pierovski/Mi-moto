@@ -30,7 +30,7 @@ export function triggerHaptic(ms = 12) {
   }
 }
 
-export function compressImage(file, maxWidth, callback) {
+export function compressImage(file, maxWidth, callback, quality = 0.65) {
   const reader = new FileReader();
   reader.onload = function (e) {
     const img = new Image();
@@ -45,7 +45,7 @@ export function compressImage(file, maxWidth, callback) {
       canvas.width = width;
       canvas.height = height;
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      callback(canvas.toDataURL('image/jpeg', 0.65));
+      callback(canvas.toDataURL('image/jpeg', quality));
     };
     img.src = e.target.result;
   };
@@ -212,6 +212,7 @@ export function createDefaultState() {
     onboarded: false,
     bikeModel: 'Bajaj Pulsar N160 FI',
     colorTheme: 'blue',
+    surfaceMode: 'day',
     sunlightMode: false,
     rideLoadMode: 'solo', // 'solo' (25/28 PSI) | 'pillion' (25/32 PSI + Monoshock Pos 4-5)
     bikePurchasePrice: 0,
@@ -362,8 +363,9 @@ export function migrateAndNormalizeState(raw) {
     ...base,
     ...raw,
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    colorTheme: raw.colorTheme === 'grey' ? 'white' : (raw.colorTheme || 'blue'),
-    sunlightMode: Boolean(raw.sunlightMode),
+    colorTheme: 'blue',
+    surfaceMode: (raw.surfaceMode === 'night' || raw.surfaceMode === 'dark') ? 'night' : 'day',
+    sunlightMode: false,
     rideLoadMode: raw.rideLoadMode === 'pillion' ? 'pillion' : 'solo',
     bikePurchasePrice: Math.max(0, Number(raw.bikePurchasePrice) || 0),
     nightDrainTest: {
